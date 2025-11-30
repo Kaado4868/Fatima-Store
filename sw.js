@@ -1,7 +1,6 @@
-const CACHE_NAME = 'fatima-store-final-v12';
+const CACHE_NAME = 'fatima-store-offline-v13'; // Bumped version
 
-// Files to save immediately
-const STATIC_ASSETS = [
+const ASSETS = [
   './',
   './index.html',
   './manifest.json',
@@ -16,10 +15,10 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // Force new worker to active immediately
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(ASSETS);
     })
   );
 });
@@ -32,25 +31,22 @@ self.addEventListener('activate', (e) => {
       );
     })
   );
-  self.clients.claim(); // Take control of all pages immediately
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
-  // 1. NAVIGATION REQUESTS (Refreshing the page)
-  // If the user tries to reload the page, serve index.html from cache
+  // Navigation strategy: Try cache first, then network
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
         return response || fetch(e.request);
       }).catch(() => {
-        // If both fail (offline + not in cache), try finding the root
         return caches.match('./index.html');
       })
     );
     return;
   }
 
-  // 2. ALL OTHER REQUESTS (Images, Scripts, Styles)
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request);
