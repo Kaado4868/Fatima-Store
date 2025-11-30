@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- CLEAN LINKS (Matches Service Worker) -->
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./logo.png">
     <link rel="apple-touch-icon" href="./logo.png">
@@ -16,7 +15,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        /* Toast Notification */
         .toast {
             position: fixed;
             bottom: 80px;
@@ -38,7 +36,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
 
-    <!-- LOADING OVERLAY -->
+    <!-- LOADING -->
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
@@ -47,7 +45,7 @@
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
@@ -67,7 +65,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- APP -->
     <div id="app-screen" class="hidden min-h-screen pb-24">
         <div class="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-200">
             <div class="max-w-md mx-auto px-4 py-3">
@@ -118,7 +116,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- MODAL -->
     <div id="modal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center px-4 py-6 sm:p-6">
         <div onclick="window.closeModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
@@ -183,35 +181,24 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP LOGIC ---
+        // Back Button
         let lastBackPressTime = 0;
-        
-        function trapBackButton() {
-            window.history.pushState({ page: 1 }, "", "");
-        }
-
+        function trapBackButton() { window.history.pushState({ page: 1 }, "", ""); }
         window.addEventListener('popstate', (event) => {
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
-
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
                 trapBackButton(); 
                 return;
             }
-
-            if (now - lastBackPressTime < 2000) {
-                // Allow exit
-            } else {
+            if (now - lastBackPressTime < 2000) { } else {
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
                 trapBackButton(); 
             }
         });
-
-        window.addEventListener('load', () => {
-            setTimeout(trapBackButton, 500); 
-        });
+        window.addEventListener('load', () => { setTimeout(trapBackButton, 500); });
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -220,7 +207,6 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -291,7 +277,6 @@
         function updateAdminUI() {
             const lockBtn = document.getElementById('admin-lock-btn');
             const fab = document.getElementById('fab-container');
-            
             if (isAdmin) {
                 lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
                 lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
@@ -305,6 +290,7 @@
             lucide.createIcons();
         }
 
+        // --- FIXED LOGIN FORM ---
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
@@ -312,10 +298,17 @@
                 alert("Please enter a valid store name.");
                 return;
             }
-            currentStoreName = inputName;
-            localStorage.setItem('pk_store_name', currentStoreName);
+            
+            // 1. Save name
+            localStorage.setItem('pk_store_name', inputName);
+            
+            // 2. Change UI
             document.getElementById('login-btn').innerText = "Opening...";
-            checkStatusAndRender();
+            
+            // 3. FORCE RELOAD (This fixes the stuck "Opening..." state)
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
         });
 
         window.logout = () => {
