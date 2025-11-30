@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION 17 -->
-    <link rel="manifest" href="./manifest.json?v=17">
-    <link rel="icon" type="image/png" href="./logo.png?v=17">
-    <link rel="apple-touch-icon" href="./logo.png?v=17">
+    <!-- VERSION: INSTANT OPEN FIX -->
+    <link rel="manifest" href="./manifest.json?v=INSTANT">
+    <link rel="icon" type="image/png" href="./logo.png?v=INSTANT">
+    <link rel="apple-touch-icon" href="./logo.png?v=INSTANT">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -182,12 +182,11 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP LOGIC ---
+        // --- BACK BUTTON TRAP LOGIC (Improved) ---
         let lastBackPressTime = 0;
         
-        // This ensures a history state is pushed immediately
         function trapBackButton() {
-            // Check if we already have a state to prevent infinite pushing
+            // Only push state if we haven't already
             if (!history.state || history.state.page !== 'trap') {
                 window.history.pushState({ page: 'trap' }, "", "");
             }
@@ -197,26 +196,27 @@
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. If Modal Open -> Close it
+            // 1. If Modal is Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                trapBackButton(); // Re-trap
+                trapBackButton(); 
                 return;
             }
 
             // 2. Main Screen Logic
             if (now - lastBackPressTime < 2000) {
-                // Allow exit (Browser handles it)
+                // Double tap: Let it exit (Browser handles closing)
             } else {
+                // First tap: Show warning
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
-                trapBackButton(); // Re-trap
+                trapBackButton(); // Trap them again
             }
         });
 
-        window.addEventListener('load', () => {
-            setTimeout(trapBackButton, 500); 
-        });
+        // Initialize Trap IMMEDIATELY (Don't wait for load)
+        trapBackButton();
+        setInterval(trapBackButton, 2000); // Robust backup check
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -225,6 +225,7 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
+        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -233,25 +234,11 @@
         async function init() {
             try {
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js').then(reg => {
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    window.location.reload();
-                                }
-                            });
-                        });
-                    });
-                    
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        window.location.reload();
-                    });
+                    navigator.serviceWorker.register('./sw.js');
                 }
                 await signInAnonymously(auth);
             } catch (error) {
                 console.log("Offline mode:", error);
-                // If offline and no user/store, show error. If cached, UI will handle it.
                 if (navigator.onLine) {
                     loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${error.message}</span>`;
                 }
@@ -291,6 +278,31 @@
             updateAdminUI();
         }
 
+        // --- FIXED LOGIN LOGIC (No Reload) ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
+            if (inputName.length < 2) {
+                alert("Please enter a valid store name.");
+                return;
+            }
+            
+            // 1. Save state
+            localStorage.setItem('pk_store_name', inputName);
+            currentStoreName = inputName;
+            
+            // 2. Immediate Transition (No Reload needed)
+            document.getElementById('login-btn').innerText = "Opening...";
+            
+            // Check if user is already auth'd (likely yes)
+            if (currentUser) {
+                showApp();
+            } else {
+                // If not auth'd yet, just wait for onAuthStateChanged to trigger showApp
+                // But show loading state on button
+            }
+        });
+
         window.toggleAdmin = () => {
             if (isAdmin) {
                 isAdmin = false;
@@ -323,21 +335,6 @@
             renderList();
             lucide.createIcons();
         }
-
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
-            if (inputName.length < 2) {
-                alert("Please enter a valid store name.");
-                return;
-            }
-            
-            localStorage.setItem('pk_store_name', inputName);
-            document.getElementById('login-btn').innerText = "Opening...";
-            
-            // Force Reload to ensure clean state and correct display
-            window.location.reload();
-        });
 
         window.logout = () => {
             if (!confirm("Go back to store selection?")) return;
