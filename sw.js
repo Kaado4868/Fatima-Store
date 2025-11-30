@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v17-final'; // Version 17
+const CACHE_NAME = 'fatima-store-v18-instant';
 
 const CRITICAL_ASSETS = [
   './',
@@ -7,51 +7,50 @@ const CRITICAL_ASSETS = [
   './logo.png'
 ];
 
-// Install: Cache critical files immediately
-self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Force activation
-  event.waitUntil(
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+  e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log(' caching critical assets');
       return cache.addAll(CRITICAL_ASSETS);
     })
   );
 });
 
-// Activate: Clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
     })
   );
-  self.clients.claim(); // Take control immediately
+  self.clients.claim();
 });
 
-// Fetch: The Offline Logic
-self.addEventListener('fetch', (event) => {
-  // A. Navigation (Page Load/Refresh): Always return index.html
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
+self.addEventListener('fetch', (e) => {
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
       caches.match('./index.html').then((response) => {
-        return response || fetch(event.request).catch(() => caches.match('./index.html'));
+        return response || fetch(e.request);
+      }).catch(() => {
+        return caches.match('./index.html');
       })
     );
     return;
   }
 
-  // B. Other Assets: Cache-First Strategy
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Optional: Cache new dynamic files here if needed
+  e.respondWith(
+    caches.match(e.request).then((cachedResponse) => {
+      const fetchPromise = fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
+        }
         return networkResponse;
-      });
+      }).catch(() => {});
+      return cachedResponse || fetchPromise;
     })
   );
 });
