@@ -1,24 +1,17 @@
-const CACHE_NAME = 'fatima-store-offline-v13'; // Bumped version
+const CACHE_NAME = 'fatima-store-v15-fixed';
 
-const ASSETS = [
+const CRITICAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
-  // Firebase SDKs
-  'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js'
+  './logo.png'
 ];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(CRITICAL_ASSETS);
     })
   );
 });
@@ -35,7 +28,6 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Navigation strategy: Try cache first, then network
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
@@ -49,7 +41,16 @@ self.addEventListener('fetch', (e) => {
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request);
+      const fetchPromise = fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {});
+      return cachedResponse || fetchPromise;
     })
   );
 });
