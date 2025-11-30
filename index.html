@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: OFFLINE & BACK BUTTON FIX -->
-    <link rel="manifest" href="./manifest.json?v=FIX">
-    <link rel="icon" type="image/png" href="./logo.png?v=FIX">
-    <link rel="apple-touch-icon" href="./logo.png?v=FIX">
+    <!-- FORCE REFRESH: v=OFFLINE_FIX -->
+    <link rel="manifest" href="./manifest.json?v=OFFLINE_FIX">
+    <link rel="icon" type="image/png" href="./logo.png?v=OFFLINE_FIX">
+    <link rel="apple-touch-icon" href="./logo.png?v=OFFLINE_FIX">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,44 +16,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        /* Toast Animation */
-        @keyframes fade-in-out {
-            0% { opacity: 0; transform: translateY(20px) translateX(-50%); }
-            10% { opacity: 1; transform: translateY(0) translateX(-50%); }
-            90% { opacity: 1; transform: translateY(0) translateX(-50%); }
-            100% { opacity: 0; transform: translateY(20px) translateX(-50%); }
-        }
+        /* Toast Notification */
         .toast {
-            animation: fade-in-out 2s ease-in-out forwards;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
 
-    <!-- 1. LOADING OVERLAY -->
+    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=FIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=OFFLINE_FIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
-    <!-- 2. LOGIN SCREEN -->
+    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png?v=FIX" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
+                <img src="./logo.png?v=OFFLINE_FIX" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
-            
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Fatima Store</h1>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
-            
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
                     class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" 
                     placeholder="STORE NAME">
-                
                 <button type="submit" id="login-btn"
                     class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">
                     Open Store
@@ -62,32 +67,27 @@
         </div>
     </div>
 
-    <!-- 3. MAIN APP -->
+    <!-- MAIN APP -->
     <div id="app-screen" class="hidden min-h-screen pb-24">
-        <!-- Header -->
         <div class="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-200">
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=FIX" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=OFFLINE_FIX" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
                         </div>
                     </div>
-                    
                     <div class="flex items-center gap-2">
-                        <!-- ADMIN LOCK BUTTON -->
                         <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50">
                             <i data-lucide="lock" class="w-4 h-4"></i>
                         </button>
-                        
                         <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">
                             Log Out
                         </button>
                     </div>
                 </div>
-
                 <div class="relative">
                     <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
                     <input type="text" id="search-input" 
@@ -100,7 +100,6 @@
             </div>
         </div>
 
-        <!-- Content -->
         <div class="max-w-md mx-auto px-4 py-4">
             <div id="empty-state" class="hidden text-center py-12">
                 <div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -109,11 +108,9 @@
                 <h3 class="text-lg font-medium text-slate-900">No items yet</h3>
                 <p class="text-slate-500 text-sm mt-1">Wait for manager to add prices.</p>
             </div>
-            
             <div id="item-list" class="space-y-3"></div>
         </div>
 
-        <!-- FAB (Only visible to Admin) -->
         <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden">
             <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
                 <i data-lucide="plus" class="w-8 h-8"></i>
@@ -154,8 +151,8 @@
         </div>
     </div>
 
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
+    <!-- Toast UI -->
+    <div id="toast" class="toast">Press back again to exit</div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
@@ -177,10 +174,8 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // Persistence
         enableIndexedDbPersistence(db).catch((err) => console.log('Persistence error:', err.code));
 
-        // State
         let currentUser = null;
         let currentStoreName = localStorage.getItem('pk_store_name');
         let unsubscribe = null;
@@ -188,48 +183,55 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // Back Button State
-        let lastBackPress = 0;
+        // --- BACK BUTTON TRAP LOGIC ---
+        let lastBackPressTime = 0;
+        
+        function trapBackButton() {
+            // Push a state so we have something to "pop"
+            window.history.pushState({ page: 1 }, "", "");
+        }
 
+        window.addEventListener('popstate', (event) => {
+            const now = new Date().getTime();
+            const modal = document.getElementById('modal');
+
+            // 1. If Modal Open -> Close it
+            if (!modal.classList.contains('hidden')) {
+                window.closeModal();
+                trapBackButton(); // Re-trap
+                return;
+            }
+
+            // 2. Main Screen Logic
+            if (now - lastBackPressTime < 2000) {
+                // Double tap detected: Allow exit (do nothing, let browser handle)
+                // We DON'T re-trap here, so the browser actually goes back/closes
+            } else {
+                // First tap: Show warning
+                lastBackPressTime = now;
+                showToast("Press back again to exit");
+                trapBackButton(); // Re-trap so they stay in app
+            }
+        });
+
+        // Initialize Trap on Load
+        window.addEventListener('load', () => {
+            setTimeout(trapBackButton, 500); 
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
         const loadingText = document.getElementById('loading-text');
 
-        // --- BACK BUTTON LOGIC ---
-        // Push a state so we can catch the 'back' action
-        window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function () {
-            // 1. If Modal is open, close it and stay in app
-            const modal = document.getElementById('modal');
-            if (!modal.classList.contains('hidden')) {
-                window.closeModal();
-                window.history.pushState(null, null, window.location.href); // Push state again to keep trap active
-                return;
-            }
-
-            // 2. If main screen, check for double tap
-            const now = new Date().getTime();
-            if (now - lastBackPress < 2000) {
-                // Allowed to exit (do nothing, browser will close)
-            } else {
-                // Trap the back button
-                window.history.pushState(null, null, window.location.href);
-                lastBackPress = now;
-                showToast("Press back again to exit");
-            }
-        };
-
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = "toast bg-slate-800 text-white px-4 py-2 rounded-full text-sm shadow-lg opacity-0";
-            toast.innerText = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
-
-        // --- INITIALIZATION ---
         async function init() {
             try {
                 if ('serviceWorker' in navigator) {
