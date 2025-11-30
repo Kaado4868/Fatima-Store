@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Price Keeper - Fatima Store</title>
     
-    <!-- ICONS: Updated with timestamps to force refresh -->
-    <link rel="manifest" href="./manifest.json?v=100">
-    <link rel="icon" type="image/png" href="./logo.png?v=100">
-    <link rel="apple-touch-icon" href="./logo.png?v=100">
+    <!-- VERSION: OFFLINE MODE -->
+    <link rel="manifest" href="./manifest.json?v=OFFLINE">
+    <link rel="icon" type="image/png" href="./logo.png?v=OFFLINE">
+    <link rel="apple-touch-icon" href="./logo.png?v=OFFLINE">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +24,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=100" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=OFFLINE" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -33,7 +33,7 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png?v=100" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
+                <img src="./logo.png?v=OFFLINE" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Price Keeper</h1>
@@ -58,7 +58,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=100" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=OFFLINE" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Price Keeper</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -81,6 +81,7 @@
             </div>
         </div>
 
+        <!-- Content -->
         <div class="max-w-md mx-auto px-4 py-4">
             <div id="empty-state" class="hidden text-center py-12">
                 <div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -138,7 +139,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
-        // --- FATIMA STORE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow",
             authDomain: "fatima-store-1f63f.firebaseapp.com",
@@ -157,7 +157,6 @@
         // Persistence
         enableIndexedDbPersistence(db).catch((err) => console.log('Persistence error:', err.code));
 
-        // State
         let currentUser = null;
         let currentStoreName = localStorage.getItem('pk_store_name');
         let unsubscribe = null;
@@ -248,22 +247,14 @@
             }, (err) => console.error("Sync error:", err));
         }
 
-        // --- NEW SMART SEARCH FUNCTION ---
         function renderList() {
-            // 1. Get search text, lowercase it, and remove extra spaces
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim();
-            
-            // 2. Split into individual words (so "sugar cube" becomes ["sugar", "cube"])
             const searchWords = rawTerm.split(" ").filter(word => word.length > 0);
-
             const listEl = document.getElementById('item-list');
             const emptyEl = document.getElementById('empty-state');
             
             const filtered = allItems.filter(item => {
-                // Combine name and category into one string to search
                 const itemText = (item.name + " " + (item.category || "")).toLowerCase();
-                
-                // Check if EVERY word typed appears somewhere in the item
                 return searchWords.every(word => itemText.includes(word));
             });
 
@@ -320,11 +311,7 @@
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
             const originalText = submitBtn.innerText;
-            
-            const resetButton = () => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = originalText;
-            };
+            const resetButton = () => { submitBtn.disabled = false; submitBtn.innerText = originalText; };
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Checking...";
