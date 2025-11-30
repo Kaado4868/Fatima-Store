@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-offline-v10'; // Bumped version
+const CACHE_NAME = 'fatima-store-offline-v11'; // Bumped version
 
 const ASSETS = [
   './',
@@ -35,6 +35,19 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // 1. Handle Page Navigation (Refreshes)
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.match('./index.html').then((response) => {
+        return response || fetch(e.request);
+      }).catch(() => {
+        return caches.match('./index.html');
+      })
+    );
+    return;
+  }
+
+  // 2. Handle Files/Images
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
