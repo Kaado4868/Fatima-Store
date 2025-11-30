@@ -1,9 +1,9 @@
-const CACHE_NAME = 'price-keeper-v3'; // BUMPED VERSION TO FORCE UPDATE
+const CACHE_NAME = 'price-keeper-v4';
 const ASSETS = [
   './',
   './index.html',
-  'https://kaado4868.github.io/Fatima-Store/manifest.json',
-  'https://kaado4868.github.io/Fatima-Store/logo.png',
+  './manifest.json',
+  './logo.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
