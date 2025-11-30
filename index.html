@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: FORCE APP UPDATE -->
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" type="image/png" href="./logo.png">
-    <link rel="apple-touch-icon" href="./logo.png">
+    <!-- VERSION 17 -->
+    <link rel="manifest" href="./manifest.json?v=17">
+    <link rel="icon" type="image/png" href="./logo.png?v=17">
+    <link rel="apple-touch-icon" href="./logo.png?v=17">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,7 +37,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
 
-    <!-- LOADING OVERLAY -->
+    <!-- LOADING -->
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
@@ -46,7 +46,7 @@
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- APP -->
     <div id="app-screen" class="hidden min-h-screen pb-24">
         <div class="bg-white sticky top-0 z-20 shadow-sm border-b border-slate-200">
             <div class="max-w-md mx-auto px-4 py-3">
@@ -117,7 +117,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- MODAL -->
     <div id="modal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center px-4 py-6 sm:p-6">
         <div onclick="window.closeModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
@@ -184,28 +184,36 @@
 
         // --- BACK BUTTON TRAP LOGIC ---
         let lastBackPressTime = 0;
-        function trapBackButton() { window.history.pushState({ page: 1 }, "", ""); }
         
+        // This ensures a history state is pushed immediately
+        function trapBackButton() {
+            // Check if we already have a state to prevent infinite pushing
+            if (!history.state || history.state.page !== 'trap') {
+                window.history.pushState({ page: 'trap' }, "", "");
+            }
+        }
+
         window.addEventListener('popstate', (event) => {
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
+            // 1. If Modal Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                trapBackButton(); 
+                trapBackButton(); // Re-trap
                 return;
             }
 
-            if (now - lastBackPressTime < 2000) { 
-                // Allow exit
+            // 2. Main Screen Logic
+            if (now - lastBackPressTime < 2000) {
+                // Allow exit (Browser handles it)
             } else {
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
-                trapBackButton(); 
+                trapBackButton(); // Re-trap
             }
         });
 
-        // Initialize Trap on Load
         window.addEventListener('load', () => {
             setTimeout(trapBackButton, 500); 
         });
@@ -217,7 +225,6 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -227,19 +234,16 @@
             try {
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('./sw.js').then(reg => {
-                        // FORCE UPDATE: Listen for new service worker
                         reg.addEventListener('updatefound', () => {
                             const newWorker = reg.installing;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New update available, reload page to apply
                                     window.location.reload();
                                 }
                             });
                         });
                     });
                     
-                    // Listen for controller change (means new SW took over)
                     navigator.serviceWorker.addEventListener('controllerchange', () => {
                         window.location.reload();
                     });
@@ -247,7 +251,10 @@
                 await signInAnonymously(auth);
             } catch (error) {
                 console.log("Offline mode:", error);
-                loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${error.message}</span>`;
+                // If offline and no user/store, show error. If cached, UI will handle it.
+                if (navigator.onLine) {
+                    loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${error.message}</span>`;
+                }
             }
         }
 
@@ -304,7 +311,6 @@
         function updateAdminUI() {
             const lockBtn = document.getElementById('admin-lock-btn');
             const fab = document.getElementById('fab-container');
-            
             if (isAdmin) {
                 lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
                 lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
@@ -325,9 +331,12 @@
                 alert("Please enter a valid store name.");
                 return;
             }
+            
             localStorage.setItem('pk_store_name', inputName);
             document.getElementById('login-btn').innerText = "Opening...";
-            setTimeout(() => window.location.reload(), 500);
+            
+            // Force Reload to ensure clean state and correct display
+            window.location.reload();
         });
 
         window.logout = () => {
