@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- FORCE REFRESH: v=OFFLINE_FIX -->
-    <link rel="manifest" href="./manifest.json?v=OFFLINE_FIX">
-    <link rel="icon" type="image/png" href="./logo.png?v=OFFLINE_FIX">
-    <link rel="apple-touch-icon" href="./logo.png?v=OFFLINE_FIX">
+    <!-- CLEAN LINKS (Matches Service Worker) -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./logo.png">
+    <link rel="apple-touch-icon" href="./logo.png">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,7 +42,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=OFFLINE_FIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -51,7 +51,7 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png?v=OFFLINE_FIX" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
+                <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Fatima Store</h1>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
@@ -73,7 +73,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=OFFLINE_FIX" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -151,7 +151,6 @@
         </div>
     </div>
 
-    <!-- Toast UI -->
     <div id="toast" class="toast">Press back again to exit</div>
 
     <script type="module">
@@ -174,6 +173,7 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
+        // Persistence
         enableIndexedDbPersistence(db).catch((err) => console.log('Persistence error:', err.code));
 
         let currentUser = null;
@@ -187,7 +187,6 @@
         let lastBackPressTime = 0;
         
         function trapBackButton() {
-            // Push a state so we have something to "pop"
             window.history.pushState({ page: 1 }, "", "");
         }
 
@@ -195,26 +194,21 @@
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. If Modal Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                trapBackButton(); // Re-trap
+                trapBackButton(); 
                 return;
             }
 
-            // 2. Main Screen Logic
             if (now - lastBackPressTime < 2000) {
-                // Double tap detected: Allow exit (do nothing, let browser handle)
-                // We DON'T re-trap here, so the browser actually goes back/closes
+                // Allow exit
             } else {
-                // First tap: Show warning
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
-                trapBackButton(); // Re-trap so they stay in app
+                trapBackButton(); 
             }
         });
 
-        // Initialize Trap on Load
         window.addEventListener('load', () => {
             setTimeout(trapBackButton, 500); 
         });
