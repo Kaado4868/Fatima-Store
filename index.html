@@ -13,7 +13,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
 
-    <!-- 1. LOADING OVERLAY (Shows first) -->
+    <!-- 1. LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="animate-spin text-indigo-600 mb-4">
             <i data-lucide="loader-2" class="w-10 h-10"></i>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="flex gap-4">
                     <div class="flex-1">
-                        <label class="text-sm font-bold text-slate-700">Price</label>
+                        <label class="text-sm font-bold text-slate-700">Price (₦)</label>
                         <input type="number" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00">
                     </div>
                     <div class="flex-1">
@@ -118,13 +118,12 @@
                         <input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Optional">
                     </div>
                 </div>
-                <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700">Save Item</button>
+                <button type="submit" id="save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Save Item</button>
             </form>
         </div>
     </div>
 
     <script type="module">
-        // Import Firebase from CDN (No npm install needed)
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
@@ -143,7 +142,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'fatima-store-1f63f'; // Using your Project ID as the identifier
+        const appId = 'fatima-store-1f63f'; 
 
         // State
         let currentUser = null;
@@ -160,7 +159,6 @@
         // --- 1. INITIALIZATION ---
         async function init() {
             try {
-                // Directly sign in anonymously
                 await signInAnonymously(auth);
             } catch (error) {
                 console.error("Auth failed:", error);
@@ -236,19 +234,14 @@
             if (unsubscribe) unsubscribe();
             
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-            // Using a simple path structure: artifacts/fatima-store/public/data/pk_store_[NAME]
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
             unsubscribe = onSnapshot(colRef, (snapshot) => {
                 allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                // Sort by name A-Z
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
                 renderList();
             }, (err) => {
                 console.error("Sync error:", err);
-                if (err.code === 'permission-denied') {
-                    alert("Permission denied. Check Firestore rules.");
-                }
             });
         }
 
@@ -274,13 +267,14 @@
             filtered.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
+                // CHANGED: Naira symbol here
                 div.innerHTML = `
                     <div class="flex-1" onclick="window.editItem('${item.id}')">
                         <div class="flex items-center gap-2">
                             <h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>
                             ${item.category ? `<span class="text-[10px] bg-slate-100 px-2 rounded-full text-slate-500 uppercase font-bold tracking-wider">${escape(item.category)}</span>` : ''}
                         </div>
-                        <div class="text-2xl font-bold text-indigo-600 mt-0.5">$${item.price.toFixed(2)}</div>
+                        <div class="text-2xl font-bold text-indigo-600 mt-0.5">₦${item.price.toFixed(2)}</div>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
@@ -304,15 +298,26 @@
             renderList();
         });
 
-        // Form Submit
+        // --- 7. FORM HANDLER (FIXED) ---
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = document.getElementById('save-btn');
+            const originalText = submitBtn.innerText;
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Saving...";
+
             const id = document.getElementById('item-id').value;
             const name = document.getElementById('name-input').value.trim();
             const price = parseFloat(document.getElementById('price-input').value);
             const category = document.getElementById('category-input').value.trim();
 
-            if (!name) return;
+            if (!name) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+                return;
+            }
 
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
@@ -323,9 +328,17 @@
                 } else {
                     await addDoc(colRef, { name, price, category, createdAt: serverTimestamp() });
                 }
+                
+                // Success feedback
+                alert("Success! Item Saved.");
                 window.closeModal();
+
             } catch(err) {
                 alert("Error saving item: " + err.message);
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
             }
         });
 
@@ -363,4 +376,6 @@
     </script>
 </body>
 </html>
+
+
 
