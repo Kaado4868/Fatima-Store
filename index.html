@@ -267,7 +267,6 @@
             filtered.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
-                // CHANGED: Naira symbol here
                 div.innerHTML = `
                     <div class="flex-1" onclick="window.editItem('${item.id}')">
                         <div class="flex items-center gap-2">
@@ -298,26 +297,50 @@
             renderList();
         });
 
-        // --- 7. FORM HANDLER (FIXED) ---
+        // --- 7. FORM HANDLER (WITH DUPLICATE CHECK) ---
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
             const originalText = submitBtn.innerText;
             
-            // Disable button
+            // Helper to reset button
+            const resetButton = () => {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            };
+
+            // Disable button immediately
             submitBtn.disabled = true;
-            submitBtn.innerText = "Saving...";
+            submitBtn.innerText = "Checking...";
 
             const id = document.getElementById('item-id').value;
             const name = document.getElementById('name-input').value.trim();
             const price = parseFloat(document.getElementById('price-input').value);
             const category = document.getElementById('category-input').value.trim();
 
-            if (!name) {
-                submitBtn.disabled = false;
-                submitBtn.innerText = originalText;
-                return;
+            if (!name) { resetButton(); return; }
+
+            // === SMART DUPLICATE CHECK ===
+            // Only check if we are creating a NEW item (id is empty)
+            if (!id) {
+                const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
+                
+                if (existingItem) {
+                    resetButton(); // Unlock button so they can click again if they say "Cancel"
+                    
+                    // Ask the user
+                    const wantsToModify = confirm(`"${existingItem.name}" already exists.\n\nDo you wish to make modification?`);
+                    
+                    if (wantsToModify) {
+                        // Switch to Edit Mode for the existing item
+                        window.editItem(existingItem.id);
+                    }
+                    return; // Stop the save process here
+                }
             }
+            // ==============================
+
+            submitBtn.innerText = "Saving..."; // Update text for saving phase
 
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
@@ -329,16 +352,13 @@
                     await addDoc(colRef, { name, price, category, createdAt: serverTimestamp() });
                 }
                 
-                // Success feedback
                 alert("Success! Item Saved.");
                 window.closeModal();
 
             } catch(err) {
                 alert("Error saving item: " + err.message);
             } finally {
-                // Reset button
-                submitBtn.disabled = false;
-                submitBtn.innerText = originalText;
+                resetButton();
             }
         });
 
@@ -376,6 +396,5 @@
     </script>
 </body>
 </html>
-
 
 
