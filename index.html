@@ -104,20 +104,32 @@
             </div>
             <form id="item-form" class="p-6 space-y-4">
                 <input type="hidden" id="item-id">
+                
+                <!-- Name -->
                 <div>
                     <label class="text-sm font-bold text-slate-700">Name</label>
                     <input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Item Name">
                 </div>
+
+                <!-- Price and Bulk Row -->
                 <div class="flex gap-4">
                     <div class="flex-1">
                         <label class="text-sm font-bold text-slate-700">Price (₦)</label>
                         <input type="number" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00">
                     </div>
+                    <!-- NEW FIELD: Bulk Deal -->
                     <div class="flex-1">
-                        <label class="text-sm font-bold text-slate-700">Category</label>
-                        <input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Optional">
+                        <label class="text-sm font-bold text-slate-700">Bulk Deal</label>
+                        <input type="text" id="bulk-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="e.g. 2 for ₦50">
                     </div>
                 </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="text-sm font-bold text-slate-700">Category</label>
+                    <input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Optional (e.g. Drinks)">
+                </div>
+
                 <button type="submit" id="save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Save Item</button>
             </form>
         </div>
@@ -267,13 +279,24 @@
             filtered.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
+                
+                // UPDATED: Professional Badge Styling
+                // Uses Indigo color scheme and package icon
                 div.innerHTML = `
                     <div class="flex-1" onclick="window.editItem('${item.id}')">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>
-                            ${item.category ? `<span class="text-[10px] bg-slate-100 px-2 rounded-full text-slate-500 uppercase font-bold tracking-wider">${escape(item.category)}</span>` : ''}
+                            ${item.bulkPrice ? `
+                                <span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100">
+                                    <i data-lucide="package" class="w-3 h-3"></i>
+                                    ${escape(item.bulkPrice)}
+                                </span>
+                            ` : ''}
                         </div>
-                        <div class="text-2xl font-bold text-indigo-600 mt-0.5">₦${item.price.toFixed(2)}</div>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <div class="text-2xl font-bold text-indigo-600">₦${item.price.toFixed(2)}</div>
+                             ${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">${escape(item.category)}</span>` : ''}
+                        </div>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
@@ -303,13 +326,11 @@
             const submitBtn = document.getElementById('save-btn');
             const originalText = submitBtn.innerText;
             
-            // Helper to reset button
             const resetButton = () => {
                 submitBtn.disabled = false;
                 submitBtn.innerText = originalText;
             };
 
-            // Disable button immediately
             submitBtn.disabled = true;
             submitBtn.innerText = "Checking...";
 
@@ -317,39 +338,32 @@
             const name = document.getElementById('name-input').value.trim();
             const price = parseFloat(document.getElementById('price-input').value);
             const category = document.getElementById('category-input').value.trim();
+            const bulkPrice = document.getElementById('bulk-input').value.trim(); 
 
             if (!name) { resetButton(); return; }
 
-            // === SMART DUPLICATE CHECK ===
-            // Only check if we are creating a NEW item (id is empty)
+            // === DUPLICATE CHECK ===
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
-                
                 if (existingItem) {
-                    resetButton(); // Unlock button so they can click again if they say "Cancel"
-                    
-                    // Ask the user
+                    resetButton();
                     const wantsToModify = confirm(`"${existingItem.name}" already exists.\n\nDo you wish to make modification?`);
-                    
-                    if (wantsToModify) {
-                        // Switch to Edit Mode for the existing item
-                        window.editItem(existingItem.id);
-                    }
-                    return; // Stop the save process here
+                    if (wantsToModify) window.editItem(existingItem.id);
+                    return; 
                 }
             }
-            // ==============================
 
-            submitBtn.innerText = "Saving..."; // Update text for saving phase
+            submitBtn.innerText = "Saving...";
 
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
             try {
+                // Save all fields
                 if (id) {
-                    await updateDoc(doc(colRef, id), { name, price, category, updatedAt: serverTimestamp() });
+                    await updateDoc(doc(colRef, id), { name, price, category, bulkPrice, updatedAt: serverTimestamp() });
                 } else {
-                    await addDoc(colRef, { name, price, category, createdAt: serverTimestamp() });
+                    await addDoc(colRef, { name, price, category, bulkPrice, createdAt: serverTimestamp() });
                 }
                 
                 alert("Success! Item Saved.");
@@ -379,6 +393,7 @@
             document.getElementById('name-input').value = item.name;
             document.getElementById('price-input').value = item.price;
             document.getElementById('category-input').value = item.category || '';
+            document.getElementById('bulk-input').value = item.bulkPrice || ''; 
             document.getElementById('modal').classList.remove('hidden');
         };
 
