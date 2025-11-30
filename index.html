@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: FIXED SWAP -->
-    <link rel="manifest" href="./manifest.json?v=FIXED">
-    <link rel="icon" type="image/png" href="./logo.png?v=FIXED">
-    <link rel="apple-touch-icon" href="./logo.png?v=FIXED">
+    <!-- VERSION: FORCE APP UPDATE -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./logo.png">
+    <link rel="apple-touch-icon" href="./logo.png">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=FIXED" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -182,23 +182,33 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
+        // --- BACK BUTTON TRAP LOGIC ---
         let lastBackPressTime = 0;
         function trapBackButton() { window.history.pushState({ page: 1 }, "", ""); }
+        
         window.addEventListener('popstate', (event) => {
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
+
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
                 trapBackButton(); 
                 return;
             }
-            if (now - lastBackPressTime < 2000) { } else {
+
+            if (now - lastBackPressTime < 2000) { 
+                // Allow exit
+            } else {
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
                 trapBackButton(); 
             }
         });
-        window.addEventListener('load', () => { setTimeout(trapBackButton, 500); });
+
+        // Initialize Trap on Load
+        window.addEventListener('load', () => {
+            setTimeout(trapBackButton, 500); 
+        });
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -207,6 +217,7 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
+        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -215,7 +226,23 @@
         async function init() {
             try {
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js').then(reg => reg.update());
+                    navigator.serviceWorker.register('./sw.js').then(reg => {
+                        // FORCE UPDATE: Listen for new service worker
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New update available, reload page to apply
+                                    window.location.reload();
+                                }
+                            });
+                        });
+                    });
+                    
+                    // Listen for controller change (means new SW took over)
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        window.location.reload();
+                    });
                 }
                 await signInAnonymously(auth);
             } catch (error) {
@@ -277,6 +304,7 @@
         function updateAdminUI() {
             const lockBtn = document.getElementById('admin-lock-btn');
             const fab = document.getElementById('fab-container');
+            
             if (isAdmin) {
                 lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
                 lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
