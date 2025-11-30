@@ -1,6 +1,6 @@
 {
-  "name": "Price Keeper",
-  "short_name": "PriceKeeper",
+  "name": "Fatima Store",
+  "short_name": "Fatima Store",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f1f5f9",
