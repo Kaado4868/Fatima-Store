@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Price Keeper - Fatima Store</title>
+    
+    <!-- APP ICON LINKS -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="./logo.png">
+    <link rel="apple-touch-icon" href="./logo.png">
+    <meta name="theme-color" content="#4f46e5">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -15,18 +22,22 @@
 
     <!-- 1. LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
-        <div class="animate-spin text-indigo-600 mb-4">
-            <i data-lucide="loader-2" class="w-10 h-10"></i>
+        <!-- Logo Animation -->
+        <div class="mb-4 relative">
+             <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
+             <img src="./logo.png" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
-        <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Connecting to Fatima Store...</p>
+        <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
     <!-- 2. LOGIN SCREEN -->
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
-            <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="store" class="w-8 h-8 text-indigo-600"></i>
+            <!-- Updated Logo Here -->
+            <div class="w-24 h-24 mx-auto mb-4">
+                <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
+            
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Price Keeper</h1>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             
@@ -50,7 +61,8 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <i data-lucide="store" class="w-6 h-6"></i>
+                        <!-- Small Logo in Header -->
+                        <img src="./logo.png" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Price Keeper</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -117,7 +129,7 @@
                         <label class="text-sm font-bold text-slate-700">Price (₦)</label>
                         <input type="number" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00">
                     </div>
-                    <!-- NEW FIELD: Bulk Deal -->
+                    <!-- Bulk Deal -->
                     <div class="flex-1">
                         <label class="text-sm font-bold text-slate-700">Bulk Deal</label>
                         <input type="text" id="bulk-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="e.g. 2 for ₦50">
@@ -138,7 +150,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         // --- FATIMA STORE CONFIGURATION ---
         const firebaseConfig = {
@@ -156,6 +168,15 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
+        // --- ENABLE OFFLINE PERSISTENCE ---
+        enableIndexedDbPersistence(db).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.log('Multiple tabs open, persistence can only be enabled in one.');
+            } else if (err.code == 'unimplemented') {
+                console.log('Browser lacks persistence support');
+            }
+        });
+
         // State
         let currentUser = null;
         let currentStoreName = localStorage.getItem('pk_store_name');
@@ -171,11 +192,21 @@
         // --- 1. INITIALIZATION ---
         async function init() {
             try {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(() => console.log('Service Worker Registered'))
+                        .catch((err) => console.log('SW Failed', err));
+                }
+
                 await signInAnonymously(auth);
             } catch (error) {
-                console.error("Auth failed:", error);
-                loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${error.message}</span>`;
-                loadingText.className = "text-red-500 font-bold text-center px-4";
+                console.log("Network/Auth issue, likely offline mode:", error);
+                if (!navigator.onLine) {
+                    // Offline mode handle
+                } else {
+                    loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${error.message}</span>`;
+                    loadingText.className = "text-red-500 font-bold text-center px-4";
+                }
             }
         }
 
@@ -209,7 +240,6 @@
             loadingOverlay.classList.add('hidden');
             loginScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
-            
             document.getElementById('display-store-name').innerText = currentStoreName;
             startDataSync();
         }
@@ -280,8 +310,6 @@
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
                 
-                // UPDATED: Professional Badge Styling
-                // Uses Indigo color scheme and package icon
                 div.innerHTML = `
                     <div class="flex-1" onclick="window.editItem('${item.id}')">
                         <div class="flex flex-wrap items-center gap-2">
@@ -308,7 +336,6 @@
             lucide.createIcons();
         }
 
-        // Search
         document.getElementById('search-input').addEventListener('input', (e) => {
             const hasText = e.target.value.length > 0;
             document.getElementById('clear-search').classList.toggle('hidden', !hasText);
@@ -320,7 +347,7 @@
             renderList();
         });
 
-        // --- 7. FORM HANDLER (WITH DUPLICATE CHECK) ---
+        // --- 7. FORM HANDLER ---
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
@@ -342,7 +369,7 @@
 
             if (!name) { resetButton(); return; }
 
-            // === DUPLICATE CHECK ===
+            // DUPLICATE CHECK
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
@@ -359,7 +386,6 @@
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
             try {
-                // Save all fields
                 if (id) {
                     await updateDoc(doc(colRef, id), { name, price, category, bulkPrice, updatedAt: serverTimestamp() });
                 } else {
@@ -376,7 +402,6 @@
             }
         });
 
-        // Global Actions
         window.openModal = () => {
             document.getElementById('modal-title').innerText = "New Item";
             document.getElementById('item-id').value = "";
@@ -405,7 +430,6 @@
 
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
 
-        // Start
         lucide.createIcons();
         init();
     </script>
