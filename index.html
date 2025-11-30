@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: SAFE MODE UPDATE -->
-    <link rel="manifest" href="./manifest.json?v=SAFE_MODE">
-    <link rel="icon" type="image/png" href="./logo.png?v=SAFE_MODE">
-    <link rel="apple-touch-icon" href="./logo.png?v=SAFE_MODE">
+    <!-- VERSION: FIXED SWAP -->
+    <link rel="manifest" href="./manifest.json?v=FIXED">
+    <link rel="icon" type="image/png" href="./logo.png?v=FIXED">
+    <link rel="apple-touch-icon" href="./logo.png?v=FIXED">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=SAFE_MODE" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=FIXED" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -172,6 +172,7 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
+        // Persistence
         enableIndexedDbPersistence(db).catch((err) => console.log('Persistence error:', err.code));
 
         let currentUser = null;
@@ -296,8 +297,6 @@
                 alert("Please enter a valid store name.");
                 return;
             }
-            
-            // SAVE AND RELOAD
             localStorage.setItem('pk_store_name', inputName);
             document.getElementById('login-btn').innerText = "Opening...";
             setTimeout(() => window.location.reload(), 500);
