@@ -1,65 +1,15 @@
-const CACHE_NAME = 'fatima-store-v14-safe';
-
-// 1. CRITICAL FILES: Must save these for the app to open
-const CRITICAL_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './logo.png'
-];
-
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Only wait for critical files. If CDNs fail, we don't care yet.
-      return cache.addAll(CRITICAL_ASSETS);
-    })
-  );
-});
-
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (e) => {
-  // A. NAVIGATION: Always return index.html for page loads
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      caches.match('./index.html').then((response) => {
-        return response || fetch(e.request);
-      }).catch(() => {
-        return caches.match('./index.html');
-      })
-    );
-    return;
-  }
-
-  // B. EVERYTHING ELSE: Stale-While-Revalidate Strategy
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      // 1. Return cached file immediately if found
-      const fetchPromise = fetch(e.request).then((networkResponse) => {
-        // 2. Save new copy in background
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Network failed, nothing to do (we hopefully returned cache already)
-      });
-
-      return cachedResponse || fetchPromise;
-    })
-  );
-});
+{
+  "name": "Fatima Store",
+  "short_name": "Fatima Store",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
