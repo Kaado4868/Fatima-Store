@@ -1,8 +1,8 @@
-const CACHE_NAME = 'fatima-store-v22-final';
+const CACHE_NAME = 'fatima-store-v23-robust';
 
-const ASSETS = [
-  './',
-  './index.html',
+const CRITICAL_ASSETS = [
+  './',                // The folder
+  './index.html',      // The file
   './manifest.json',
   './logo.png',
   'https://cdn.tailwindcss.com',
@@ -17,7 +17,7 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return cache.addAll(CRITICAL_ASSETS);
     })
   );
 });
@@ -34,19 +34,17 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // 1. HTML REQUESTS (Navigation): ALWAYS return cached index.html
-  // This fixes the "No Internet" screen
-  if (e.request.mode === 'navigate' || e.request.headers.get('accept').includes('text/html')) {
+  // NAVIGATION: Handle both "/" and "/index.html" requests
+  if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
-        // Return cache, fallback to network, fallback to cache again (safety)
         return response || fetch(e.request).catch(() => caches.match('./index.html'));
       })
     );
     return;
   }
 
-  // 2. ASSETS (Images, JS): Cache First, Network Backup
+  // ASSETS
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request);
