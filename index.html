@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.5">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.5">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.5">
+    <link rel="manifest" href="./manifest.json?v=1.6">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.6">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.6">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -88,7 +88,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.5</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.6</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -189,7 +189,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -207,9 +207,10 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // 1. Persistence
+        // 1. ENABLE PERSISTENCE (Local Database)
         enableIndexedDbPersistence(db).catch((err) => {
-             console.log('Persistence:', err.code);
+            if (err.code == 'failed-precondition') console.log('Multiple tabs open');
+            else if (err.code == 'unimplemented') console.log('Browser not supported');
         });
 
         let currentUser = null;
@@ -219,7 +220,7 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP (AGGRESSIVE SCROLL FIX) ---
+        // --- BACK BUTTON TRAP (Aggressive) ---
         let lastBackPressTime = 0;
         let trapActive = false;
         
@@ -233,30 +234,28 @@
             } catch(e) { trapActive = false; }
         }
 
-        // AGGRESSIVE TRAP TRIGGERS
-        // 'capture: true' ensures we see the event before scrolling starts
+        // Catch triggers early
         ['touchstart', 'touchmove', 'click', 'keydown'].forEach(evt => {
             window.addEventListener(evt, () => {
                 if (!trapActive) engageTrap();
             }, { passive: true, capture: true });
         });
         
-        // Handle Back Button
         window.addEventListener('popstate', (event) => {
             trapActive = false;
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. Close Modal if open
+            // Close Modal
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
                 setTimeout(engageTrap, 50); 
                 return;
             }
 
-            // 2. Double Press to Exit
+            // Exit Logic
             if (now - lastBackPressTime < 2000) {
-                // Exit
+                // Allowed exit
             } else {
                 lastBackPressTime = now;
                 const t = document.getElementById('toast');
@@ -266,7 +265,6 @@
                 setTimeout(engageTrap, 50); 
             }
         });
-        // --- END TRAP ---
 
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
@@ -288,8 +286,11 @@
 
         // --- INITIALIZATION ---
         async function init() {
+            // Service Worker (Improved Update Check)
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
+                    if (reg.waiting) document.getElementById('update-toast').classList.add('show');
+                    
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
@@ -302,18 +303,16 @@
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
 
-            // CRITICAL OFFLINE CHECK
+            // Bypass Login if Offline & Store Name exists
             if (!navigator.onLine && currentStoreName) {
-                console.log("Offline Mode: Opening App Immediately");
                 showApp();
                 return;
             }
 
-            // ONLINE AUTH
+            // Online Auth
             try {
                 await signInAnonymously(auth);
             } catch (error) {
-                console.log("Auth Error:", error);
                 if (currentStoreName) showApp();
                 else if (navigator.onLine) loadingText.innerHTML = "Connection Weak. Retrying...";
             }
@@ -344,7 +343,7 @@
             document.getElementById('display-store-name').innerText = currentStoreName;
             startDataSync();
             updateAdminUI();
-            engageTrap(); // Trigger trap on load
+            engageTrap();
         }
 
         document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -356,53 +355,14 @@
             setTimeout(() => window.location.reload(), 100);
         });
 
-        window.toggleAdmin = () => {
-            if (isAdmin) {
-                isAdmin = false;
-                alert("Manager Mode: OFF");
-            } else {
-                const pin = prompt("Enter Manager PIN:");
-                if (pin === ADMIN_PIN) {
-                    isAdmin = true;
-                    alert("Manager Mode: ON");
-                } else if (pin !== null) alert("Wrong PIN.");
-            }
-            updateAdminUI();
-        };
-
-        function updateAdminUI() {
-            const lockBtn = document.getElementById('admin-lock-btn');
-            const fab = document.getElementById('fab-container');
-            if (isAdmin) {
-                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
-                lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
-                fab.classList.remove('hidden');
-            } else {
-                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
-                lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200";
-                fab.classList.add('hidden');
-            }
-            renderList();
-            lucide.createIcons();
-        }
-
-        window.logout = () => {
-            if (!confirm("Go back to store selection?")) return;
-            localStorage.removeItem('pk_store_name');
-            currentStoreName = null;
-            isAdmin = false;
-            if (unsubscribe) unsubscribe();
-            document.getElementById('store-name-input').value = "";
-            document.getElementById('login-btn').innerText = "Open Store";
-            showLogin();
-        };
-
+        // --- DATA SYNC (OFFLINE CAPABLE) ---
         function startDataSync() {
             if (unsubscribe) unsubscribe();
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
-            unsubscribe = onSnapshot(colRef, 
+            // 'includeMetadataChanges: true' allows offline updates to show immediately
+            unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, 
                 (snapshot) => {
                     allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                     allItems.sort((a, b) => a.name.localeCompare(b.name));
@@ -434,12 +394,14 @@
             filtered.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
+                
                 const adminButtons = isAdmin ? `
                     <div class="flex gap-2">
                         <button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
                         <button onclick="window.deleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                 ` : '';
+
                 div.innerHTML = `
                     <div class="flex-1" ${isAdmin ? `onclick="window.editItem('${item.id}')"` : ''}>
                         <div class="flex flex-wrap items-center gap-2">
@@ -469,6 +431,7 @@
             renderList();
         });
 
+        // SAVE LOGIC
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
@@ -477,6 +440,7 @@
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Saving...";
+
             const id = document.getElementById('item-id').value;
             const name = document.getElementById('name-input').value.trim();
             const price = parseFloat(document.getElementById('price-input').value);
@@ -485,6 +449,7 @@
 
             if (!name) { resetButton(); return; }
 
+            // Check Duplicate
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
@@ -537,6 +502,47 @@
             if (!confirm("Delete this item?")) return;
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id));
+        };
+        
+        window.toggleAdmin = () => {
+            if (isAdmin) {
+                isAdmin = false;
+                alert("Manager Mode: OFF");
+            } else {
+                const pin = prompt("Enter Manager PIN:");
+                if (pin === ADMIN_PIN) {
+                    isAdmin = true;
+                    alert("Manager Mode: ON");
+                } else if (pin !== null) alert("Wrong PIN.");
+            }
+            updateAdminUI();
+        };
+
+        function updateAdminUI() {
+            const lockBtn = document.getElementById('admin-lock-btn');
+            const fab = document.getElementById('fab-container');
+            if (isAdmin) {
+                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
+                lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
+                fab.classList.remove('hidden');
+            } else {
+                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
+                lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200";
+                fab.classList.add('hidden');
+            }
+            renderList();
+            lucide.createIcons();
+        }
+
+        window.logout = () => {
+            if (!confirm("Go back to store selection?")) return;
+            localStorage.removeItem('pk_store_name');
+            currentStoreName = null;
+            isAdmin = false;
+            if (unsubscribe) unsubscribe();
+            document.getElementById('store-name-input').value = "";
+            document.getElementById('login-btn').innerText = "Open Store";
+            showLogin();
         };
 
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
