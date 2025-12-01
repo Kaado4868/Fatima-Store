@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.5.2">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.5.2">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.5.2">
+    <link rel="manifest" href="./manifest.json?v=3.5.3">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.5.3">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.5.3">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +62,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=3.5" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=3.5.3" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -79,7 +79,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.5.2</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.5.3</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -98,13 +98,13 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=3.5" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=3.5.3" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
                                 Fatima Store
                                 <span class="offline-badge">OFFLINE</span>
                             </h1>
-                            <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
+                            <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -175,10 +175,7 @@
         </div>
         <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
             <div id="reader" class="w-full h-full"></div>
-            <div class="scanner-viewfinder z-10">
-                <div class="scanner-line"></div>
-                <div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div>
-            </div>
+            <div class="scanner-viewfinder z-10"><div class="scanner-line"></div><div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div></div>
             <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button>
         </div>
     </div>
@@ -198,24 +195,23 @@
 
         enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
-        let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; 
-        
-        let audioCtx = null;
-        function playBeep() {
-            try {
+        let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; let audioCtx = null;
+
+        function playBeep() { 
+            try { 
                 if (navigator.vibrate) navigator.vibrate(200); 
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.type = 'square';
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+                if (audioCtx.state === 'suspended') audioCtx.resume(); 
+                const oscillator = audioCtx.createOscillator(); 
+                const gainNode = audioCtx.createGain(); 
+                oscillator.connect(gainNode); 
+                gainNode.connect(audioCtx.destination); 
+                oscillator.type = 'square'; 
                 oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
                 gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); 
-                oscillator.start();
+                oscillator.start(); 
                 oscillator.stop(audioCtx.currentTime + 0.15); 
-            } catch (e) { console.error("Sound Fail", e); }
+            } catch (e) { console.error("Sound Fail", e); } 
         }
 
         // TRAP
@@ -248,8 +244,11 @@
 
             if (currentStoreName) {
                 showApp();
-                // FIX: Don't aggressively overwrite auth status on load
-                // Let onAuthStateChanged handle it
+                // DATA FIRST: Don't wait for auth to load UI
+                // Just try auth in background
+                if (!auth.currentUser) {
+                     signInAnonymously(auth).catch(e => {});
+                }
                 return;
             }
 
@@ -262,8 +261,7 @@
             if (user) { 
                 currentUser = user; 
                 const userEmail = user.email ? user.email.toLowerCase() : "";
-                
-                // CHECK IF MANAGER
+                // MANAGER CHECK
                 if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) {
                     isAdmin = true;
                 } else if (user.isAnonymous) {
@@ -272,26 +270,36 @@
                     alert("Access Denied: Not a Manager.");
                     signOut(auth).then(() => signInAnonymously(auth));
                 }
-                
-                if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             } else { 
                 currentUser = null; 
                 isAdmin = false;
-                // If not logged in, AND we have store name, THEN default to Anon
+                // SAFE RECOVERY: If store exists but no user, try Anon
                 if (currentStoreName && navigator.onLine) {
                     signInAnonymously(auth).catch(e => {});
                 } else if (!currentStoreName) {
                     showLogin(); 
                 }
             }
+            // ALWAYS UPDATE UI
+            if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             updateAdminUI(); 
         });
 
         function showLogin() { loadingOverlay.classList.add('hidden'); appScreen.classList.add('hidden'); loginScreen.classList.remove('hidden'); }
-        function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); document.getElementById('display-store-name').innerText = currentStoreName; startDataSync(); updateAdminUI(); engageTrap(); }
+        function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); document.getElementById('display-store-name').innerText = "PRICE KEEPER"; startDataSync(); updateAdminUI(); engageTrap(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
 
-        function startDataSync() { if (unsubscribe) unsubscribe(); const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, (snapshot) => { allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()})); allItems.sort((a, b) => a.name.localeCompare(b.name)); renderCategories(); renderList(); }, (err) => console.log("Sync Status:", err.code)); }
+        function startDataSync() { 
+            if (unsubscribe) unsubscribe(); 
+            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); 
+            unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, (snapshot) => { 
+                allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()})); 
+                allItems.sort((a, b) => a.name.localeCompare(b.name)); 
+                renderCategories(); renderList(); 
+            }, (err) => console.log("Sync Status:", err.code)); 
+        }
+        
         function renderCategories() { const cats = new Set(['All']); allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
         function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffTime = Math.abs(now - date); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; if (diffDays < 30) return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-amber-500 font-bold" }; }
         function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -321,7 +329,6 @@
         document.getElementById('search-input').addEventListener('input', (e) => { const hasText = e.target.value.length > 0; document.getElementById('clear-search').classList.toggle('hidden', !hasText); renderList(); });
         document.getElementById('clear-search').addEventListener('click', () => { document.getElementById('search-input').value = ''; document.getElementById('clear-search').classList.add('hidden'); renderList(); });
         
-        // TOGGLE ADMIN: Switched back to POPUP for reliability
         window.toggleAdmin = () => {
             if (isAdmin) {
                 if(confirm("Lock Manager Mode?")) {
