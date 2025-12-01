@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v3.6-revived'; // New name forces update
+const CACHE_NAME = 'fatima-store-v3.5-restore'; // Forces update to v3.5
 
 const CRITICAL_ASSETS = [
   './',
@@ -33,7 +33,9 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match('./index.html'))
+    );
     return;
   }
   e.respondWith(
