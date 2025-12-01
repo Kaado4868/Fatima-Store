@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.9">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.9">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.9">
+    <link rel="manifest" href="./manifest.json?v=2.0">
+    <link rel="icon" type="image/png" href="./logo.png?v=2.0">
+    <link rel="apple-touch-icon" href="./logo.png?v=2.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -92,7 +92,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.9</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v2.0</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -250,7 +250,9 @@
         let scanMode = null; 
         const ADMIN_PIN = "Zee1179@";
 
-        const BEEP_AUDIO = "data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; 
+        // REAL BEEP SOUND (Base64 WAV)
+        const BEEP_AUDIO = "data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
+        const beepSound = new Audio(BEEP_AUDIO);
 
         // TRAP
         let lastBackPressTime = 0;
@@ -443,24 +445,26 @@
             lucide.createIcons();
         }
 
-        // NEW: AUTO FILL LOGIC
+        // --- NEW: DUAL DATABASE SEARCH (FOOD + BEAUTY) ---
         async function fetchProductName(barcode) {
-            if (!navigator.onLine) return; // Internet needed
+            if (!navigator.onLine) return; 
             const nameInput = document.getElementById('name-input');
-            const originalPlaceholder = nameInput.placeholder;
-            
-            // Visual feedback
             nameInput.placeholder = "Searching database...";
             nameInput.value = ""; 
 
             try {
-                // OpenFoodFacts API (Free, Global)
-                const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-                const data = await response.json();
+                // 1. Try Food Database (Milo, Indomie, Coke)
+                let response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+                let data = await response.json();
+
+                // 2. If not found, try Beauty Database (Soap, Cream, Toothpaste)
+                if (data.status !== 1) {
+                    response = await fetch(`https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`);
+                    data = await response.json();
+                }
 
                 if (data.status === 1 && data.product && data.product.product_name) {
                     nameInput.value = data.product.product_name;
-                    // Try to guess category if available
                     if (data.product.categories) {
                         const firstCat = data.product.categories.split(',')[0].trim();
                         document.getElementById('category-input').value = firstCat;
@@ -469,7 +473,6 @@
                     nameInput.placeholder = "Not found, type name manually";
                 }
             } catch (e) {
-                console.error("API Error", e);
                 nameInput.placeholder = "Error, type name manually";
             }
         }
@@ -479,8 +482,14 @@
             scanMode = mode;
             document.getElementById('scanner-overlay').classList.remove('hidden');
             scanner = new Html5Qrcode("reader");
+            
+            // FIX: Beep needs to be triggered by user first interaction
+            beepSound.volume = 1.0; 
+            
             scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
-                new Audio(BEEP_AUDIO).play().catch(e => {}); 
+                // PLAY BEEP
+                beepSound.play().catch(e => console.log("Audio blocked:", e));
+                
                 window.stopScanner();
                 if (scanMode === 'search') {
                     const searchInput = document.getElementById('search-input');
@@ -488,11 +497,11 @@
                     searchInput.dispatchEvent(new Event('input'));
                 } else if (scanMode === 'edit') {
                     document.getElementById('barcode-input').value = decodedText;
-                    // TRIGGER AUTO-FILL
                     fetchProductName(decodedText);
                 }
             }, () => {}).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
         };
+        
         window.stopScanner = () => {
             if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log);
             else document.getElementById('scanner-overlay').classList.add('hidden');
