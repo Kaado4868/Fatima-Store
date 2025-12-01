@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: BACK BUTTON FIX -->
-    <link rel="manifest" href="./manifest.json?v=BACKFIX">
-    <link rel="icon" type="image/png" href="./logo.png?v=BACKFIX">
-    <link rel="apple-touch-icon" href="./logo.png?v=BACKFIX">
+    <!-- VERSION: FINAL FIX -->
+    <link rel="manifest" href="./manifest.json?v=FINAL_FIX">
+    <link rel="icon" type="image/png" href="./logo.png?v=FINAL_FIX">
+    <link rel="apple-touch-icon" href="./logo.png?v=FINAL_FIX">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=BACKFIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=FINAL_FIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -50,7 +50,7 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
+                <img src="./logo.png?v=FINAL_FIX" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-2">Fatima Store</h1>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
@@ -72,7 +72,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=FINAL_FIX" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -182,40 +182,42 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP LOGIC (Improved) ---
+        // --- ROBUST BACK BUTTON TRAP ---
         let lastBackPressTime = 0;
         
         function trapBackButton() {
-            // Attempt to push state immediately
+            // Push state only if needed
             if (!history.state || history.state.page !== 'trap') {
                 window.history.pushState({ page: 'trap' }, "", "");
             }
         }
 
-        // 1. Run IMMEDIATELY on script execution
+        // 1. Trap on Load
         trapBackButton();
 
-        // 2. Also run on first click (Backup for strict browsers)
-        window.addEventListener('click', () => {
-            trapBackButton();
-        }, { once: true });
+        // 2. Trap on ANY interaction (The "Sneaky" Fix)
+        ['click', 'touchstart', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, trapBackButton, { once: false, passive: true });
+        });
 
         window.addEventListener('popstate', (event) => {
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
+            // 1. If Modal Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                trapBackButton(); // Re-arm the trap
+                trapBackButton(); // Re-arm instantly
                 return;
             }
 
+            // 2. Main Screen Logic
             if (now - lastBackPressTime < 2000) {
-                // Exit allowed
+                // Allow exit
             } else {
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
-                trapBackButton(); // Re-arm the trap
+                trapBackButton(); // Re-arm instantly
             }
         });
 
@@ -234,20 +236,7 @@
         async function init() {
             try {
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js').then(reg => {
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    window.location.reload();
-                                }
-                            });
-                        });
-                    });
-                    
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        window.location.reload();
-                    });
+                    navigator.serviceWorker.register('./sw.js');
                 }
                 await signInAnonymously(auth);
             } catch (error) {
@@ -291,6 +280,27 @@
             updateAdminUI();
         }
 
+        // --- FIXED LOGIN LOGIC (No Reload) ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
+            if (inputName.length < 2) {
+                alert("Please enter a valid store name.");
+                return;
+            }
+            
+            // 1. Save state
+            localStorage.setItem('pk_store_name', inputName);
+            currentStoreName = inputName;
+            
+            // 2. Immediate Transition
+            document.getElementById('login-btn').innerText = "Opening...";
+            
+            if (currentUser) {
+                showApp();
+            }
+        });
+
         window.toggleAdmin = () => {
             if (isAdmin) {
                 isAdmin = false;
@@ -324,26 +334,6 @@
             lucide.createIcons();
         }
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
-            if (inputName.length < 2) {
-                alert("Please enter a valid store name.");
-                return;
-            }
-            
-            localStorage.setItem('pk_store_name', inputName);
-            document.getElementById('login-btn').innerText = "Opening...";
-            
-            // Immediate transition
-            if (currentUser) {
-                currentStoreName = inputName;
-                showApp();
-            } else {
-                // If auth is slow, let onAuthStateChanged handle it
-            }
-        });
-
         window.logout = () => {
             if (!confirm("Go back to store selection?")) return;
             localStorage.removeItem('pk_store_name');
@@ -367,6 +357,7 @@
             }, (err) => console.error("Sync error:", err));
         }
 
+        // --- RESTORED SMART SEARCH ---
         function renderList() {
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim();
             const searchWords = rawTerm.split(" ").filter(word => word.length > 0);
@@ -448,6 +439,7 @@
 
             if (!name) { resetButton(); return; }
 
+            // DUPLICATE CHECK
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
