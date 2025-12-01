@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.6">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.6">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.6">
+    <link rel="manifest" href="./manifest.json?v=1.7">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.7">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.7">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
         
@@ -63,6 +65,10 @@
             vertical-align: middle;
         }
         .offline .offline-badge { display: inline-block; }
+
+        /* Hide scrollbar for category chips */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -88,7 +94,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.6</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.7</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -125,15 +131,24 @@
                         </button>
                     </div>
                 </div>
-                <div class="relative">
-                    <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
-                    <input type="text" id="search-input" 
-                        class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all"
-                        placeholder="Search items...">
-                    <button id="clear-search" class="absolute right-3 top-3 text-slate-400 hidden">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                
+                <div class="relative flex gap-2">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
+                        <input type="text" id="search-input" 
+                            class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all"
+                            placeholder="Search...">
+                        <button id="clear-search" class="absolute right-3 top-3 text-slate-400 hidden">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <button onclick="window.startScanner('search')" class="bg-indigo-50 text-indigo-600 p-3 rounded-xl border border-indigo-100 active:scale-95 transition-transform">
+                        <i data-lucide="scan-line" class="w-6 h-6"></i>
                     </button>
                 </div>
+
+                <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
+                    </div>
             </div>
         </div>
 
@@ -142,8 +157,8 @@
                 <div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="tag" class="w-8 h-8 text-slate-400"></i>
                 </div>
-                <h3 class="text-lg font-medium text-slate-900">No items yet</h3>
-                <p class="text-slate-500 text-sm mt-1">Wait for manager to add prices.</p>
+                <h3 class="text-lg font-medium text-slate-900">No items found</h3>
+                <p class="text-slate-500 text-sm mt-1">Try a different search or category.</p>
             </div>
             <div id="item-list" class="space-y-3"></div>
         </div>
@@ -164,6 +179,17 @@
             </div>
             <form id="item-form" class="p-6 space-y-4">
                 <input type="hidden" id="item-id">
+                
+                <div>
+                    <label class="text-sm font-bold text-slate-700">Barcode (Optional)</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="barcode-input" class="flex-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none font-mono" placeholder="Scan or Type">
+                        <button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 text-slate-600 p-3 rounded-lg">
+                            <i data-lucide="scan-line" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <div>
                     <label class="text-sm font-bold text-slate-700">Name</label>
                     <input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Item Name">
@@ -187,6 +213,14 @@
         </div>
     </div>
 
+    <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col">
+        <div class="p-4 flex justify-between items-center text-white bg-black/50 absolute top-0 w-full z-10">
+            <h3 class="font-bold">Scan Barcode</h3>
+            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="reader" class="w-full h-full object-cover"></div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
@@ -207,23 +241,22 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // 1. ENABLE PERSISTENCE (Local Database)
-        enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') console.log('Multiple tabs open');
-            else if (err.code == 'unimplemented') console.log('Browser not supported');
-        });
+        // OFFLINE DATABASE
+        enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
         let currentUser = null;
         let currentStoreName = localStorage.getItem('pk_store_name');
         let unsubscribe = null;
         let allItems = [];
         let isAdmin = false;
+        let selectedCategory = 'All';
+        let scanner = null;
+        let scanMode = null; // 'search' or 'edit'
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP (Aggressive) ---
+        // --- BACK BUTTON TRAP ---
         let lastBackPressTime = 0;
         let trapActive = false;
-        
         function engageTrap() {
             if (trapActive) return;
             try {
@@ -233,49 +266,46 @@
                 }
             } catch(e) { trapActive = false; }
         }
-
-        // Catch triggers early
         ['touchstart', 'touchmove', 'click', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                if (!trapActive) engageTrap();
-            }, { passive: true, capture: true });
+            window.addEventListener(evt, () => { if (!trapActive) engageTrap(); }, { passive: true, capture: true });
         });
-        
         window.addEventListener('popstate', (event) => {
             trapActive = false;
-            const now = new Date().getTime();
+            // Handle Back Button Priorities
+            const scannerOverlay = document.getElementById('scanner-overlay');
             const modal = document.getElementById('modal');
-
-            // Close Modal
-            if (!modal.classList.contains('hidden')) {
-                window.closeModal();
-                setTimeout(engageTrap, 50); 
+            
+            if (!scannerOverlay.classList.contains('hidden')) {
+                window.stopScanner();
+                setTimeout(engageTrap, 50);
                 return;
             }
-
-            // Exit Logic
-            if (now - lastBackPressTime < 2000) {
-                // Allowed exit
-            } else {
+            if (!modal.classList.contains('hidden')) {
+                window.closeModal();
+                setTimeout(engageTrap, 50);
+                return;
+            }
+            const now = new Date().getTime();
+            if (now - lastBackPressTime < 2000) { } 
+            else {
                 lastBackPressTime = now;
                 const t = document.getElementById('toast');
                 t.innerText = "Press back again to exit";
                 t.classList.add('show');
                 setTimeout(() => t.classList.remove('show'), 2000);
-                setTimeout(engageTrap, 50); 
+                setTimeout(engageTrap, 50);
             }
         });
 
+        // --- CORE LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
-        const loadingText = document.getElementById('loading-text');
 
-        // --- OFFLINE STATUS ---
         function updateOnlineStatus() {
             if (navigator.onLine) {
                 document.body.classList.remove('offline');
-                if (!currentUser) signInAnonymously(auth).catch(e => console.log(e));
+                if (!currentUser) signInAnonymously(auth).catch(e=>console.log(e));
             } else {
                 document.body.classList.add('offline');
             }
@@ -284,13 +314,10 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // --- INITIALIZATION ---
         async function init() {
-            // Service Worker (Improved Update Check)
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
                     if (reg.waiting) document.getElementById('update-toast').classList.add('show');
-                    
                     reg.addEventListener('updatefound', () => {
                         const newWorker = reg.installing;
                         newWorker.addEventListener('statechange', () => {
@@ -302,32 +329,14 @@
                 });
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
-
-            // Bypass Login if Offline & Store Name exists
-            if (!navigator.onLine && currentStoreName) {
-                showApp();
-                return;
-            }
-
-            // Online Auth
-            try {
-                await signInAnonymously(auth);
-            } catch (error) {
-                if (currentStoreName) showApp();
-                else if (navigator.onLine) loadingText.innerHTML = "Connection Weak. Retrying...";
-            }
+            if (!navigator.onLine && currentStoreName) { showApp(); return; }
+            try { await signInAnonymously(auth); } 
+            catch (error) { if (currentStoreName) showApp(); }
         }
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                if (currentStoreName && !appScreen.classList.contains('hidden') === false) {
-                    showApp();
-                }
-            } else {
-                currentUser = null;
-                if (navigator.onLine && !currentStoreName) showLogin();
-            }
+            if (user) { currentUser = user; if (currentStoreName) showApp(); } 
+            else { currentUser = null; if (navigator.onLine && !currentStoreName) showLogin(); }
         });
 
         function showLogin() {
@@ -355,21 +364,64 @@
             setTimeout(() => window.location.reload(), 100);
         });
 
-        // --- DATA SYNC (OFFLINE CAPABLE) ---
+        // --- DATA SYNC & RENDERING ---
         function startDataSync() {
             if (unsubscribe) unsubscribe();
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
-            // 'includeMetadataChanges: true' allows offline updates to show immediately
-            unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, 
-                (snapshot) => {
-                    allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                    allItems.sort((a, b) => a.name.localeCompare(b.name));
+            unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, (snapshot) => {
+                allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                allItems.sort((a, b) => a.name.localeCompare(b.name));
+                renderCategories();
+                renderList();
+            }, (err) => console.log("Sync Status:", err.code));
+        }
+
+        function renderCategories() {
+            // Extract unique categories
+            const cats = new Set(['All']);
+            allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); });
+            
+            const container = document.getElementById('category-container');
+            container.innerHTML = '';
+            
+            cats.forEach(cat => {
+                const btn = document.createElement('button');
+                const isActive = cat === selectedCategory;
+                btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    isActive 
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                    : 'bg-white text-slate-500 border border-slate-200'
+                }`;
+                btn.innerText = cat;
+                btn.onclick = () => {
+                    selectedCategory = cat;
+                    renderCategories(); // Re-render to update styling
                     renderList();
-                }, 
-                (err) => console.log("Sync Status:", err.code)
-            );
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function formatFreshness(timestamp) {
+            if (!timestamp) return { text: "Unknown date", color: "text-slate-300" };
+            
+            const date = timestamp.toDate(); // Firebase timestamp to JS Date
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            let text = "";
+            let color = "text-slate-400";
+
+            if (diffDays <= 1) text = "Updated today";
+            else if (diffDays < 30) text = `Updated ${diffDays}d ago`;
+            else {
+                text = `Updated ${diffDays}d ago`;
+                color = "text-amber-500 font-bold"; // Warning color
+            }
+            return { text, color };
         }
 
         function renderList() {
@@ -379,19 +431,23 @@
             const emptyEl = document.getElementById('empty-state');
             
             const filtered = allItems.filter(item => {
-                const itemText = (item.name + " " + (item.category || "")).toLowerCase();
-                return searchWords.every(word => itemText.includes(word));
+                // 1. Filter by Search (Name OR Barcode)
+                const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase();
+                const matchesSearch = searchWords.every(word => itemText.includes(word));
+                
+                // 2. Filter by Category
+                const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+                
+                return matchesSearch && matchesCategory;
             });
 
             listEl.innerHTML = '';
-            
-            if (allItems.length === 0) {
-                emptyEl.classList.remove('hidden');
-                return;
-            }
+            if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; }
             emptyEl.classList.add('hidden');
 
             filtered.forEach(item => {
+                const freshness = formatFreshness(item.updatedAt || item.createdAt);
+                
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
                 
@@ -410,8 +466,9 @@
                         </div>
                         <div class="flex items-center gap-2 mt-0.5">
                             <div class="text-2xl font-bold text-indigo-600">₦${item.price.toFixed(2)}</div>
-                             ${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">${escape(item.category)}</span>` : ''}
+                             ${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}
                         </div>
+                        <div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div>
                     </div>
                     ${adminButtons}
                 `;
@@ -420,6 +477,46 @@
             lucide.createIcons();
         }
 
+        // --- BARCODE SCANNER LOGIC ---
+        window.startScanner = (mode) => {
+            scanMode = mode;
+            document.getElementById('scanner-overlay').classList.remove('hidden');
+            
+            scanner = new Html5Qrcode("reader");
+            scanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    // SUCCESS
+                    window.stopScanner();
+                    if (scanMode === 'search') {
+                        const searchInput = document.getElementById('search-input');
+                        searchInput.value = decodedText;
+                        searchInput.dispatchEvent(new Event('input')); // Trigger search
+                    } else if (scanMode === 'edit') {
+                        document.getElementById('barcode-input').value = decodedText;
+                    }
+                },
+                (errorMessage) => { /* ignore scanning errors */ }
+            ).catch(err => {
+                alert("Camera error: " + err);
+                window.stopScanner();
+            });
+        };
+
+        window.stopScanner = () => {
+            if (scanner) {
+                scanner.stop().then(() => {
+                    scanner.clear();
+                    document.getElementById('scanner-overlay').classList.add('hidden');
+                    scanner = null;
+                }).catch(err => console.log(err));
+            } else {
+                document.getElementById('scanner-overlay').classList.add('hidden');
+            }
+        };
+
+        // --- FORMS & ACTIONS ---
         document.getElementById('search-input').addEventListener('input', (e) => {
             const hasText = e.target.value.length > 0;
             document.getElementById('clear-search').classList.toggle('hidden', !hasText);
@@ -431,7 +528,6 @@
             renderList();
         });
 
-        // SAVE LOGIC
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
@@ -446,10 +542,11 @@
             const price = parseFloat(document.getElementById('price-input').value);
             const category = document.getElementById('category-input').value.trim();
             const bulkPrice = document.getElementById('bulk-input').value.trim(); 
+            const barcode = document.getElementById('barcode-input').value.trim();
 
             if (!name) { resetButton(); return; }
 
-            // Check Duplicate
+            // Duplicate Check
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
@@ -462,12 +559,12 @@
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
+            const itemData = { name, price, category, bulkPrice, barcode, updatedAt: serverTimestamp() };
+            if (!id) itemData.createdAt = serverTimestamp();
+
             try {
-                if (id) {
-                    await updateDoc(doc(colRef, id), { name, price, category, bulkPrice, updatedAt: serverTimestamp() });
-                } else {
-                    await addDoc(colRef, { name, price, category, bulkPrice, createdAt: serverTimestamp() });
-                }
+                if (id) await updateDoc(doc(colRef, id), itemData);
+                else await addDoc(colRef, itemData);
                 alert("Saved!");
                 window.closeModal();
             } catch(err) {
@@ -495,6 +592,7 @@
             document.getElementById('price-input').value = item.price;
             document.getElementById('category-input').value = item.category || '';
             document.getElementById('bulk-input').value = item.bulkPrice || ''; 
+            document.getElementById('barcode-input').value = item.barcode || '';
             document.getElementById('modal').classList.remove('hidden');
         };
 
