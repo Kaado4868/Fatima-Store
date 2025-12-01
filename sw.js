@@ -1,21 +1,19 @@
-const CACHE_NAME = 'fatima-store-v2';
+const CACHE_NAME = 'fatima-store-v3'; // Version 3
 
+// ONLY cache local files during install. 
+// This prevents the "Installation Failed" error if internet is weak.
 const CRITICAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
-  // Removed specific Firebase URLs here because the dynamic fetch handler below 
-  // will capture them and their dependencies automatically.
+  './logo.png'
 ];
 
 self.addEventListener('install', (e) => {
-  self.skipWaiting();
+  self.skipWaiting(); // Activate immediately
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
+      console.log('Service Worker: Caching critical local assets');
       return cache.addAll(CRITICAL_ASSETS);
     })
   );
@@ -29,11 +27,11 @@ self.addEventListener('activate', (e) => {
       );
     })
   );
-  self.clients.claim();
+  self.clients.claim(); // Take control immediately
 });
 
 self.addEventListener('fetch', (e) => {
-  // 1. NAVIGATION: Always serve index.html for navigation (SPA logic)
+  // 1. NAVIGATION (The HTML Page)
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
@@ -43,33 +41,26 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. ASSETS: Cache First, then Network (and update cache)
+  // 2. ALL OTHER ASSETS (Images, CSS, JS, Tailwind, Firebase)
+  // Strategy: Cache First, Then Network, Then Fail gracefully
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      // Return cached file if found
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
 
-      // If not in cache, fetch from network
       return fetch(e.request).then((networkResponse) => {
-        // Check if we received a valid response
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors') {
           return networkResponse;
         }
 
-        // CLONE the response (streams can only be read once)
+        // Clone and Cache automatically
         const responseToCache = networkResponse.clone();
-
-        // Save this new file to cache for next time (Dynamic Caching)
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(e.request, responseToCache);
         });
 
         return networkResponse;
       }).catch(() => {
-        // Network failed and no cache available
-        // console.log('Fetch failed:', e.request.url);
+        // Silent fail for images/fonts if offline and not cached
       });
     })
   );
