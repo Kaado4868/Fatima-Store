@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.2">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.2">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.2">
+    <link rel="manifest" href="./manifest.json?v=1.3">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.3">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.3">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -61,6 +61,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             margin-left: 8px;
+            vertical-align: middle;
         }
         .offline .offline-badge { display: inline-block; }
     </style>
@@ -88,7 +89,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.2</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.3</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -207,13 +208,10 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // Persistence
+        // 1. Persistence (Keeps data available offline)
         enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                 // Multiple tabs open, persistence can only be enabled in one tab at a time.
-            } else if (err.code == 'unimplemented') {
-                 // The current browser does not support all of the features required to enable persistence
-            }
+             // Ignore specific errors about multiple tabs or browser compatibility
+             console.log('Persistence:', err.code);
         });
 
         let currentUser = null;
@@ -223,54 +221,57 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP v2 ---
+        // --- BACK BUTTON TRAP (Aggressive Mode) ---
         let lastBackPressTime = 0;
         let trapActive = false;
         
         function engageTrap() {
             if (trapActive) return;
             try {
+                // Only push state if we aren't already there
                 if (!history.state || history.state.page !== 'trap') {
                     window.history.pushState({ page: 'trap' }, "", "");
                     trapActive = true;
                 }
-            } catch(e) { trapActive = false; }
+            } catch(e) { 
+                trapActive = false; 
+            }
         }
 
-        // Try on Load
-        engageTrap();
+        // AGGRESSIVE TRAP TRIGGERS
+        // We listen to the "window" to catch events anywhere on screen
+        ['touchstart', 'touchmove', 'click', 'scroll', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                // If trap isn't active, try to activate it on every touch
+                if (!trapActive) engageTrap();
+            }, { passive: true, capture: true }); // 'capture' ensures we see the event first
+        });
 
-        // Try on ANY touch (Crucial for Mobile)
-        // 'touchstart' is faster than 'click' or 'scroll' on mobile
-        window.addEventListener('touchstart', () => {
-             if (!trapActive) engageTrap();
-        }, { passive: true });
-        
-        window.addEventListener('click', () => {
-             if (!trapActive) engageTrap();
-        }, { passive: true });
-
+        // Handle the Back Button
         window.addEventListener('popstate', (event) => {
-            trapActive = false;
+            trapActive = false; // The trap was popped
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. If Modal Open -> Close it
+            // If Modal is Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
+                // Re-arm trap immediately
                 setTimeout(engageTrap, 50); 
                 return;
             }
 
-            // 2. Main Screen Logic
+            // Double Press Logic
             if (now - lastBackPressTime < 2000) {
-                // Exit allowed
+                // Allow Exit
             } else {
                 lastBackPressTime = now;
                 const t = document.getElementById('toast');
                 t.innerText = "Press back again to exit";
                 t.classList.add('show');
                 setTimeout(() => t.classList.remove('show'), 2000);
+                
+                // Re-arm trap immediately
                 setTimeout(engageTrap, 50); 
             }
         });
@@ -280,10 +281,12 @@
         const appScreen = document.getElementById('app-screen');
         const loadingText = document.getElementById('loading-text');
 
-        // OFFLINE DETECTION
+        // --- OFFLINE STATUS BADGE ---
         function updateOnlineStatus() {
             if (navigator.onLine) {
                 document.body.classList.remove('offline');
+                // If we came back online, try to sync/auth if needed
+                if (!currentUser) signInAnonymously(auth).catch(e => console.log(e));
             } else {
                 document.body.classList.add('offline');
             }
@@ -292,68 +295,60 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
+        // --- INITIALIZATION ---
         async function init() {
-            try {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js').then(reg => {
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    document.getElementById('update-toast').classList.add('show');
-                                }
-                            });
+            // Service Worker Setup
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                document.getElementById('update-toast').classList.add('show');
+                            }
                         });
                     });
-                    
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        window.location.reload();
-                    });
-                }
-                
-                // AUTH LOGIC FIX: Don't break if offline
-                try {
-                    await signInAnonymously(auth);
-                } catch (authErr) {
-                    console.log("Auth failed (likely offline):", authErr);
-                    // If we are offline, we might still have a cached user from onAuthStateChanged
-                    // We simply wait for onAuthStateChanged to fire (it fires with null or user object)
-                    // If it takes too long and we have no user, show error.
-                    if (!currentUser && navigator.onLine) {
-                         loadingText.innerHTML = `Connection Failed.<br><span class="text-xs font-normal text-slate-400">${authErr.message}</span>`;
-                    }
-                }
-                
+                });
+                navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+            }
+
+            // CRITICAL FIX: If Offline AND we have a store name, FORCE OPEN immediately.
+            // Do not wait for Auth. Persistence handles the rest.
+            if (!navigator.onLine && currentStoreName) {
+                console.log("Offline Start: Bypassing Auth Wait");
+                showApp();
+                return; // Stop here, don't run the rest of init logic yet
+            }
+
+            // If Online, try to Auth normally
+            try {
+                await signInAnonymously(auth);
             } catch (error) {
-                console.log("Init error:", error);
+                console.log("Auth Error:", error);
+                // Even if Auth fails (slow network), if we have a name, open the app
+                if (currentStoreName) showApp();
+                else if (navigator.onLine) {
+                    loadingText.innerHTML = "Connection Weak. Retrying...";
+                }
             }
         }
 
+        // Firebase Listener
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                checkStatusAndRender();
+                if (currentStoreName && !appScreen.classList.contains('hidden') === false) {
+                    showApp();
+                }
             } else {
-                // If we are offline and not signed in, we might be stuck.
-                // But usually Persistence keeps the user logged in.
+                // If logged out
                 currentUser = null;
-                // Only show login if we are sure we aren't waiting for a cached user
-                if (!loadingOverlay.classList.contains('hidden')) {
-                     checkStatusAndRender(); // Check if we should show login
+                // Only go to login screen if we aren't offline-forced
+                if (navigator.onLine && !currentStoreName) {
+                    showLogin();
                 }
             }
         });
-
-        function checkStatusAndRender() {
-            // If we have a store name, try to open app (even if currentUser is null, Firestore might throw error, or might work from cache)
-            // Actually, Firestore needs auth. But if offline, onAuthStateChanged should have given us the cached user.
-            
-            if (currentStoreName) {
-                showApp();
-            } else {
-                showLogin();
-            }
-        }
 
         function showLogin() {
             loadingOverlay.classList.add('hidden');
@@ -366,44 +361,37 @@
             loginScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
             document.getElementById('display-store-name').innerText = currentStoreName;
-            startDataSync();
+            
+            startDataSync(); // Will load from cache if offline
             updateAdminUI();
+            
+            // Try to engage trap immediately
             engageTrap();
         }
 
-        // --- FIXED LOGIN LOGIC (RELOAD) ---
+        // Login Logic
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
-            if (inputName.length < 2) {
-                alert("Please enter a valid store name.");
-                return;
-            }
-            
+            if (inputName.length < 2) return alert("Invalid Name");
             localStorage.setItem('pk_store_name', inputName);
             document.getElementById('login-btn').innerText = "Opening...";
-            
-            // FORCE RELOAD TO PREVENT LOOPS
-            setTimeout(() => {
-                window.location.reload();
-            }, 100);
+            setTimeout(() => window.location.reload(), 100);
         });
 
+        // Admin Logic
         window.toggleAdmin = () => {
             if (isAdmin) {
                 isAdmin = false;
                 alert("Manager Mode: OFF");
-                updateAdminUI();
             } else {
                 const pin = prompt("Enter Manager PIN:");
                 if (pin === ADMIN_PIN) {
                     isAdmin = true;
                     alert("Manager Mode: ON");
-                    updateAdminUI();
-                } else if (pin !== null) {
-                    alert("Wrong PIN.");
-                }
+                } else if (pin !== null) alert("Wrong PIN.");
             }
+            updateAdminUI();
         };
 
         function updateAdminUI() {
@@ -430,23 +418,27 @@
             if (unsubscribe) unsubscribe();
             document.getElementById('store-name-input').value = "";
             document.getElementById('login-btn').innerText = "Open Store";
-            checkStatusAndRender();
+            showLogin();
         };
 
+        // Data Sync
         function startDataSync() {
             if (unsubscribe) unsubscribe();
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
-            unsubscribe = onSnapshot(colRef, (snapshot) => {
-                allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                allItems.sort((a, b) => a.name.localeCompare(b.name));
-                renderList();
-            }, (err) => {
-                console.error("Sync error:", err);
-                // If offline, we might get a permission error initially, but then cache kicks in.
-                // We don't want to alert the user for every sync error if they are offline.
-            });
+            // onSnapshot works Offline perfectly (reads cache)
+            unsubscribe = onSnapshot(colRef, 
+                (snapshot) => {
+                    allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                    allItems.sort((a, b) => a.name.localeCompare(b.name));
+                    renderList();
+                }, 
+                (err) => {
+                    console.log("Sync Status:", err.code); 
+                    // Ignore permission errors in offline mode (cache will still display)
+                }
+            );
         }
 
         function renderList() {
@@ -502,6 +494,7 @@
             lucide.createIcons();
         }
 
+        // Search Listeners
         document.getElementById('search-input').addEventListener('input', (e) => {
             const hasText = e.target.value.length > 0;
             document.getElementById('clear-search').classList.toggle('hidden', !hasText);
@@ -513,6 +506,7 @@
             renderList();
         });
 
+        // Add/Edit Form
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('save-btn');
@@ -520,7 +514,7 @@
             const resetButton = () => { submitBtn.disabled = false; submitBtn.innerText = originalText; };
 
             submitBtn.disabled = true;
-            submitBtn.innerText = "Checking...";
+            submitBtn.innerText = "Saving...";
 
             const id = document.getElementById('item-id').value;
             const name = document.getElementById('name-input').value.trim();
@@ -530,17 +524,16 @@
 
             if (!name) { resetButton(); return; }
 
+            // Duplicate Check
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
                     resetButton();
-                    const wantsToModify = confirm(`"${existingItem.name}" already exists.\n\nDo you wish to make modification?`);
-                    if (wantsToModify) window.editItem(existingItem.id);
+                    if (confirm(`"${existingItem.name}" already exists.\n\nEdit it instead?`)) window.editItem(existingItem.id);
                     return; 
                 }
             }
 
-            submitBtn.innerText = "Saving...";
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
 
@@ -550,10 +543,10 @@
                 } else {
                     await addDoc(colRef, { name, price, category, bulkPrice, createdAt: serverTimestamp() });
                 }
-                alert("Success! Item Saved.");
+                alert("Saved!");
                 window.closeModal();
             } catch(err) {
-                alert("Error saving item: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 resetButton();
             }
