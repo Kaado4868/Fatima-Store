@@ -1,8 +1,8 @@
-const CACHE_NAME = 'fatima-store-v23-robust';
+const CACHE_NAME = 'fatima-store-v1'; // Reset to v1
 
 const CRITICAL_ASSETS = [
-  './',                // The folder
-  './index.html',      // The file
+  './',
+  './index.html',
   './manifest.json',
   './logo.png',
   'https://cdn.tailwindcss.com',
@@ -34,7 +34,6 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // NAVIGATION: Handle both "/" and "/index.html" requests
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
@@ -44,7 +43,6 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // ASSETS
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request);
