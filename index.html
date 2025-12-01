@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: v1.1 -->
-    <link rel="manifest" href="./manifest.json?v=1.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.1">
+    <!-- VERSION: v1.0 RESET -->
+    <link rel="manifest" href="./manifest.json?v=1.0">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.0">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,7 +17,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* TOAST STYLE */
         .toast {
             position: fixed;
             bottom: 40px;
@@ -36,6 +35,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
             white-space: nowrap;
         }
@@ -59,14 +59,14 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=1.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
     <!-- NOTIFICATIONS -->
     <div id="update-toast" class="toast">
-        <span>New Update Available</span>
+        <span>New Update (v1.0)</span>
         <button class="update-btn" onclick="window.location.reload()">Update</button>
     </div>
     
@@ -76,10 +76,10 @@
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png?v=1.1" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
+                <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.1</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.0</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -99,7 +99,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=1.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -207,21 +207,22 @@
         let isAdmin = false;
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP LOGIC ---
+        // --- BACK BUTTON TRAP ---
         let lastBackPressTime = 0;
         
         function engageTrap() {
-            // Only push state if we are not already trapped
-            if (!history.state || history.state.page !== 'trap') {
-                window.history.pushState({ page: 'trap' }, "", "");
-            }
+            try {
+                if (!history.state || history.state.page !== 'trap') {
+                    window.history.pushState({ page: 'trap' }, "", "");
+                }
+            } catch(e) {}
         }
 
-        // Try on load (Best effort)
+        // Try on Load
         engageTrap();
 
-        // Try on interaction (Guaranteed)
-        ['click', 'touchstart', 'focus'].forEach(evt => {
+        // Try on ANY touch (Crucial for Mobile)
+        ['click', 'touchstart', 'scroll', 'focus'].forEach(evt => {
             window.addEventListener(evt, engageTrap, { passive: true });
         });
 
@@ -232,7 +233,7 @@
             // 1. If Modal Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                engageTrap(); // Re-arm
+                engageTrap(); 
                 return;
             }
 
@@ -241,10 +242,11 @@
                 // Exit allowed
             } else {
                 lastBackPressTime = now;
-                const toast = document.getElementById('toast');
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
-                engageTrap(); // Re-arm
+                const t = document.getElementById('toast');
+                t.innerText = "Press back again to exit";
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 2000);
+                engageTrap(); 
             }
         });
 
@@ -261,6 +263,7 @@
                             const newWorker = reg.installing;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // SHOW UPDATE BUTTON
                                     document.getElementById('update-toast').classList.add('show');
                                 }
                             });
@@ -311,12 +314,11 @@
             document.getElementById('display-store-name').innerText = currentStoreName;
             startDataSync();
             updateAdminUI();
-            
-            // CRITICAL: Engage trap the moment the app screen shows
+            // RE-ARM TRAP ON APP LOAD
             engageTrap();
         }
 
-        // --- FIXED LOGIN LOGIC (Instant Open) ---
+        // --- FIXED LOGIN LOGIC (RELOAD) ---
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
@@ -325,36 +327,24 @@
                 return;
             }
             
-            // 1. Save data
             localStorage.setItem('pk_store_name', inputName);
-            currentStoreName = inputName;
-            
-            // 2. Visual Feedback
             document.getElementById('login-btn').innerText = "Opening...";
             
-            // 3. Trigger Trap (User clicked the button!)
-            engageTrap();
-
-            // 4. Instant Transition (if auth ready)
-            if (currentUser) {
-                showApp();
-            } else {
-                // If offline/slow auth, force transition after 1.5s
-                setTimeout(showApp, 1500);
-            }
+            // FORCE RELOAD TO PREVENT LOOPS
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         });
 
         window.toggleAdmin = () => {
             if (isAdmin) {
                 isAdmin = false;
-                // showToast("Manager Mode: OFF");
                 alert("Manager Mode: OFF");
                 updateAdminUI();
             } else {
                 const pin = prompt("Enter Manager PIN:");
                 if (pin === ADMIN_PIN) {
                     isAdmin = true;
-                    // showToast("Manager Mode: ON");
                     alert("Manager Mode: ON");
                     updateAdminUI();
                 } else if (pin !== null) {
@@ -483,7 +473,6 @@
 
             if (!name) { resetButton(); return; }
 
-            // DUPLICATE CHECK
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
