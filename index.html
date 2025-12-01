@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.1">
+    <link rel="manifest" href="./manifest.json?v=3.4">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.4">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.4">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +62,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=3.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=3.4" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
         <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">Tap to Open Anyway</button>
@@ -80,7 +80,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.1</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.4</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -99,7 +99,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=3.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=3.4" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
                                 Fatima Store
@@ -156,10 +156,7 @@
                         <button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 text-slate-600 p-3 rounded-lg"><i data-lucide="scan-line" class="w-5 h-5"></i></button>
                     </div>
                 </div>
-                <div>
-                    <label class="text-sm font-bold text-slate-700">Name</label>
-                    <input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Item Name">
-                </div>
+                <div><label class="text-sm font-bold text-slate-700">Name</label><input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Item Name"></div>
                 <div class="flex gap-4">
                     <div class="flex-1"><label class="text-sm font-bold text-slate-700">Price (₦)</label><input type="number" inputmode="decimal" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00"></div>
                     <div class="flex-1"><label class="text-sm font-bold text-slate-700">Bulk Deal</label><input type="text" id="bulk-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="e.g. 2 for 50"></div>
@@ -193,12 +190,12 @@
                 loader.innerText = "Connection Slow?";
                 if(btn) btn.classList.remove('hidden');
             }
-        }, 3000); // 3 Seconds Timeout
+        }, 3000); 
     </script>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
@@ -207,11 +204,13 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
+        // --- AUTHORIZED ADMINS ---
+        const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "Maryam2003abubakar@gmail.com"];
+
         enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
         let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; 
-        const ADMIN_PIN = "Zee1179@";
-
+        
         let audioCtx = null;
         function playBeep() {
             try {
@@ -246,7 +245,7 @@
 
         // APP LOGIC
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
-        function updateOnlineStatus() { if (navigator.onLine) { document.body.classList.remove('offline'); if (!currentUser) signInAnonymously(auth).catch(e=>console.log(e)); } else { document.body.classList.add('offline'); } }
+        function updateOnlineStatus() { if (navigator.onLine) { document.body.classList.remove('offline'); } else { document.body.classList.add('offline'); } }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
         window.forceStartApp = () => { if (currentStoreName) { showApp(); } else { showLogin(); } };
 
@@ -259,22 +258,42 @@
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
 
-            // CRITICAL: FAST PATH FOR RETURNING USERS
             if (currentStoreName) {
-                console.log("Known User: Opening App (Background Auth)");
+                console.log("Fast Path: Opening App");
                 showApp();
-                // Try to auth in background, but don't block UI
                 signInAnonymously(auth).catch(e => console.log("Background Auth Pending"));
                 return;
             }
 
             try { await signInAnonymously(auth); } catch (error) { 
-                // Only show login if no store name saved
                 if (!currentStoreName) showLogin(); 
             }
         }
 
-        onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); } else { currentUser = null; if (navigator.onLine && !currentStoreName) showLogin(); } });
+        onAuthStateChanged(auth, (user) => {
+            if (user) { 
+                currentUser = user; 
+                // SECURE CHECK: Is the email in the approved list?
+                if (user.email && ALLOWED_ADMINS.includes(user.email)) {
+                    isAdmin = true;
+                } else {
+                    // Logged in but not admin (or anon)
+                    isAdmin = false;
+                }
+                
+                if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
+            } else { 
+                currentUser = null; 
+                isAdmin = false;
+                if (currentStoreName && navigator.onLine) {
+                    signInAnonymously(auth).catch(e => console.log("Anon login failed", e));
+                } else if (!currentStoreName) {
+                    showLogin(); 
+                }
+            }
+            updateAdminUI(); 
+        });
+
         function showLogin() { loadingOverlay.classList.add('hidden'); appScreen.classList.add('hidden'); loginScreen.classList.remove('hidden'); }
         function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); document.getElementById('display-store-name').innerText = currentStoreName; startDataSync(); updateAdminUI(); engageTrap(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
@@ -329,7 +348,6 @@
         window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log); else document.getElementById('scanner-overlay').classList.add('hidden'); isFlashOn = false; const btn = document.getElementById('flash-btn'); btn.classList.remove('bg-yellow-400', 'text-black'); btn.classList.add('hidden'); };
 
         async function fetchProductName(barcode) { 
-            // 1. CHECK LOCAL MEMORY
             const existingItem = allItems.find(i => i.barcode === barcode);
             if (existingItem) {
                 document.getElementById('name-input').value = existingItem.name;
@@ -339,7 +357,6 @@
                 return;
             }
 
-            // 2. CHECK IF EDITING EXISTING NAME (Protection)
             const currentName = document.getElementById('name-input').value.trim();
             if (currentName.length > 0) return; 
 
@@ -373,7 +390,23 @@
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
         window.editItem = (id) => { if (!isAdmin) return; const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('item-id').value = id; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('category-input').value = item.category || ''; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('modal').classList.remove('hidden'); };
         window.deleteItem = async (id) => { if (!confirm("Delete this item?")) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); };
-        window.toggleAdmin = () => { if (isAdmin) { isAdmin = false; alert("Manager Mode: OFF"); } else { const pin = prompt("Enter Manager PIN:"); if (pin === ADMIN_PIN) { isAdmin = true; alert("Manager Mode: ON"); } else if (pin !== null) alert("Wrong PIN."); } updateAdminUI(); };
+        
+        // --- GOOGLE AUTH TOGGLE ---
+        window.toggleAdmin = () => {
+            if (isAdmin) {
+                if(confirm("Lock Manager Mode?")) {
+                    signOut(auth).then(() => {
+                        signInAnonymously(auth); // Go back to Staff
+                    });
+                }
+            } else {
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider).catch((error) => {
+                    alert("Login failed: " + error.message);
+                });
+            }
+        };
+
         function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
         window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
