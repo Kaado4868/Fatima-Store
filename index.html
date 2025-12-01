@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=2.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=2.0">
+    <link rel="manifest" href="./manifest.json?v=2.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=2.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=2.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -67,6 +67,36 @@
         .offline .offline-badge { display: inline-block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Modern Scanner Styles */
+        #scanner-overlay video {
+            object-fit: cover !important;
+            border-radius: 12px;
+        }
+        .scanner-viewfinder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+        .scanner-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: #4f46e5;
+            border-style: solid;
+            border-width: 0;
+        }
+        .tl { top: -2px; left: -2px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 16px; }
+        .tr { top: -2px; right: -2px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 16px; }
+        .bl { bottom: -2px; left: -2px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 16px; }
+        .br { bottom: -2px; right: -2px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 16px; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -77,6 +107,9 @@
              <img src="./logo.png?v=1.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
+        <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">
+            Tap to Open Anyway
+        </button>
     </div>
 
     <div id="update-toast" class="toast">
@@ -92,7 +125,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v2.0</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v2.1</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -210,12 +243,26 @@
         </div>
     </div>
 
-    <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col">
-        <div class="p-4 flex justify-between items-center text-white bg-black/50 absolute top-0 w-full z-10">
-            <h3 class="font-bold">Scan Barcode</h3>
-            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
+    <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-center items-center">
+        <div class="absolute top-0 w-full p-4 z-20 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent">
+            <h3 class="font-bold text-lg">Scan Barcode</h3>
+            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
-        <div id="reader" class="w-full h-full object-cover"></div>
+        
+        <div class="relative w-full h-full bg-black flex flex-col justify-center">
+            <div id="reader" class="w-full h-full"></div>
+            
+            <div class="scanner-viewfinder z-10">
+                <div class="scanner-corner tl"></div>
+                <div class="scanner-corner tr"></div>
+                <div class="scanner-corner bl"></div>
+                <div class="scanner-corner br"></div>
+            </div>
+
+            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden">
+                <i data-lucide="flashlight" class="w-6 h-6 text-white"></i>
+            </button>
+        </div>
     </div>
 
     <script type="module">
@@ -250,7 +297,6 @@
         let scanMode = null; 
         const ADMIN_PIN = "Zee1179@";
 
-        // REAL BEEP SOUND (Base64 WAV)
         const BEEP_AUDIO = "data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const beepSound = new Audio(BEEP_AUDIO);
 
@@ -304,6 +350,16 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
+        // FORCE START FUNCTION (New Fix for Stuck Loading)
+        window.forceStartApp = () => {
+            if (currentStoreName) {
+                console.log("Forcing App Start...");
+                showApp();
+            } else {
+                showLogin();
+            }
+        };
+
         async function init() {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
@@ -319,9 +375,23 @@
                 });
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
+
+            // TIMEOUT FIX: If Auth takes > 4 seconds, show Force Button
+            setTimeout(() => {
+                if (!appScreen.classList.contains('hidden')) return; // Already opened
+                if (!loginScreen.classList.contains('hidden')) return; // Login visible
+                // Still stuck on loading?
+                document.getElementById('force-start-btn').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Taking too long?";
+            }, 4000);
+
             if (!navigator.onLine && currentStoreName) { showApp(); return; }
+            
             try { await signInAnonymously(auth); } 
-            catch (error) { if (currentStoreName) showApp(); }
+            catch (error) { 
+                if (currentStoreName) showApp(); 
+                else document.getElementById('loading-text').innerHTML = "Connection Error.<br>Try Force Start.";
+            }
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -445,7 +515,6 @@
             lucide.createIcons();
         }
 
-        // --- NEW: DUAL DATABASE SEARCH (FOOD + BEAUTY) ---
         async function fetchProductName(barcode) {
             if (!navigator.onLine) return; 
             const nameInput = document.getElementById('name-input');
@@ -453,16 +522,12 @@
             nameInput.value = ""; 
 
             try {
-                // 1. Try Food Database (Milo, Indomie, Coke)
                 let response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
                 let data = await response.json();
-
-                // 2. If not found, try Beauty Database (Soap, Cream, Toothpaste)
                 if (data.status !== 1) {
                     response = await fetch(`https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`);
                     data = await response.json();
                 }
-
                 if (data.status === 1 && data.product && data.product.product_name) {
                     nameInput.value = data.product.product_name;
                     if (data.product.categories) {
@@ -477,19 +542,19 @@
             }
         }
 
-        // SCANNER
+        // MODERN SCANNER LOGIC
+        let track = null;
+        let isFlashOn = false;
+
         window.startScanner = (mode) => {
             scanMode = mode;
             document.getElementById('scanner-overlay').classList.remove('hidden');
             scanner = new Html5Qrcode("reader");
             
-            // FIX: Beep needs to be triggered by user first interaction
             beepSound.volume = 1.0; 
             
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
-                // PLAY BEEP
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250, aspectRatio: 1.0 }, (decodedText) => {
                 beepSound.play().catch(e => console.log("Audio blocked:", e));
-                
                 window.stopScanner();
                 if (scanMode === 'search') {
                     const searchInput = document.getElementById('search-input');
@@ -499,12 +564,69 @@
                     document.getElementById('barcode-input').value = decodedText;
                     fetchProductName(decodedText);
                 }
-            }, () => {}).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
+            }, () => {})
+            .then(() => {
+                // FLASHLIGHT CHECK
+                // We need to wait for scanner to start to access the track
+                // This logic depends on browser support.
+                // We show the button if possible.
+                document.getElementById('flash-btn').classList.remove('hidden');
+            })
+            .catch(err => { 
+                alert("Camera error: " + err); 
+                window.stopScanner(); 
+            });
+        };
+
+        window.toggleFlash = () => {
+            // NOTE: Flash support is experimental in browsers.
+            // This attempts to toggle it using standard MediaStreamTrack constraints.
+            if (!scanner) return;
+            
+            // Getting the track from Html5Qrcode is tricky without direct access, 
+            // but we can try applying video constraints if supported.
+            // A safer way in Html5Qrcode library is currently limited. 
+            // We will attempt a restart-free constraint apply if supported, 
+            // or warn user.
+            
+            // Since accessing 'track' directly from this library wrapper is hard,
+            // we will simulate toggle by re-scanning with torch constraint if simple apply fails.
+            // However, that is slow. 
+            
+            // For now, we will try the direct 'applyVideoConstraints' method if exposed.
+            // If not, we alert user.
+            
+            try {
+               // This library instance allows applyVideoConstraints?
+               // The plain JS library exposes 'html5QrCode' object if we used that.
+               // We used 'new Html5Qrcode'.
+               
+               isFlashOn = !isFlashOn;
+               scanner.applyVideoConstraints({
+                   advanced: [{ torch: isFlashOn }]
+               }).catch(err => {
+                   isFlashOn = !isFlashOn; // Revert
+                   alert("Flash not supported on this device/browser.");
+               });
+               
+               // Visual update
+               const btn = document.getElementById('flash-btn');
+               if(isFlashOn) btn.classList.add('bg-yellow-400', 'text-black');
+               else btn.classList.remove('bg-yellow-400', 'text-black');
+               
+            } catch(e) {
+               alert("Flash control not available.");
+            }
         };
         
         window.stopScanner = () => {
             if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log);
             else document.getElementById('scanner-overlay').classList.add('hidden');
+            
+            // Reset flash UI
+            isFlashOn = false;
+            document.getElementById('flash-btn').classList.remove('bg-yellow-400');
+            document.getElementById('flash-btn').classList.add('hidden');
         };
 
         // FORMS
