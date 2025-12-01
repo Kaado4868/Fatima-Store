@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.0">
+    <link rel="manifest" href="./manifest.json?v=3.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,19 +33,14 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- SCANNER STYLES (FIXED DOUBLE CARD) --- */
+        /* SCANNER STYLES */
         #reader { width: 100% !important; height: 100% !important; background: black; border: none !important; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        
-        /* Force hide library's default overlay/shade */
         #reader__scan_region { display: none !important; }
-        #reader div[style*="border"] { border: none !important; box-shadow: none !important; } 
         
-        /* Custom Modern Viewfinder */
         .scanner-viewfinder {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; max-width: 300px; height: 200px;
-            /* box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);  Dark Overlay */
             pointer-events: none; z-index: 20;
         }
         .scanner-line {
@@ -55,7 +50,6 @@
         }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
         
-        /* White Corners */
         .scanner-corner { position: absolute; width: 40px; height: 40px; border-color: white; border-style: solid; border-width: 0; z-index: 21; }
         .tl { top: 0; left: 0; border-top-width: 5px; border-left-width: 5px; border-top-left-radius: 12px; }
         .tr { top: 0; right: 0; border-top-width: 5px; border-right-width: 5px; border-top-right-radius: 12px; }
@@ -68,7 +62,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=1.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=3.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
         <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">Tap to Open Anyway</button>
@@ -86,7 +80,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.0</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.1</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -105,7 +99,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=1.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=3.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
                                 Fatima Store
@@ -191,6 +185,17 @@
         </div>
     </div>
 
+    <script>
+        setTimeout(() => {
+            const loader = document.getElementById('loading-text');
+            const btn = document.getElementById('force-start-btn');
+            if(loader && loader.innerText.includes('Starting')) {
+                loader.innerText = "Connection Slow?";
+                if(btn) btn.classList.remove('hidden');
+            }
+        }, 3000); // 3 Seconds Timeout
+    </script>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
@@ -253,12 +258,23 @@
                 });
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
-            setTimeout(() => { if (!appScreen.classList.contains('hidden')) return; if (!loginScreen.classList.contains('hidden')) return; document.getElementById('force-start-btn').classList.remove('hidden'); document.getElementById('loading-text').innerText = "Taking too long?"; }, 4000);
-            if (!navigator.onLine && currentStoreName) { showApp(); return; }
-            try { await signInAnonymously(auth); } catch (error) { if (currentStoreName) showApp(); else document.getElementById('loading-text').innerHTML = "Connection Error.<br>Try Force Start."; }
+
+            // CRITICAL: FAST PATH FOR RETURNING USERS
+            if (currentStoreName) {
+                console.log("Known User: Opening App (Background Auth)");
+                showApp();
+                // Try to auth in background, but don't block UI
+                signInAnonymously(auth).catch(e => console.log("Background Auth Pending"));
+                return;
+            }
+
+            try { await signInAnonymously(auth); } catch (error) { 
+                // Only show login if no store name saved
+                if (!currentStoreName) showLogin(); 
+            }
         }
 
-        onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; if (currentStoreName) showApp(); } else { currentUser = null; if (navigator.onLine && !currentStoreName) showLogin(); } });
+        onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); } else { currentUser = null; if (navigator.onLine && !currentStoreName) showLogin(); } });
         function showLogin() { loadingOverlay.classList.add('hidden'); appScreen.classList.add('hidden'); loginScreen.classList.remove('hidden'); }
         function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); document.getElementById('display-store-name').innerText = currentStoreName; startDataSync(); updateAdminUI(); engageTrap(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
@@ -358,4 +374,11 @@
         window.editItem = (id) => { if (!isAdmin) return; const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('item-id').value = id; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('category-input').value = item.category || ''; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('modal').classList.remove('hidden'); };
         window.deleteItem = async (id) => { if (!confirm("Delete this item?")) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); };
         window.toggleAdmin = () => { if (isAdmin) { isAdmin = false; alert("Manager Mode: OFF"); } else { const pin = prompt("Enter Manager PIN:"); if (pin === ADMIN_PIN) { isAdmin = true; alert("Manager Mode: ON"); } else if (pin !== null) alert("Wrong PIN."); } updateAdminUI(); };
-        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4">
+        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
+        window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
+        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+        lucide.createIcons();
+        init();
+    </script>
+</body>
+</html>
