@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.8">
-    <link rel="icon" type="image/png" href="./logo.png?v=2.8">
-    <link rel="apple-touch-icon" href="./logo.png?v=2.8">
+    <link rel="manifest" href="./manifest.json?v=3.0">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.0">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,28 +33,34 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Scanner Styles */
-        #reader { width: 100% !important; height: 100% !important; background: black; }
+        /* --- SCANNER STYLES (FIXED DOUBLE CARD) --- */
+        #reader { width: 100% !important; height: 100% !important; background: black; border: none !important; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
         
+        /* Force hide library's default overlay/shade */
+        #reader__scan_region { display: none !important; }
+        #reader div[style*="border"] { border: none !important; box-shadow: none !important; } 
+        
+        /* Custom Modern Viewfinder */
         .scanner-viewfinder {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; max-width: 300px; height: 200px;
-            border-radius: 12px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+            /* box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);  Dark Overlay */
             pointer-events: none; z-index: 20;
         }
         .scanner-line {
             position: absolute; top: 50%; left: 5%; right: 5%; height: 2px;
             background: #ef4444; box-shadow: 0 0 4px #ef4444;
-            animation: scan 1.5s infinite ease-in-out; opacity: 0.8;
+            animation: scan 1.5s infinite ease-in-out; opacity: 0.9;
         }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+        
+        /* White Corners */
         .scanner-corner { position: absolute; width: 40px; height: 40px; border-color: white; border-style: solid; border-width: 0; z-index: 21; }
-        .tl { top: -2px; left: -2px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 12px; }
-        .tr { top: -2px; right: -2px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 12px; }
-        .bl { bottom: -2px; left: -2px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 12px; }
-        .br { bottom: -2px; right: -2px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 12px; }
+        .tl { top: 0; left: 0; border-top-width: 5px; border-left-width: 5px; border-top-left-radius: 12px; }
+        .tr { top: 0; right: 0; border-top-width: 5px; border-right-width: 5px; border-top-right-radius: 12px; }
+        .bl { bottom: 0; left: 0; border-bottom-width: 5px; border-left-width: 5px; border-bottom-left-radius: 12px; }
+        .br { bottom: 0; right: 0; border-bottom-width: 5px; border-right-width: 5px; border-bottom-right-radius: 12px; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -80,7 +86,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v2.8</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.0</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -273,7 +279,6 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const silentOsc = audioCtx.createOscillator(); silentOsc.connect(audioCtx.destination); silentOsc.start(); silentOsc.stop(audioCtx.currentTime + 0.001);
 
-            // COMMON STORE FORMATS ONLY (Speed)
             const formats = [
                 Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
                 Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
@@ -283,13 +288,13 @@
             scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
             
             const config = { 
-                fps: 15, // 15fps for Better Light/Accuracy
-                qrbox: { width: 250, height: 250 }, 
+                fps: 25, 
+                qrbox: { width: 300, height: 200 }, 
                 aspectRatio: 1.0,
                 videoConstraints: {
                     facingMode: "environment",
                     focusMode: "continuous",
-                    width: { min: 640, ideal: 1920, max: 2560 }, // HD
+                    width: { min: 640, ideal: 1920, max: 2560 }, 
                     height: { min: 480, ideal: 1080, max: 1440 }
                 }
             };
@@ -320,12 +325,11 @@
 
             // 2. CHECK IF EDITING EXISTING NAME (Protection)
             const currentName = document.getElementById('name-input').value.trim();
-            if (currentName.length > 0) return; // Do not overwrite existing name
+            if (currentName.length > 0) return; 
 
             if (!navigator.onLine) return; 
             const nameInput = document.getElementById('name-input'); nameInput.placeholder = "Searching databases..."; nameInput.value = ""; 
             try { 
-                // 3. CHECK EXTERNAL DBs
                 let endpoints = [
                     `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
                     `https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`,
@@ -354,11 +358,4 @@
         window.editItem = (id) => { if (!isAdmin) return; const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('item-id').value = id; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('category-input').value = item.category || ''; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('modal').classList.remove('hidden'); };
         window.deleteItem = async (id) => { if (!confirm("Delete this item?")) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); };
         window.toggleAdmin = () => { if (isAdmin) { isAdmin = false; alert("Manager Mode: OFF"); } else { const pin = prompt("Enter Manager PIN:"); if (pin === ADMIN_PIN) { isAdmin = true; alert("Manager Mode: ON"); } else if (pin !== null) alert("Wrong PIN."); } updateAdminUI(); };
-        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
-        window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
-        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        lucide.createIcons();
-        init();
-    </script>
-</body>
-</html>
+        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4">
