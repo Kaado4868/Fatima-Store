@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.7">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.7">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.7">
+    <link rel="manifest" href="./manifest.json?v=3.8">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.8">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.8">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,10 +62,11 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=3.7" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=3.8" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
         <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">Tap to Open Anyway</button>
+        <p id="debug-status" class="mt-4 text-[10px] text-slate-400 font-mono text-center max-w-xs break-words"></p>
     </div>
 
     <div id="update-toast" class="toast">
@@ -80,7 +81,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.7</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.8</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -99,13 +100,13 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=3.7" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=3.8" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
                                 Fatima Store
                                 <span class="offline-badge">OFFLINE</span>
                             </h1>
-                            <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
+                            <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -132,12 +133,19 @@
             <div id="data-loading" class="text-center py-12 hidden">
                 <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
                 <p class="text-slate-500 text-sm font-medium">Loading products...</p>
+                <p id="loading-detail" class="text-xs text-slate-400 mt-2 font-mono"></p>
+            </div>
+
+            <div id="error-state" class="hidden text-center py-12 bg-red-50 rounded-xl border border-red-100 p-4">
+                <p class="text-red-600 font-bold mb-2">Connection Error</p>
+                <p id="error-msg" class="text-xs text-red-500 font-mono"></p>
+                <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold">Retry</button>
             </div>
 
             <div id="empty-state" class="hidden text-center py-12">
                 <div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="tag" class="w-8 h-8 text-slate-400"></i></div>
                 <h3 class="text-lg font-medium text-slate-900">No items found</h3>
-                <p class="text-slate-500 text-sm mt-1">Try a different search or category.</p>
+                <p class="text-slate-500 text-sm mt-1">Is this the right store name?</p>
             </div>
             <div id="item-list" class="space-y-3"></div>
         </div>
@@ -186,17 +194,6 @@
         </div>
     </div>
 
-    <script>
-        setTimeout(() => {
-            const loader = document.getElementById('loading-text');
-            const btn = document.getElementById('force-start-btn');
-            if(loader && loader.innerText.includes('Starting')) {
-                loader.innerText = "Connection Slow?";
-                if(btn) btn.classList.remove('hidden');
-            }
-        }, 3000); 
-    </script>
-
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
@@ -210,11 +207,18 @@
 
         const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "Maryam2003abubakar@gmail.com"];
 
-        enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
+        // DEBUG: Logging function to screen
+        function logDebug(msg) {
+            console.log(msg);
+            const el = document.getElementById('debug-status');
+            if(el) el.innerText = msg;
+        }
+
+        enableIndexedDbPersistence(db).catch(err => logDebug('Persistence: ' + err.code));
 
         let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; 
-        
         let audioCtx = null;
+
         function playBeep() {
             try {
                 if (navigator.vibrate) navigator.vibrate(200); 
@@ -250,9 +254,15 @@
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
         function updateOnlineStatus() { if (navigator.onLine) { document.body.classList.remove('offline'); } else { document.body.classList.add('offline'); } }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
-        window.forceStartApp = () => { if (currentStoreName) { showApp(); } else { showLogin(); } };
+        window.forceStartApp = () => { 
+            if (currentStoreName) { 
+                logDebug("Force Start: " + currentStoreName);
+                showApp(); 
+            } else { showLogin(); } 
+        };
 
         async function init() {
+            logDebug("Initializing...");
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
                     if (reg.waiting) document.getElementById('update-toast').classList.add('show');
@@ -261,41 +271,33 @@
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
 
+            // AUTO-START LOGIC
             if (currentStoreName) {
-                console.log("Fast Path: Opening App");
-                showApp();
-                // Retrying Auth for data access
-                signInAnonymously(auth).catch(e => console.log("Background Auth Pending"));
+                logDebug("Found Store: " + currentStoreName);
+                showApp(); // OPEN IMMEDIATELY
+                // Auth in background
+                signInAnonymously(auth).catch(e => logDebug("Auth Pending: " + e.message));
                 return;
-            }
-
-            try { await signInAnonymously(auth); } catch (error) { 
-                if (!currentStoreName) showLogin(); 
+            } else {
+                logDebug("No store saved. Showing Login.");
+                showLogin();
+                signInAnonymously(auth).catch(e => logDebug("Auth Error"));
             }
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
+                logDebug("Auth: " + (user.email || "Anonymous"));
                 const userEmail = user.email ? user.email.toLowerCase() : "";
-                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) {
-                    isAdmin = true;
-                    if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
-                } else if (user.isAnonymous) {
-                    isAdmin = false;
-                    if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
-                } else {
-                    alert("Access Denied: This email is not a Manager.");
-                    signOut(auth).then(() => signInAnonymously(auth));
-                }
+                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { isAdmin = true; } else if (user.isAnonymous) { isAdmin = false; } else { alert("Access Denied: Not a Manager."); signOut(auth).then(() => signInAnonymously(auth)); }
+                
+                if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             } else { 
-                currentUser = null; 
-                isAdmin = false;
-                if (currentStoreName && navigator.onLine) {
-                    signInAnonymously(auth).catch(e => console.log("Anon login failed", e));
-                } else if (!currentStoreName) {
-                    showLogin(); 
-                }
+                currentUser = null; isAdmin = false; 
+                logDebug("Auth: Logged Out");
+                if (currentStoreName && navigator.onLine) { signInAnonymously(auth).catch(e => logDebug("Retry Auth Fail")); } 
+                else if (!currentStoreName) { showLogin(); }
             }
             updateAdminUI(); 
         });
@@ -305,7 +307,11 @@
             loadingOverlay.classList.add('hidden'); 
             loginScreen.classList.add('hidden'); 
             appScreen.classList.remove('hidden'); 
-            document.getElementById('display-store-name').innerText = currentStoreName; 
+            
+            // SHOW THE EXACT ID WE ARE LOADING
+            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
+            document.getElementById('display-store-name').innerText = `ID: pk_store_${safeName}`;
+            
             startDataSync(); 
             updateAdminUI(); 
             engageTrap(); 
@@ -317,27 +323,33 @@
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); 
             
-            // SHOW SPINNER
+            // SPINNER LOGIC
             const spinner = document.getElementById('data-loading');
             const emptyEl = document.getElementById('empty-state');
+            const errorState = document.getElementById('error-state');
+            const errorMsg = document.getElementById('error-msg');
+            const detail = document.getElementById('loading-detail');
+            
             spinner.classList.remove('hidden');
             emptyEl.classList.add('hidden');
+            errorState.classList.add('hidden');
+            detail.innerText = `Connecting to pk_store_${safeName}...`;
 
             unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, (snapshot) => {
-                // HIDE SPINNER
                 spinner.classList.add('hidden');
-                
                 allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
+                
+                logDebug(`Loaded ${allItems.length} items.`);
+                
                 renderCategories();
                 renderList();
             }, (err) => {
-                console.log("Sync Status:", err.code);
+                console.log("Sync Status:", err);
                 spinner.classList.add('hidden');
-                if (err.code === 'permission-denied') {
-                    // Try to re-auth silently if denied
-                    signInAnonymously(auth).catch(e => {});
-                }
+                errorState.classList.remove('hidden');
+                errorMsg.innerText = err.code + ": " + err.message;
+                logDebug("Error: " + err.code);
             }); 
         }
         
@@ -358,76 +370,31 @@
         window.startScanner = (mode) => {
             scanMode = mode;
             document.getElementById('scanner-overlay').classList.remove('hidden');
-            
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const silentOsc = audioCtx.createOscillator(); silentOsc.connect(audioCtx.destination); silentOsc.start(); silentOsc.stop(audioCtx.currentTime + 0.001);
-
-            const formats = [
-                Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E,
-                Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
-                Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE
-            ];
-
+            const formats = [ Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE ];
             scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
-            
-            const config = { 
-                fps: 25, 
-                qrbox: { width: 300, height: 200 }, 
-                aspectRatio: 1.0,
-                videoConstraints: {
-                    facingMode: "environment",
-                    focusMode: "continuous",
-                    width: { min: 640, ideal: 1920, max: 2560 }, 
-                    height: { min: 480, ideal: 1080, max: 1440 }
-                }
-            };
-
+            const config = { fps: 25, qrbox: { width: 300, height: 200 }, aspectRatio: 1.0, videoConstraints: { facingMode: "environment", focusMode: "continuous", width: { min: 640, ideal: 1920, max: 2560 }, height: { min: 480, ideal: 1080, max: 1440 } } };
             scanner.start({ facingMode: "environment" }, config, (decodedText) => {
-                playBeep(); 
-                window.stopScanner();
+                playBeep(); window.stopScanner();
                 if (scanMode === 'search') { const searchInput = document.getElementById('search-input'); searchInput.value = decodedText; searchInput.dispatchEvent(new Event('input')); }
                 else if (scanMode === 'edit') { document.getElementById('barcode-input').value = decodedText; fetchProductName(decodedText); }
-            }, () => {})
-            .then(() => { document.getElementById('flash-btn').classList.remove('hidden'); })
-            .catch(err => { alert("Camera error: " + err); window.stopScanner(); });
+            }, () => {}).then(() => { document.getElementById('flash-btn').classList.remove('hidden'); }).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
         };
-
         window.toggleFlash = () => { if (!scanner) return; try { isFlashOn = !isFlashOn; scanner.applyVideoConstraints({ advanced: [{ torch: isFlashOn }] }).catch(err => { isFlashOn = !isFlashOn; alert("Flash not supported on this device."); }); const btn = document.getElementById('flash-btn'); if(isFlashOn) btn.classList.add('bg-yellow-400', 'text-black'); else btn.classList.remove('bg-yellow-400', 'text-black'); } catch(e) { alert("Flash control not available."); } };
         window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log); else document.getElementById('scanner-overlay').classList.add('hidden'); isFlashOn = false; const btn = document.getElementById('flash-btn'); btn.classList.remove('bg-yellow-400', 'text-black'); btn.classList.add('hidden'); };
 
         async function fetchProductName(barcode) { 
             const existingItem = allItems.find(i => i.barcode === barcode);
-            if (existingItem) {
-                document.getElementById('name-input').value = existingItem.name;
-                document.getElementById('price-input').value = existingItem.price;
-                document.getElementById('category-input').value = existingItem.category;
-                alert("Found in your store!");
-                return;
-            }
-
-            const currentName = document.getElementById('name-input').value.trim();
-            if (currentName.length > 0) return; 
-
+            if (existingItem) { document.getElementById('name-input').value = existingItem.name; document.getElementById('price-input').value = existingItem.price; document.getElementById('category-input').value = existingItem.category; alert("Found in your store!"); return; }
+            const currentName = document.getElementById('name-input').value.trim(); if (currentName.length > 0) return; 
             if (!navigator.onLine) return; 
             const nameInput = document.getElementById('name-input'); nameInput.placeholder = "Searching databases..."; nameInput.value = ""; 
             try { 
-                let endpoints = [
-                    `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-                    `https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`,
-                    `https://world.openproductsfacts.org/api/v0/product/${barcode}.json`,
-                    `https://world.openpetfoodfacts.org/api/v0/product/${barcode}.json`
-                ];
+                let endpoints = [ `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, `https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`, `https://world.openproductsfacts.org/api/v0/product/${barcode}.json`, `https://world.openpetfoodfacts.org/api/v0/product/${barcode}.json` ];
                 let found = false;
-                for (let url of endpoints) {
-                    let response = await fetch(url);
-                    let data = await response.json();
-                    if (data.status === 1 && data.product && data.product.product_name) {
-                        nameInput.value = data.product.product_name;
-                        if (data.product.categories) { const firstCat = data.product.categories.split(',')[0].trim(); document.getElementById('category-input').value = firstCat; }
-                        found = true; break; 
-                    }
-                }
+                for (let url of endpoints) { let response = await fetch(url); let data = await response.json(); if (data.status === 1 && data.product && data.product.product_name) { nameInput.value = data.product.product_name; if (data.product.categories) { const firstCat = data.product.categories.split(',')[0].trim(); document.getElementById('category-input').value = firstCat; } found = true; break; } }
                 if (!found) nameInput.placeholder = "Not found, type name manually"; 
             } catch (e) { nameInput.placeholder = "Error, type name manually"; } 
         }
@@ -440,21 +407,7 @@
         window.editItem = (id) => { if (!isAdmin) return; const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('item-id').value = id; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('category-input').value = item.category || ''; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('modal').classList.remove('hidden'); };
         window.deleteItem = async (id) => { if (!confirm("Delete this item?")) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); };
         
-        window.toggleAdmin = () => {
-            if (isAdmin) {
-                if(confirm("Lock Manager Mode?")) {
-                    signOut(auth).then(() => {
-                        signInAnonymously(auth); 
-                    });
-                }
-            } else {
-                const provider = new GoogleAuthProvider();
-                signInWithRedirect(auth, provider).catch((error) => {
-                    alert("Login failed: " + error.message);
-                });
-            }
-        };
-
+        window.toggleAdmin = () => { if (isAdmin) { if(confirm("Lock Manager Mode?")) { signOut(auth).then(() => { signInAnonymously(auth); }); } } else { const provider = new GoogleAuthProvider(); signInWithRedirect(auth, provider).catch((error) => { alert("Login failed: " + error.message); }); } };
         function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
         window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
@@ -462,4 +415,4 @@
         init();
     </script>
 </body>
-</html>
+    </html>
