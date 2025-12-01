@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=4.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=4.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=4.0">
+    <link rel="manifest" href="./manifest.json?v=4.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=4.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=4.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,39 +17,20 @@
     
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
-        
-        .toast {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: #1e293b; color: white; padding: 10px 20px; border-radius: 999px;
-            font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s;
-            pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            display: flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap;
-        }
+        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap; }
         .toast.show { opacity: 1; pointer-events: auto; }
-        
         .update-btn { background: #4f46e5; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .offline-badge { display: none; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
         .offline .offline-badge { display: inline-block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* SCANNER FIXES */
+        /* SCANNER */
         #reader { width: 100% !important; height: 100% !important; background: black; border: none !important; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        #reader__scan_region { display: none !important; } /* Hides library default box */
-        
-        .scanner-viewfinder {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; max-width: 300px; height: 200px;
-            pointer-events: none; z-index: 20;
-        }
-        .scanner-line {
-            position: absolute; top: 50%; left: 5%; right: 5%; height: 2px;
-            background: #ef4444; box-shadow: 0 0 4px #ef4444;
-            animation: scan 1.5s infinite ease-in-out; opacity: 0.9;
-        }
+        #reader__scan_region { display: none !important; }
+        .scanner-viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; height: 200px; pointer-events: none; z-index: 20; }
+        .scanner-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #ef4444; box-shadow: 0 0 4px #ef4444; animation: scan 1.5s infinite ease-in-out; opacity: 0.9; }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-        
         .scanner-corner { position: absolute; width: 40px; height: 40px; border-color: white; border-style: solid; border-width: 0; z-index: 21; }
         .tl { top: 0; left: 0; border-top-width: 5px; border-left-width: 5px; border-top-left-radius: 12px; }
         .tr { top: 0; right: 0; border-top-width: 5px; border-right-width: 5px; border-top-right-radius: 12px; }
@@ -62,35 +43,25 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=4.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=4.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
         <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">Tap to Open Anyway</button>
         <p id="debug-status" class="mt-4 text-[10px] text-slate-400 font-mono text-center max-w-xs break-words"></p>
     </div>
 
-    <div id="update-toast" class="toast">
-        <span>New Update Available</span>
-        <button class="update-btn" onclick="window.location.reload()">Update</button>
-    </div>
+    <div id="update-toast" class="toast"><span>New Update Available</span><button class="update-btn" onclick="window.location.reload()">Update</button></div>
     <div id="toast" class="toast">Press back again to exit</div>
 
     <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex flex-col items-center justify-center p-6 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
-            <div class="w-24 h-24 mx-auto mb-4">
-                <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
-            </div>
+            <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v4.0</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v4.1</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
-                <input type="text" id="store-name-input" required 
-                    class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" 
-                    placeholder="STORE NAME">
-                <button type="submit" id="login-btn"
-                    class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">
-                    Open Store
-                </button>
+                <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
+                <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
     </div>
@@ -100,29 +71,19 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=4.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=4.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
-                            <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
-                                Fatima Store
-                                <span class="offline-badge">OFFLINE</span>
-                            </h1>
+                            <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
                             <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative">
-                            <i data-lucide="lock" class="w-4 h-4"></i>
-                        </button>
+                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative"><i data-lucide="lock" class="w-4 h-4"></i></button>
                         <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
                     </div>
                 </div>
-                
                 <div class="relative flex gap-2">
-                    <div class="relative flex-1">
-                        <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
-                        <input type="text" id="search-input" class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Search...">
-                        <button id="clear-search" class="absolute right-3 top-3 text-slate-400 hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
-                    </div>
+                    <div class="relative flex-1"><i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i><input type="text" id="search-input" class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Search..."><button id="clear-search" class="absolute right-3 top-3 text-slate-400 hidden"><i data-lucide="x" class="w-5 h-5"></i></button></div>
                     <button onclick="window.startScanner('search')" class="bg-indigo-50 text-indigo-600 p-3 rounded-xl border border-indigo-100 active:scale-95 transition-transform"><i data-lucide="scan-line" class="w-6 h-6"></i></button>
                 </div>
                 <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1"></div>
@@ -130,47 +91,21 @@
         </div>
 
         <div class="max-w-md mx-auto px-4 py-4">
-            <div id="data-loading" class="text-center py-12 hidden">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
-                <p class="text-slate-500 text-sm font-medium">Loading products...</p>
-                <p id="loading-detail" class="text-xs text-slate-400 mt-2 font-mono"></p>
-            </div>
-
-            <div id="error-state" class="hidden text-center py-12 bg-red-50 rounded-xl border border-red-100 p-4">
-                <p class="text-red-600 font-bold mb-2">Connection Error</p>
-                <p id="error-msg" class="text-xs text-red-500 font-mono"></p>
-                <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold">Retry</button>
-            </div>
-
-            <div id="empty-state" class="hidden text-center py-12">
-                <div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="tag" class="w-8 h-8 text-slate-400"></i></div>
-                <h3 class="text-lg font-medium text-slate-900">No items found</h3>
-                <p class="text-slate-500 text-sm mt-1">Is this the right store name?</p>
-            </div>
+            <div id="data-loading" class="text-center py-12 hidden"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div><p class="text-slate-500 text-sm font-medium">Loading products...</p></div>
+            <div id="error-state" class="hidden text-center py-12 bg-red-50 rounded-xl border border-red-100 p-4"><p class="text-red-600 font-bold mb-2">Connection Error</p><p id="error-msg" class="text-xs text-red-500 font-mono"></p><button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold">Retry</button></div>
+            <div id="empty-state" class="hidden text-center py-12"><div class="bg-slate-200 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="tag" class="w-8 h-8 text-slate-400"></i></div><h3 class="text-lg font-medium text-slate-900">No items found</h3><p class="text-slate-500 text-sm mt-1">Is this the right store name?</p></div>
             <div id="item-list" class="space-y-3"></div>
         </div>
-
-        <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden">
-            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button>
-        </div>
+        <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden"><button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button></div>
     </div>
 
     <div id="modal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center px-4 py-6 sm:p-6">
         <div onclick="window.closeModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
-            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 id="modal-title" class="font-bold text-lg text-slate-900">New Item</h3>
-                <button onclick="window.closeModal()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h3 id="modal-title" class="font-bold text-lg text-slate-900">New Item</h3><button onclick="window.closeModal()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button></div>
             <form id="item-form" class="p-6 space-y-4">
                 <input type="hidden" id="item-id">
-                <div>
-                    <label class="text-sm font-bold text-slate-700">Barcode</label>
-                    <div class="flex gap-2 mt-1">
-                        <input type="text" id="barcode-input" class="flex-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none font-mono" placeholder="Scan or Type">
-                        <button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 text-slate-600 p-3 rounded-lg"><i data-lucide="scan-line" class="w-5 h-5"></i></button>
-                    </div>
-                </div>
+                <div><label class="text-sm font-bold text-slate-700">Barcode</label><div class="flex gap-2 mt-1"><input type="text" id="barcode-input" class="flex-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none font-mono" placeholder="Scan or Type"><button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 text-slate-600 p-3 rounded-lg"><i data-lucide="scan-line" class="w-5 h-5"></i></button></div></div>
                 <div><label class="text-sm font-bold text-slate-700">Name</label><input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Item Name"></div>
                 <div class="flex gap-4">
                     <div class="flex-1"><label class="text-sm font-bold text-slate-700">Price (₦)</label><input type="number" inputmode="decimal" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00"></div>
@@ -183,23 +118,20 @@
     </div>
 
     <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-center items-center">
-        <div class="absolute top-0 w-full p-4 z-20 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent">
-            <h3 class="font-bold text-lg">Scan Barcode</h3>
-            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
-        <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
-            <div id="reader" class="w-full h-full"></div>
-            <div class="scanner-viewfinder z-10">
-                <div class="scanner-line"></div>
-                <div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div>
-            </div>
-            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button>
-        </div>
+        <div class="absolute top-0 w-full p-4 z-20 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent"><h3 class="font-bold text-lg">Scan Barcode</h3><button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button></div>
+        <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden"><div id="reader" class="w-full h-full"></div><div class="scanner-viewfinder z-10"><div class="scanner-line"></div><div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div></div><button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button></div>
     </div>
+
+    <script>
+        setTimeout(() => {
+            const loader = document.getElementById('loading-text'); const btn = document.getElementById('force-start-btn');
+            if(loader && loader.innerText.includes('Starting')) { loader.innerText = "Connection Slow?"; if(btn) btn.classList.remove('hidden'); }
+        }, 3000); 
+    </script>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
@@ -208,7 +140,7 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "Maryam2003abubakar@gmail.com"];
+        const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "maryam2003abubakar@gmail.com"];
 
         function logDebug(msg) { console.log(msg); const el = document.getElementById('debug-status'); if(el) el.innerText = msg; }
         enableIndexedDbPersistence(db).catch(err => logDebug('Persistence: ' + err.code));
@@ -231,29 +163,72 @@
                 });
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
-            // Auto Open if store saved
-            if (currentStoreName) { logDebug("Opening..."); showApp(); signInAnonymously(auth).catch(e => logDebug("Auth Pending")); return; }
-            try { await signInAnonymously(auth); } catch (error) { if (!currentStoreName) showLogin(); }
+
+            if (currentStoreName) {
+                logDebug("Fast Path: Opening App");
+                showApp();
+                // FIX: Do NOT force anonymous login immediately. 
+                // Wait to see if onAuthStateChanged or getRedirectResult fires first.
+                return;
+            }
+
+            // Check if returning from redirect
+            getRedirectResult(auth).then((result) => {
+                if (!result) {
+                    // No redirect, and no store name -> Show Login
+                    // But if we have no store name, we already showed login?
+                    // This block runs if no store name.
+                    signInAnonymously(auth).catch(e => {}); 
+                }
+            }).catch(e => {
+                logDebug("Redirect Error: " + e.message);
+                if (!currentStoreName) showLogin();
+            });
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
                 const userEmail = user.email ? user.email.toLowerCase() : "";
-                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { isAdmin = true; } 
-                else if (user.isAnonymous) { isAdmin = false; } 
-                else { alert("Access Denied: Not a Manager."); signOut(auth).then(() => signInAnonymously(auth)); }
+                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { 
+                    isAdmin = true; 
+                    logDebug("Manager Mode: Active");
+                } else if (user.isAnonymous) { 
+                    isAdmin = false; 
+                } else {
+                    alert("Access Denied: " + userEmail + " is not a Manager.");
+                    signOut(auth).then(() => signInAnonymously(auth));
+                }
                 if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             } else { 
-                currentUser = null; isAdmin = false; 
-                if (currentStoreName && navigator.onLine) { signInAnonymously(auth).catch(e => {}); } 
-                else if (!currentStoreName) { showLogin(); }
+                // NO USER DETECTED
+                currentUser = null; 
+                isAdmin = false;
+                
+                // Only force anon login if we are SURE we aren't waiting for a redirect
+                // A simple heuristic: If we are offline, or if we have been on this page for > 3 seconds without auth
+                if (currentStoreName && navigator.onLine) {
+                    // Wait a moment before forcing Anon, to give Google a chance
+                    setTimeout(() => {
+                        if (!currentUser) signInAnonymously(auth).catch(e => {});
+                    }, 2000);
+                } else if (!currentStoreName) {
+                    showLogin(); 
+                }
             }
             updateAdminUI(); 
         });
 
         function showLogin() { loadingOverlay.classList.add('hidden'); appScreen.classList.add('hidden'); loginScreen.classList.remove('hidden'); }
-        function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); startDataSync(); updateAdminUI(); engageTrap(); }
+        function showApp() { 
+            loadingOverlay.classList.add('hidden'); 
+            loginScreen.classList.add('hidden'); 
+            appScreen.classList.remove('hidden'); 
+            document.getElementById('display-store-name').innerText = currentStoreName; 
+            startDataSync(); 
+            updateAdminUI(); 
+            engageTrap(); 
+        }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
 
         function startDataSync() { 
@@ -270,7 +245,6 @@
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
                 renderCategories(); renderList();
             }, (err) => {
-                console.log("Sync Status:", err);
                 spinner.classList.add('hidden');
                 errorState.classList.remove('hidden');
                 errorMsg.innerText = err.code + ": " + err.message;
@@ -290,36 +264,10 @@
             filtered.forEach(item => { const freshness = formatFreshness(item.updatedAt || item.createdAt); const div = document.createElement('div'); div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors"; const adminButtons = isAdmin ? `<div class="flex gap-2"><button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button><button onclick="window.deleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div>` : ''; div.innerHTML = `<div class="flex-1" ${isAdmin ? `onclick="window.editItem('${item.id}')"` : ''}><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>${item.bulkPrice ? `<span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100"><i data-lucide="package" class="w-3 h-3"></i>${escape(item.bulkPrice)}</span>` : ''}</div><div class="flex items-center gap-2 mt-0.5"><div class="text-2xl font-bold text-indigo-600">₦${formatMoney(item.price)}</div>${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}</div><div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div></div>${adminButtons}`; listEl.appendChild(div); }); lucide.createIcons(); 
         }
 
-        // SCANNER
         let isFlashOn = false;
         window.startScanner = (mode) => {
             scanMode = mode; document.getElementById('scanner-overlay').classList.remove('hidden');
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const silentOsc = audioCtx.createOscillator(); silentOsc.connect(audioCtx.destination); silentOsc.start(); silentOsc.stop(audioCtx.currentTime + 0.001);
             const formats = [ Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE ];
             scanner = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
-            const config = { fps: 25, qrbox: { width: 300, height: 200 }, aspectRatio: 1.0, videoConstraints: { facingMode: "environment", focusMode: "continuous", width: { min: 640, ideal: 1920, max: 2560 }, height: { min: 480, ideal: 1080, max: 1440 } } };
-            scanner.start({ facingMode: "environment" }, config, (decodedText) => { playBeep(); window.stopScanner(); if (scanMode === 'search') { const searchInput = document.getElementById('search-input'); searchInput.value = decodedText; searchInput.dispatchEvent(new Event('input')); } else if (scanMode === 'edit') { document.getElementById('barcode-input').value = decodedText; fetchProductName(decodedText); } }, () => {}).then(() => { document.getElementById('flash-btn').classList.remove('hidden'); }).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
-        };
-        window.toggleFlash = () => { if (!scanner) return; try { isFlashOn = !isFlashOn; scanner.applyVideoConstraints({ advanced: [{ torch: isFlashOn }] }).catch(err => { isFlashOn = !isFlashOn; alert("Flash not supported."); }); const btn = document.getElementById('flash-btn'); if(isFlashOn) btn.classList.add('bg-yellow-400', 'text-black'); else btn.classList.remove('bg-yellow-400', 'text-black'); } catch(e) { alert("Flash control not available."); } };
-        window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log); else document.getElementById('scanner-overlay').classList.add('hidden'); isFlashOn = false; const btn = document.getElementById('flash-btn'); btn.classList.remove('bg-yellow-400', 'text-black'); btn.classList.add('hidden'); };
-
-        async function fetchProductName(barcode) { 
-            const existingItem = allItems.find(i => i.barcode === barcode);
-            if (existingItem) { document.getElementById('name-input').value = existingItem.name; document.getElementById('price-input').value = existingItem.price; document.getElementById('category-input').value = existingItem.category; alert("Found in your store!"); return; }
-            const currentName = document.getElementById('name-input').value.trim(); if (currentName.length > 0) return; 
-            if (!navigator.onLine) return; 
-            const nameInput = document.getElementById('name-input'); nameInput.placeholder = "Searching databases..."; nameInput.value = ""; 
-            try { let endpoints = [ `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, `https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`, `https://world.openproductsfacts.org/api/v0/product/${barcode}.json`, `https://world.openpetfoodfacts.org/api/v0/product/${barcode}.json` ]; let found = false; for (let url of endpoints) { let response = await fetch(url); let data = await response.json(); if (data.status === 1 && data.product && data.product.product_name) { nameInput.value = data.product.product_name; if (data.product.categories) { const firstCat = data.product.categories.split(',')[0].trim(); document.getElementById('category-input').value = firstCat; } found = true; break; } } if (!found) nameInput.placeholder = "Not found, type name manually"; } catch (e) { nameInput.placeholder = "Error, type name manually"; } 
-        }
-
-        document.getElementById('search-input').addEventListener('input', (e) => { const hasText = e.target.value.length > 0; document.getElementById('clear-search').classList.toggle('hidden', !hasText); renderList(); });
-        document.getElementById('clear-search').addEventListener('click', () => { document.getElementById('search-input').value = ''; document.getElementById('clear-search').classList.add('hidden'); renderList(); });
-        window.toggleAdmin = () => { if (isAdmin) { if(confirm("Lock Manager Mode?")) { signOut(auth).then(() => { signInAnonymously(auth); }); } } else { const provider = new GoogleAuthProvider(); signInWithRedirect(auth, provider).catch((error) => { alert("Login failed: " + error.message); }); } };
-        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
-        window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
-        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        lucide.createIcons();
-        init();
-    </script>
-</body>
-</html>
+            const config = { fps: 25, qrbox: { width
