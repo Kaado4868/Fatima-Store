@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v18-instant';
+const CACHE_NAME = 'fatima-store-v19-backfix';
 
 const CRITICAL_ASSETS = [
   './',
