@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.7">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.7">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.7">
+    <link rel="manifest" href="./manifest.json?v=1.8">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.8">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.8">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,8 +65,6 @@
             vertical-align: middle;
         }
         .offline .offline-badge { display: inline-block; }
-
-        /* Hide scrollbar for category chips */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -94,7 +92,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.7</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.8</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -147,8 +145,7 @@
                     </button>
                 </div>
 
-                <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
-                    </div>
+                <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1"></div>
             </div>
         </div>
 
@@ -181,7 +178,7 @@
                 <input type="hidden" id="item-id">
                 
                 <div>
-                    <label class="text-sm font-bold text-slate-700">Barcode (Optional)</label>
+                    <label class="text-sm font-bold text-slate-700">Barcode</label>
                     <div class="flex gap-2 mt-1">
                         <input type="text" id="barcode-input" class="flex-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none font-mono" placeholder="Scan or Type">
                         <button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 text-slate-600 p-3 rounded-lg">
@@ -192,21 +189,21 @@
 
                 <div>
                     <label class="text-sm font-bold text-slate-700">Name</label>
-                    <input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Item Name">
+                    <input type="text" id="name-input" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Item Name">
                 </div>
                 <div class="flex gap-4">
                     <div class="flex-1">
                         <label class="text-sm font-bold text-slate-700">Price (₦)</label>
-                        <input type="number" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00">
+                        <input type="number" inputmode="decimal" id="price-input" step="0.01" required class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="0.00">
                     </div>
                     <div class="flex-1">
                         <label class="text-sm font-bold text-slate-700">Bulk Deal</label>
-                        <input type="text" id="bulk-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="e.g. 2 for ₦50">
+                        <input type="text" id="bulk-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="e.g. 2 for 50">
                     </div>
                 </div>
                 <div>
                     <label class="text-sm font-bold text-slate-700">Category</label>
-                    <input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none" placeholder="Optional (e.g. Drinks)">
+                    <input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Optional (e.g. Drinks)">
                 </div>
                 <button type="submit" id="save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Save Item</button>
             </form>
@@ -241,7 +238,6 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // OFFLINE DATABASE
         enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
         let currentUser = null;
@@ -251,10 +247,13 @@
         let isAdmin = false;
         let selectedCategory = 'All';
         let scanner = null;
-        let scanMode = null; // 'search' or 'edit'
+        let scanMode = null; 
         const ADMIN_PIN = "Zee1179@";
 
-        // --- BACK BUTTON TRAP ---
+        // BEEP SOUND (Encoded for offline use)
+        const BEEP_AUDIO = "data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; 
+
+        // TRAP
         let lastBackPressTime = 0;
         let trapActive = false;
         function engageTrap() {
@@ -271,20 +270,10 @@
         });
         window.addEventListener('popstate', (event) => {
             trapActive = false;
-            // Handle Back Button Priorities
             const scannerOverlay = document.getElementById('scanner-overlay');
             const modal = document.getElementById('modal');
-            
-            if (!scannerOverlay.classList.contains('hidden')) {
-                window.stopScanner();
-                setTimeout(engageTrap, 50);
-                return;
-            }
-            if (!modal.classList.contains('hidden')) {
-                window.closeModal();
-                setTimeout(engageTrap, 50);
-                return;
-            }
+            if (!scannerOverlay.classList.contains('hidden')) { window.stopScanner(); setTimeout(engageTrap, 50); return; }
+            if (!modal.classList.contains('hidden')) { window.closeModal(); setTimeout(engageTrap, 50); return; }
             const now = new Date().getTime();
             if (now - lastBackPressTime < 2000) { } 
             else {
@@ -297,7 +286,7 @@
             }
         });
 
-        // --- CORE LOGIC ---
+        // APP LOGIC
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -364,7 +353,6 @@
             setTimeout(() => window.location.reload(), 100);
         });
 
-        // --- DATA SYNC & RENDERING ---
         function startDataSync() {
             if (unsubscribe) unsubscribe();
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
@@ -379,49 +367,36 @@
         }
 
         function renderCategories() {
-            // Extract unique categories
             const cats = new Set(['All']);
             allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); });
-            
             const container = document.getElementById('category-container');
             container.innerHTML = '';
-            
             cats.forEach(cat => {
                 const btn = document.createElement('button');
                 const isActive = cat === selectedCategory;
                 btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                    isActive 
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                    : 'bg-white text-slate-500 border border-slate-200'
+                    isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'
                 }`;
                 btn.innerText = cat;
-                btn.onclick = () => {
-                    selectedCategory = cat;
-                    renderCategories(); // Re-render to update styling
-                    renderList();
-                };
+                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); };
                 container.appendChild(btn);
             });
         }
 
         function formatFreshness(timestamp) {
             if (!timestamp) return { text: "Unknown date", color: "text-slate-300" };
-            
-            const date = timestamp.toDate(); // Firebase timestamp to JS Date
+            const date = timestamp.toDate(); 
             const now = new Date();
             const diffTime = Math.abs(now - date);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" };
+            if (diffDays < 30) return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" };
+            return { text: `Updated ${diffDays}d ago`, color: "text-amber-500 font-bold" };
+        }
 
-            let text = "";
-            let color = "text-slate-400";
-
-            if (diffDays <= 1) text = "Updated today";
-            else if (diffDays < 30) text = `Updated ${diffDays}d ago`;
-            else {
-                text = `Updated ${diffDays}d ago`;
-                color = "text-amber-500 font-bold"; // Warning color
-            }
-            return { text, color };
+        // IMPROVED: Currency Formatter
+        function formatMoney(amount) {
+            return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function renderList() {
@@ -431,14 +406,8 @@
             const emptyEl = document.getElementById('empty-state');
             
             const filtered = allItems.filter(item => {
-                // 1. Filter by Search (Name OR Barcode)
                 const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase();
-                const matchesSearch = searchWords.every(word => itemText.includes(word));
-                
-                // 2. Filter by Category
-                const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
-                
-                return matchesSearch && matchesCategory;
+                return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory);
             });
 
             listEl.innerHTML = '';
@@ -447,7 +416,6 @@
 
             filtered.forEach(item => {
                 const freshness = formatFreshness(item.updatedAt || item.createdAt);
-                
                 const div = document.createElement('div');
                 div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors";
                 
@@ -465,7 +433,7 @@
                             ${item.bulkPrice ? `<span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100"><i data-lucide="package" class="w-3 h-3"></i>${escape(item.bulkPrice)}</span>` : ''}
                         </div>
                         <div class="flex items-center gap-2 mt-0.5">
-                            <div class="text-2xl font-bold text-indigo-600">₦${item.price.toFixed(2)}</div>
+                            <div class="text-2xl font-bold text-indigo-600">₦${formatMoney(item.price)}</div>
                              ${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}
                         </div>
                         <div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div>
@@ -477,46 +445,30 @@
             lucide.createIcons();
         }
 
-        // --- BARCODE SCANNER LOGIC ---
+        // SCANNER
         window.startScanner = (mode) => {
             scanMode = mode;
             document.getElementById('scanner-overlay').classList.remove('hidden');
-            
             scanner = new Html5Qrcode("reader");
-            scanner.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    // SUCCESS
-                    window.stopScanner();
-                    if (scanMode === 'search') {
-                        const searchInput = document.getElementById('search-input');
-                        searchInput.value = decodedText;
-                        searchInput.dispatchEvent(new Event('input')); // Trigger search
-                    } else if (scanMode === 'edit') {
-                        document.getElementById('barcode-input').value = decodedText;
-                    }
-                },
-                (errorMessage) => { /* ignore scanning errors */ }
-            ).catch(err => {
-                alert("Camera error: " + err);
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
+                // IMPROVED: Beep sound
+                new Audio(BEEP_AUDIO).play().catch(e => {}); 
                 window.stopScanner();
-            });
+                if (scanMode === 'search') {
+                    const searchInput = document.getElementById('search-input');
+                    searchInput.value = decodedText;
+                    searchInput.dispatchEvent(new Event('input'));
+                } else if (scanMode === 'edit') {
+                    document.getElementById('barcode-input').value = decodedText;
+                }
+            }, () => {}).catch(err => { alert("Camera error: " + err); window.stopScanner(); });
         };
-
         window.stopScanner = () => {
-            if (scanner) {
-                scanner.stop().then(() => {
-                    scanner.clear();
-                    document.getElementById('scanner-overlay').classList.add('hidden');
-                    scanner = null;
-                }).catch(err => console.log(err));
-            } else {
-                document.getElementById('scanner-overlay').classList.add('hidden');
-            }
+            if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log);
+            else document.getElementById('scanner-overlay').classList.add('hidden');
         };
 
-        // --- FORMS & ACTIONS ---
+        // FORMS
         document.getElementById('search-input').addEventListener('input', (e) => {
             const hasText = e.target.value.length > 0;
             document.getElementById('clear-search').classList.toggle('hidden', !hasText);
@@ -533,20 +485,22 @@
             const submitBtn = document.getElementById('save-btn');
             const originalText = submitBtn.innerText;
             const resetButton = () => { submitBtn.disabled = false; submitBtn.innerText = originalText; };
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Saving...";
+            submitBtn.disabled = true; submitBtn.innerText = "Saving...";
 
             const id = document.getElementById('item-id').value;
-            const name = document.getElementById('name-input').value.trim();
+            // IMPROVED: Force Capitalization on Save
+            const rawName = document.getElementById('name-input').value.trim();
+            const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+            
             const price = parseFloat(document.getElementById('price-input').value);
-            const category = document.getElementById('category-input').value.trim();
+            const rawCat = document.getElementById('category-input').value.trim();
+            const category = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
+            
             const bulkPrice = document.getElementById('bulk-input').value.trim(); 
             const barcode = document.getElementById('barcode-input').value.trim();
 
             if (!name) { resetButton(); return; }
 
-            // Duplicate Check
             if (!id) {
                 const existingItem = allItems.find(i => i.name.toLowerCase() === name.toLowerCase());
                 if (existingItem) {
@@ -555,10 +509,8 @@
                     return; 
                 }
             }
-
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
-
             const itemData = { name, price, category, bulkPrice, barcode, updatedAt: serverTimestamp() };
             if (!id) itemData.createdAt = serverTimestamp();
 
@@ -567,11 +519,8 @@
                 else await addDoc(colRef, itemData);
                 alert("Saved!");
                 window.closeModal();
-            } catch(err) {
-                alert("Error: " + err.message);
-            } finally {
-                resetButton();
-            }
+            } catch(err) { alert("Error: " + err.message); } 
+            finally { resetButton(); }
         });
 
         window.openModal = () => {
@@ -579,6 +528,8 @@
             document.getElementById('item-id').value = "";
             document.getElementById('item-form').reset();
             document.getElementById('modal').classList.remove('hidden');
+            // IMPROVED: Auto Focus on Name
+            setTimeout(() => document.getElementById('name-input').focus(), 100);
         };
         window.closeModal = () => document.getElementById('modal').classList.add('hidden');
         
@@ -603,15 +554,11 @@
         };
         
         window.toggleAdmin = () => {
-            if (isAdmin) {
-                isAdmin = false;
-                alert("Manager Mode: OFF");
-            } else {
+            if (isAdmin) { isAdmin = false; alert("Manager Mode: OFF"); } 
+            else {
                 const pin = prompt("Enter Manager PIN:");
-                if (pin === ADMIN_PIN) {
-                    isAdmin = true;
-                    alert("Manager Mode: ON");
-                } else if (pin !== null) alert("Wrong PIN.");
+                if (pin === ADMIN_PIN) { isAdmin = true; alert("Manager Mode: ON"); } 
+                else if (pin !== null) alert("Wrong PIN.");
             }
             updateAdminUI();
         };
@@ -644,7 +591,6 @@
         };
 
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-
         lucide.createIcons();
         init();
     </script>
