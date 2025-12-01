@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.4">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.4">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.4">
+    <link rel="manifest" href="./manifest.json?v=3.6">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.6">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.6">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +62,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=3.4" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=3.6" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
         <button id="force-start-btn" onclick="window.forceStartApp()" class="hidden mt-6 text-sm text-indigo-600 font-bold border border-indigo-200 px-4 py-2 rounded-full">Tap to Open Anyway</button>
@@ -80,7 +80,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.4</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.6</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -99,17 +99,19 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=3.4" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=3.6" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
                                 Fatima Store
                                 <span class="offline-badge">OFFLINE</span>
                             </h1>
-                            <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
+                            <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </button>
                         <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
                     </div>
                 </div>
@@ -174,10 +176,7 @@
         </div>
         <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
             <div id="reader" class="w-full h-full"></div>
-            <div class="scanner-viewfinder z-10">
-                <div class="scanner-line"></div>
-                <div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div>
-            </div>
+            <div class="scanner-viewfinder z-10"><div class="scanner-line"></div><div class="scanner-corner tl"></div><div class="scanner-corner tr"></div><div class="scanner-corner bl"></div><div class="scanner-corner br"></div></div>
             <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button>
         </div>
     </div>
@@ -195,7 +194,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithRedirect } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
@@ -204,7 +203,6 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // --- AUTHORIZED ADMINS ---
         const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "Maryam2003abubakar@gmail.com"];
 
         enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
@@ -273,15 +271,17 @@
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                // SECURE CHECK: Is the email in the approved list?
-                if (user.email && ALLOWED_ADMINS.includes(user.email)) {
+                const userEmail = user.email ? user.email.toLowerCase() : "";
+                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) {
                     isAdmin = true;
-                } else {
-                    // Logged in but not admin (or anon)
+                    if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
+                } else if (user.isAnonymous) {
                     isAdmin = false;
+                    if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
+                } else {
+                    alert("Access Denied: This email is not a Manager.");
+                    signOut(auth).then(() => signInAnonymously(auth));
                 }
-                
-                if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             } else { 
                 currentUser = null; 
                 isAdmin = false;
@@ -391,17 +391,16 @@
         window.editItem = (id) => { if (!isAdmin) return; const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('item-id').value = id; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('category-input').value = item.category || ''; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('modal').classList.remove('hidden'); };
         window.deleteItem = async (id) => { if (!confirm("Delete this item?")) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); };
         
-        // --- GOOGLE AUTH TOGGLE ---
         window.toggleAdmin = () => {
             if (isAdmin) {
                 if(confirm("Lock Manager Mode?")) {
                     signOut(auth).then(() => {
-                        signInAnonymously(auth); // Go back to Staff
+                        signInAnonymously(auth); 
                     });
                 }
             } else {
                 const provider = new GoogleAuthProvider();
-                signInWithPopup(auth, provider).catch((error) => {
+                signInWithRedirect(auth, provider).catch((error) => {
                     alert("Login failed: " + error.message);
                 });
             }
