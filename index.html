@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=3.5.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=3.5.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=3.5.1">
+    <link rel="manifest" href="./manifest.json?v=3.5.2">
+    <link rel="icon" type="image/png" href="./logo.png?v=3.5.2">
+    <link rel="apple-touch-icon" href="./logo.png?v=3.5.2">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -79,7 +79,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v3.5.1</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v3.5.2</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -104,7 +104,7 @@
                                 Fatima Store
                                 <span class="offline-badge">OFFLINE</span>
                             </h1>
-                            <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
+                            <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -185,7 +185,6 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        // CHANGED BACK TO: signInWithPopup
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
@@ -249,10 +248,8 @@
 
             if (currentStoreName) {
                 showApp();
-                // Try anonymous login for data access
-                if (!auth.currentUser) {
-                     signInAnonymously(auth).catch(e => {});
-                }
+                // FIX: Don't aggressively overwrite auth status on load
+                // Let onAuthStateChanged handle it
                 return;
             }
 
@@ -264,8 +261,9 @@
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                // MANAGER CHECK
                 const userEmail = user.email ? user.email.toLowerCase() : "";
+                
+                // CHECK IF MANAGER
                 if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) {
                     isAdmin = true;
                 } else if (user.isAnonymous) {
@@ -279,6 +277,7 @@
             } else { 
                 currentUser = null; 
                 isAdmin = false;
+                // If not logged in, AND we have store name, THEN default to Anon
                 if (currentStoreName && navigator.onLine) {
                     signInAnonymously(auth).catch(e => {});
                 } else if (!currentStoreName) {
