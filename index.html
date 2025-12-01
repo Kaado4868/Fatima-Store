@@ -82,7 +82,7 @@
                     class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" 
                     placeholder="STORE NAME">
                 <button type="submit" id="login-btn"
-                    class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center">
                     Open Store
                 </button>
             </form>
@@ -134,7 +134,7 @@
         </div>
 
         <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden">
-            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
+            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90">
                 <i data-lucide="plus" class="w-8 h-8"></i>
             </button>
         </div>
@@ -205,46 +205,75 @@
 
         // --- BACK BUTTON TRAP ---
         let lastBackPressTime = 0;
-        
+        let trapArmed = false;
+
         function engageTrap() {
-            // Push state safely
             try {
+                // Ensure there is a base state then a trap state after it.
+                // Replace the current entry with a known base state
+                history.replaceState({ page: 'base' }, "", location.href);
+                // Push the trap entry if not already present
                 if (!history.state || history.state.page !== 'trap') {
-                    window.history.pushState({ page: 'trap' }, "", "");
+                    history.pushState({ page: 'trap' }, "", "");
                 }
-            } catch(e) {}
+                trapArmed = true;
+            } catch (e) {
+                console.warn('engageTrap error:', e);
+            }
         }
 
-        // 1. Try Immediately
+        // Call engageTrap immediately and a couple of times shortly after to handle browsers that delay pushState until user interaction.
         engageTrap();
+        setTimeout(engageTrap, 100);
+        setTimeout(engageTrap, 500);
 
-        // 2. STEALTH TRAP: Activate on ANY touch (Scroll, click, tap)
-        ['touchstart', 'click', 'scroll', 'focus'].forEach(evt => {
-            window.addEventListener(evt, engageTrap, { passive: true });
+        // Re-arm when page becomes visible (user returns to tab)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) engageTrap();
         });
 
-        window.addEventListener('popstate', (event) => {
-            const now = new Date().getTime();
+        // Optional: also re-arm on touch/click to be extra sure
+        ['touchstart', 'click', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (!trapArmed) engageTrap();
+            }, { passive: true });
+        });
+
+        // Named handler so we can remove it to allow a real exit
+        function handlePopState(event) {
+            const now = Date.now();
             const modal = document.getElementById('modal');
 
-            // 1. Close Modal
-            if (!modal.classList.contains('hidden')) {
+            // 1. If modal open, close it and re-arm (do not exit)
+            if (modal && !modal.classList.contains('hidden')) {
                 window.closeModal();
-                engageTrap(); 
+                // re-arm trap
+                setTimeout(engageTrap, 0);
                 return;
             }
 
-            // 2. Exit Logic
+            // 2. If double-pressed within 2s allow exit
             if (now - lastBackPressTime < 2000) {
-                // Exit allowed
-            } else {
-                lastBackPressTime = now;
-                const toast = document.getElementById('toast');
+                // Remove handler to allow the navigation to proceed without interference
+                window.removeEventListener('popstate', handlePopState);
+                // Programmatically go back one step to leave (there's usually one base entry behind trap)
+                history.back();
+                return;
+            }
+
+            // 3. First press: show toast and re-arm trap so user stays
+            lastBackPressTime = now;
+            const toast = document.getElementById('toast');
+            if (toast) {
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 2000);
-                engageTrap(); // Re-arm
             }
-        });
+            // Re-arm trap immediately
+            engageTrap();
+        }
+
+        // Attach handler once
+        window.addEventListener('popstate', handlePopState);
 
         // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -537,5 +566,3 @@
     </script>
 </body>
 </html>
-
-
