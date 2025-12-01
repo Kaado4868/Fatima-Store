@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: INSTANT OPEN FIX -->
-    <link rel="manifest" href="./manifest.json?v=INSTANT">
-    <link rel="icon" type="image/png" href="./logo.png?v=INSTANT">
-    <link rel="apple-touch-icon" href="./logo.png?v=INSTANT">
+    <!-- VERSION: BACK BUTTON FIX -->
+    <link rel="manifest" href="./manifest.json?v=BACKFIX">
+    <link rel="icon" type="image/png" href="./logo.png?v=BACKFIX">
+    <link rel="apple-touch-icon" href="./logo.png?v=BACKFIX">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=BACKFIX" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -186,37 +186,38 @@
         let lastBackPressTime = 0;
         
         function trapBackButton() {
-            // Only push state if we haven't already
+            // Attempt to push state immediately
             if (!history.state || history.state.page !== 'trap') {
                 window.history.pushState({ page: 'trap' }, "", "");
             }
         }
 
+        // 1. Run IMMEDIATELY on script execution
+        trapBackButton();
+
+        // 2. Also run on first click (Backup for strict browsers)
+        window.addEventListener('click', () => {
+            trapBackButton();
+        }, { once: true });
+
         window.addEventListener('popstate', (event) => {
             const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. If Modal is Open -> Close it
             if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                trapBackButton(); 
+                trapBackButton(); // Re-arm the trap
                 return;
             }
 
-            // 2. Main Screen Logic
             if (now - lastBackPressTime < 2000) {
-                // Double tap: Let it exit (Browser handles closing)
+                // Exit allowed
             } else {
-                // First tap: Show warning
                 lastBackPressTime = now;
                 showToast("Press back again to exit");
-                trapBackButton(); // Trap them again
+                trapBackButton(); // Re-arm the trap
             }
         });
-
-        // Initialize Trap IMMEDIATELY (Don't wait for load)
-        trapBackButton();
-        setInterval(trapBackButton, 2000); // Robust backup check
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -225,7 +226,6 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -234,7 +234,20 @@
         async function init() {
             try {
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./sw.js');
+                    navigator.serviceWorker.register('./sw.js').then(reg => {
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    window.location.reload();
+                                }
+                            });
+                        });
+                    });
+                    
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        window.location.reload();
+                    });
                 }
                 await signInAnonymously(auth);
             } catch (error) {
@@ -278,31 +291,6 @@
             updateAdminUI();
         }
 
-        // --- FIXED LOGIN LOGIC (No Reload) ---
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
-            if (inputName.length < 2) {
-                alert("Please enter a valid store name.");
-                return;
-            }
-            
-            // 1. Save state
-            localStorage.setItem('pk_store_name', inputName);
-            currentStoreName = inputName;
-            
-            // 2. Immediate Transition (No Reload needed)
-            document.getElementById('login-btn').innerText = "Opening...";
-            
-            // Check if user is already auth'd (likely yes)
-            if (currentUser) {
-                showApp();
-            } else {
-                // If not auth'd yet, just wait for onAuthStateChanged to trigger showApp
-                // But show loading state on button
-            }
-        });
-
         window.toggleAdmin = () => {
             if (isAdmin) {
                 isAdmin = false;
@@ -335,6 +323,26 @@
             renderList();
             lucide.createIcons();
         }
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
+            if (inputName.length < 2) {
+                alert("Please enter a valid store name.");
+                return;
+            }
+            
+            localStorage.setItem('pk_store_name', inputName);
+            document.getElementById('login-btn').innerText = "Opening...";
+            
+            // Immediate transition
+            if (currentUser) {
+                currentStoreName = inputName;
+                showApp();
+            } else {
+                // If auth is slow, let onAuthStateChanged handle it
+            }
+        });
 
         window.logout = () => {
             if (!confirm("Go back to store selection?")) return;
