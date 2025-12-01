@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=2.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=2.1">
+    <link rel="manifest" href="./manifest.json?v=2.2">
+    <link rel="icon" type="image/png" href="./logo.png?v=2.2">
+    <link rel="apple-touch-icon" href="./logo.png?v=2.2">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,35 +68,59 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Modern Scanner Styles */
-        #scanner-overlay video {
-            object-fit: cover !important;
-            border-radius: 12px;
+        /* FIXED: Scanner Video Aspect Ratio */
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            background: black;
         }
+        #reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important; /* Forces video to fill screen without stretching */
+        }
+        
         .scanner-viewfinder {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 250px;
-            height: 250px;
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            border-radius: 16px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            width: 280px;
+            height: 180px; /* Rectangular for barcodes */
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); /* Darker background */
             pointer-events: none;
+            z-index: 20;
+        }
+        .scanner-line {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: red;
+            box-shadow: 0 0 4px red;
+            animation: scan 2s infinite ease-in-out;
+            opacity: 0.7;
+        }
+        @keyframes scan {
+            0% { top: 10%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
         }
         .scanner-corner {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            border-color: #4f46e5;
+            width: 30px;
+            height: 30px;
+            border-color: white;
             border-style: solid;
             border-width: 0;
+            z-index: 21;
         }
-        .tl { top: -2px; left: -2px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 16px; }
-        .tr { top: -2px; right: -2px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 16px; }
-        .bl { bottom: -2px; left: -2px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 16px; }
-        .br { bottom: -2px; right: -2px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 16px; }
+        .tl { top: -2px; left: -2px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 12px; }
+        .tr { top: -2px; right: -2px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 12px; }
+        .bl { bottom: -2px; left: -2px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 12px; }
+        .br { bottom: -2px; right: -2px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 12px; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -125,7 +149,7 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v2.1</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v2.2</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
@@ -249,17 +273,17 @@
             <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
         
-        <div class="relative w-full h-full bg-black flex flex-col justify-center">
+        <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
             <div id="reader" class="w-full h-full"></div>
             
             <div class="scanner-viewfinder z-10">
-                <div class="scanner-corner tl"></div>
+                <div class="scanner-line"></div> <div class="scanner-corner tl"></div>
                 <div class="scanner-corner tr"></div>
                 <div class="scanner-corner bl"></div>
                 <div class="scanner-corner br"></div>
             </div>
 
-            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden">
+            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all">
                 <i data-lucide="flashlight" class="w-6 h-6 text-white"></i>
             </button>
         </div>
@@ -297,6 +321,7 @@
         let scanMode = null; 
         const ADMIN_PIN = "Zee1179@";
 
+        // SOUND FIX: Audio Context needs user gesture
         const BEEP_AUDIO = "data:audio/wav;base64,UklGRl9vT1BXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const beepSound = new Audio(BEEP_AUDIO);
 
@@ -350,7 +375,7 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // FORCE START FUNCTION (New Fix for Stuck Loading)
+        // FORCE START FUNCTION
         window.forceStartApp = () => {
             if (currentStoreName) {
                 console.log("Forcing App Start...");
@@ -376,11 +401,9 @@
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
             }
 
-            // TIMEOUT FIX: If Auth takes > 4 seconds, show Force Button
             setTimeout(() => {
-                if (!appScreen.classList.contains('hidden')) return; // Already opened
-                if (!loginScreen.classList.contains('hidden')) return; // Login visible
-                // Still stuck on loading?
+                if (!appScreen.classList.contains('hidden')) return; 
+                if (!loginScreen.classList.contains('hidden')) return; 
                 document.getElementById('force-start-btn').classList.remove('hidden');
                 document.getElementById('loading-text').innerText = "Taking too long?";
             }, 4000);
@@ -549,12 +572,20 @@
         window.startScanner = (mode) => {
             scanMode = mode;
             document.getElementById('scanner-overlay').classList.remove('hidden');
+            
+            // Unmute audio immediately on interaction
+            beepSound.volume = 1.0; 
+            beepSound.muted = false;
+            // Play a silent note to unlock audio engine on iOS/Android
+            beepSound.play().then(() => beepSound.pause()).catch(e => {});
+
             scanner = new Html5Qrcode("reader");
             
-            beepSound.volume = 1.0; 
-            
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250, aspectRatio: 1.0 }, (decodedText) => {
-                beepSound.play().catch(e => console.log("Audio blocked:", e));
+            // FASTER SCANNING (20fps)
+            scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 }, (decodedText) => {
+                beepSound.currentTime = 0;
+                beepSound.play();
+                
                 window.stopScanner();
                 if (scanMode === 'search') {
                     const searchInput = document.getElementById('search-input');
@@ -566,10 +597,7 @@
                 }
             }, () => {})
             .then(() => {
-                // FLASHLIGHT CHECK
-                // We need to wait for scanner to start to access the track
-                // This logic depends on browser support.
-                // We show the button if possible.
+                // Show Flash button if supported
                 document.getElementById('flash-btn').classList.remove('hidden');
             })
             .catch(err => { 
@@ -579,41 +607,19 @@
         };
 
         window.toggleFlash = () => {
-            // NOTE: Flash support is experimental in browsers.
-            // This attempts to toggle it using standard MediaStreamTrack constraints.
             if (!scanner) return;
-            
-            // Getting the track from Html5Qrcode is tricky without direct access, 
-            // but we can try applying video constraints if supported.
-            // A safer way in Html5Qrcode library is currently limited. 
-            // We will attempt a restart-free constraint apply if supported, 
-            // or warn user.
-            
-            // Since accessing 'track' directly from this library wrapper is hard,
-            // we will simulate toggle by re-scanning with torch constraint if simple apply fails.
-            // However, that is slow. 
-            
-            // For now, we will try the direct 'applyVideoConstraints' method if exposed.
-            // If not, we alert user.
-            
             try {
-               // This library instance allows applyVideoConstraints?
-               // The plain JS library exposes 'html5QrCode' object if we used that.
-               // We used 'new Html5Qrcode'.
-               
                isFlashOn = !isFlashOn;
                scanner.applyVideoConstraints({
                    advanced: [{ torch: isFlashOn }]
                }).catch(err => {
-                   isFlashOn = !isFlashOn; // Revert
-                   alert("Flash not supported on this device/browser.");
+                   isFlashOn = !isFlashOn;
+                   alert("Flash not supported on this device.");
                });
                
-               // Visual update
                const btn = document.getElementById('flash-btn');
                if(isFlashOn) btn.classList.add('bg-yellow-400', 'text-black');
                else btn.classList.remove('bg-yellow-400', 'text-black');
-               
             } catch(e) {
                alert("Flash control not available.");
             }
@@ -623,13 +629,12 @@
             if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log);
             else document.getElementById('scanner-overlay').classList.add('hidden');
             
-            // Reset flash UI
             isFlashOn = false;
-            document.getElementById('flash-btn').classList.remove('bg-yellow-400');
-            document.getElementById('flash-btn').classList.add('hidden');
+            const btn = document.getElementById('flash-btn');
+            btn.classList.remove('bg-yellow-400', 'text-black');
+            btn.classList.add('hidden');
         };
 
-        // FORMS
         document.getElementById('search-input').addEventListener('input', (e) => {
             const hasText = e.target.value.length > 0;
             document.getElementById('clear-search').classList.toggle('hidden', !hasText);
