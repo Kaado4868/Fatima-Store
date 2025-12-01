@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v1.1';
+const CACHE_NAME = 'fatima-store-v1';
 
 const CRITICAL_ASSETS = [
   './',
@@ -34,7 +34,7 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // 1. Navigation (For Refreshing/Opening App): Always serve index.html
+  // NAVIGATION: Always serve index.html
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.match('./index.html').then((response) => {
@@ -44,7 +44,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. Everything else (Images, Scripts): Cache First
+  // ASSETS: Cache first, Network fallback
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request);
