@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <!-- VERSION: v23 CHECK -->
-    <link rel="manifest" href="./manifest.json?v=23">
-    <link rel="icon" type="image/png" href="./logo.png?v=23">
-    <link rel="apple-touch-icon" href="./logo.png?v=23">
+    <!-- VERSION: v1.0 RESET -->
+    <link rel="manifest" href="./manifest.json?v=1.0">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.0">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,31 +16,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* FIXED TOAST ALIGNMENT */
         .toast {
             position: fixed;
-            bottom: 80px;
+            bottom: 40px; /* Moved slightly lower for better look */
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%); /* Perfect Center */
             background: #1e293b;
             color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
+            padding: 10px 20px;
+            border-radius: 999px; /* Pill shape */
             font-size: 14px;
+            font-weight: 500;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s, transform 0.3s;
             pointer-events: none;
             z-index: 100;
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            white-space: nowrap;
+            width: auto;
+            max-width: 90%;
+            justify-content: center;
         }
         .toast.show { opacity: 1; pointer-events: auto; }
+        
         .update-btn {
             background: #4f46e5;
             color: white;
             border: none;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-weight: bold;
             font-size: 12px;
@@ -54,18 +62,17 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=23" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
 
-    <!-- UPDATE TOAST -->
+    <!-- NOTIFICATIONS -->
     <div id="update-toast" class="toast">
-        <span>New Update (v23)</span>
+        <span>New Update (v1.0)</span>
         <button class="update-btn" onclick="window.location.reload()">Update</button>
     </div>
-
-    <!-- BACK TOAST -->
+    
     <div id="toast" class="toast">Press back again to exit</div>
 
     <!-- LOGIN -->
@@ -75,14 +82,14 @@
                 <img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo">
             </div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v23</p> <!-- Visual Version Check -->
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.0</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required 
                     class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" 
                     placeholder="STORE NAME">
                 <button type="submit" id="login-btn"
-                    class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center">
+                    class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">
                     Open Store
                 </button>
             </form>
@@ -95,7 +102,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
                             <div id="display-store-name" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide"></div>
@@ -134,7 +141,7 @@
         </div>
 
         <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden">
-            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90">
+            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
                 <i data-lucide="plus" class="w-8 h-8"></i>
             </button>
         </div>
@@ -193,7 +200,6 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // Persistence
         enableIndexedDbPersistence(db).catch((err) => console.log('Persistence error:', err.code));
 
         let currentUser = null;
@@ -205,77 +211,41 @@
 
         // --- BACK BUTTON TRAP ---
         let lastBackPressTime = 0;
-        let trapArmed = false;
-
+        
         function engageTrap() {
             try {
-                // Ensure there is a base state then a trap state after it.
-                // Replace the current entry with a known base state
-                history.replaceState({ page: 'base' }, "", location.href);
-                // Push the trap entry if not already present
                 if (!history.state || history.state.page !== 'trap') {
-                    history.pushState({ page: 'trap' }, "", "");
+                    window.history.pushState({ page: 'trap' }, "", "");
                 }
-                trapArmed = true;
-            } catch (e) {
-                console.warn('engageTrap error:', e);
-            }
+            } catch(e) {}
         }
 
-        // Call engageTrap immediately and a couple of times shortly after to handle browsers that delay pushState until user interaction.
         engageTrap();
-        setTimeout(engageTrap, 100);
-        setTimeout(engageTrap, 500);
-
-        // Re-arm when page becomes visible (user returns to tab)
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) engageTrap();
+        ['click', 'touchstart', 'scroll', 'focus'].forEach(evt => {
+            window.addEventListener(evt, engageTrap, { passive: true });
         });
 
-        // Optional: also re-arm on touch/click to be extra sure
-        ['touchstart', 'click', 'scroll'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                if (!trapArmed) engageTrap();
-            }, { passive: true });
-        });
-
-        // Named handler so we can remove it to allow a real exit
-        function handlePopState(event) {
-            const now = Date.now();
+        window.addEventListener('popstate', (event) => {
+            const now = new Date().getTime();
             const modal = document.getElementById('modal');
 
-            // 1. If modal open, close it and re-arm (do not exit)
-            if (modal && !modal.classList.contains('hidden')) {
+            if (!modal.classList.contains('hidden')) {
                 window.closeModal();
-                // re-arm trap
-                setTimeout(engageTrap, 0);
+                engageTrap(); 
                 return;
             }
 
-            // 2. If double-pressed within 2s allow exit
             if (now - lastBackPressTime < 2000) {
-                // Remove handler to allow the navigation to proceed without interference
-                window.removeEventListener('popstate', handlePopState);
-                // Programmatically go back one step to leave (there's usually one base entry behind trap)
-                history.back();
-                return;
-            }
-
-            // 3. First press: show toast and re-arm trap so user stays
-            lastBackPressTime = now;
-            const toast = document.getElementById('toast');
-            if (toast) {
+                // Exit
+            } else {
+                lastBackPressTime = now;
+                const toast = document.getElementById('toast');
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 2000);
+                engageTrap(); 
             }
-            // Re-arm trap immediately
-            engageTrap();
-        }
+        });
 
-        // Attach handler once
-        window.addEventListener('popstate', handlePopState);
-
-        // --- STANDARD APP LOGIC ---
         const loadingOverlay = document.getElementById('loading-overlay');
         const loginScreen = document.getElementById('login-screen');
         const appScreen = document.getElementById('app-screen');
@@ -289,13 +259,11 @@
                             const newWorker = reg.installing;
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // SHOW UPDATE BUTTON
                                     document.getElementById('update-toast').classList.add('show');
                                 }
                             });
                         });
                     });
-                    
                     navigator.serviceWorker.addEventListener('controllerchange', () => {
                         window.location.reload();
                     });
@@ -340,10 +308,9 @@
             document.getElementById('display-store-name').innerText = currentStoreName;
             startDataSync();
             updateAdminUI();
-            engageTrap(); // Ensure trap is set on screen switch
+            engageTrap();
         }
 
-        // --- FIXED LOGIN ---
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
@@ -351,15 +318,12 @@
                 alert("Please enter a valid store name.");
                 return;
             }
-            
             localStorage.setItem('pk_store_name', inputName);
             document.getElementById('login-btn').innerText = "Opening...";
-            
             setTimeout(() => {
                 currentStoreName = inputName;
                 showApp();
             }, 2000);
-            
             if (currentUser) {
                 currentStoreName = inputName;
                 showApp();
@@ -566,3 +530,5 @@
     </script>
 </body>
 </html>
+
+
