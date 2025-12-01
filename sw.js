@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v3.5-restore'; // Forces update to v3.5
+const CACHE_NAME = 'fatima-store-v3.5.3'; // New version forces refresh
 
 const CRITICAL_ASSETS = [
   './',
