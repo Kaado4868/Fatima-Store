@@ -1,5 +1,4 @@
-// VERSION: v4.0 (Forces update)
-const CACHE_NAME = 'fatima-store-v4.0';
+const CACHE_NAME = 'fatima-store-v3.6-revived'; // New name forces update
 
 const CRITICAL_ASSETS = [
   './',
@@ -13,7 +12,7 @@ const CRITICAL_ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  self.skipWaiting(); // FORCE ACTIVATION
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(CRITICAL_ASSETS);
@@ -25,7 +24,6 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        // DELETE ALL OLD CACHES (v3.7, v3.8, etc.)
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
     })
@@ -34,25 +32,18 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Navigation: Network First, then Cache (Ensures you get new HTML)
   if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request)
-        .catch(() => caches.match('./index.html'))
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
     return;
   }
-
-  // Assets: Cache First, Stale-While-Revalidate
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      const fetchPromise = fetch(e.request).then((networkResponse) => {
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, networkResponse.clone());
+      return cachedResponse || fetch(e.request).then(response => {
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, response.clone());
+          return response;
         });
-        return networkResponse;
-      });
-      return cachedResponse || fetchPromise;
+      }).catch(() => {});
     })
   );
 });
