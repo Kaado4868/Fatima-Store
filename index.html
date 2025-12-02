@@ -143,9 +143,9 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        // ADDED: setPersistence and browserLocalPersistence to imports
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+        // FIXED: Imported enableMultiTabIndexedDbPersistence instead of enableIndexedDbPersistence
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableMultiTabIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
         const app = initializeApp(firebaseConfig);
@@ -154,7 +154,14 @@
         const appId = 'fatima-store-1f63f'; 
         const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "maryam2003abubakar@gmail.com", "ahmedzainabukar@gmail.com"];
 
-        enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
+        // FIXED: Using MultiTab persistence to prevent failures on refresh
+        enableMultiTabIndexedDbPersistence(db).catch(err => {
+            if (err.code == 'failed-precondition') {
+                console.log('Persistence failed: Multiple tabs open.');
+            } else if (err.code == 'unimplemented') {
+                console.log('Persistence is not available in this browser');
+            }
+        });
 
         let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; let audioCtx = null;
 
@@ -207,20 +214,27 @@
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); 
             
-            const spinner = document.getElementById('data-loading'); const emptyEl = document.getElementById('empty-state');
-            spinner.classList.remove('hidden'); emptyEl.classList.add('hidden');
+            const spinner = document.getElementById('data-loading'); 
+            const emptyEl = document.getElementById('empty-state');
+            
+            // FIXED: Only show spinner if data takes more than 200ms (prevents flicker when cache is fast)
+            const spinnerTimeout = setTimeout(() => {
+                spinner.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+            }, 200);
 
-            // Force hide spinner after 3 seconds if db is slow (User Request)
-            const safetyTimer = setTimeout(() => { spinner.classList.add('hidden'); }, 3000);
-
-            unsubscribe = onSnapshot(colRef, { includeMetadataChanges: true }, (snapshot) => {
-                clearTimeout(safetyTimer);
+            unsubscribe = onSnapshot(colRef, (snapshot) => {
+                clearTimeout(spinnerTimeout); // Stop spinner if cache loads fast
                 spinner.classList.add('hidden');
+                
                 allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
-                renderCategories(); renderList();
+                
+                renderCategories(); 
+                renderList();
+                console.log("Data sync complete. Source: " + (snapshot.metadata.fromCache ? "Cache" : "Server"));
             }, (err) => { 
-                clearTimeout(safetyTimer);
+                clearTimeout(spinnerTimeout);
                 spinner.classList.add('hidden'); 
                 console.log(err.code);
             }); 
@@ -301,7 +315,6 @@
                 }
             } else {
                 const provider = new GoogleAuthProvider();
-                // UPDATED: Force persistence to LOCAL before signing in
                 setPersistence(auth, browserLocalPersistence)
                     .then(() => {
                         return signInWithPopup(auth, provider);
