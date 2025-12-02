@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v4.3.0';
+const CACHE_NAME = 'fatima-store-v4.4'; // Updated to match your HTML version
 
 // 1. CORE ASSETS: These MUST be cached or the app won't open.
 const CORE_ASSETS = [
@@ -59,9 +59,11 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   // 1. IGNORE FIREBASE/GOOGLE APIs
+  // Added 'google.com' to prevent SW from messing with Auth redirects
   if (url.hostname.includes('firebase') || 
       url.hostname.includes('firestore') || 
-      url.hostname.includes('googleapis')) {
+      url.hostname.includes('googleapis') ||
+      url.hostname.includes('google.com')) {
     return;
   }
 
