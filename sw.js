@@ -1,26 +1,48 @@
-const CACHE_NAME = 'fatima-store-v4.2.0'; // Updated version
+const CACHE_NAME = 'fatima-store-v4.3.0'; // Bumped version
 
-// We use specific versions to avoid redirects (which can break caching)
-const CRITICAL_ASSETS = [
+// 1. CORE ASSETS: These MUST be cached or the app won't open.
+const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
-  'https://cdn.tailwindcss.com', 
-  'https://unpkg.com/lucide@latest/dist/umd/lucide.js', // Specific file path
-  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js', // Specific version
+  './logo.png'
+];
+
+// 2. EXTERNAL ASSETS: We TRY to cache these, but if they fail, we don't break the app.
+const EXTERNAL_ASSETS = [
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/lucide@latest', 
+  'https://unpkg.com/html5-qrcode',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
 ];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Caching assets...');
-        return cache.addAll(CRITICAL_ASSETS);
-      })
-      .catch(err => console.error('Cache failed:', err)) // Log errors if install fails
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Step A: Cache Core Files (Vital)
+      try {
+        await cache.addAll(CORE_ASSETS);
+        console.log('Core assets cached successfully.');
+      } catch (err) {
+        console.error('Core assets failed:', err);
+      }
+
+      // Step B: Cache External Files (Best Effort)
+      // We loop through them one by one so one failure doesn't stop the rest
+      for (const url of EXTERNAL_ASSETS) {
+        try {
+          // specific fetch to handle CORS and redirects gracefully
+          const request = new Request(url, { mode: 'cors' });
+          const response = await fetch(request);
+          if (response.ok) {
+            await cache.put(request, response);
+          }
+        } catch (err) {
+          console.warn('Failed to cache external asset:', url, err);
+        }
+      }
+    })
   );
 });
 
@@ -45,7 +67,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. Navigation Fallback (Offline Refresh Fix)
+  // 2. Navigation Fallback (The "Offline Refresh" Fix)
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => {
@@ -68,7 +90,10 @@ self.addEventListener('fetch', (e) => {
           cache.put(e.request, response.clone());
           return response;
         });
-      }).catch(() => {});
+      }).catch(() => {
+        // If external asset fails and not in cache, just return nothing (prevents errors)
+        return null; 
+      });
     })
   );
 });
