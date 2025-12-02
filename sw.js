@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v3.5.4'; // Updated version
+const CACHE_NAME = 'fatima-store-v4.1.0'; // Bumped version
 
 const CRITICAL_ASSETS = [
   './',
@@ -41,10 +41,15 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. Navigation Fallback (For SPA)
+  // 2. Navigation Fallback (For SPA) - ROBUST FIX
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('./index.html'))
+      fetch(e.request).catch(() => {
+        // Try index.html first, then root ./
+        return caches.match('./index.html').then(response => {
+          return response || caches.match('./');
+        });
+      })
     );
     return;
   }
