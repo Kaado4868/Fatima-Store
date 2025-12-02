@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v3.5.3'; // New version forces refresh
+const CACHE_NAME = 'fatima-store-v3.5.4'; // Updated version
 
 const CRITICAL_ASSETS = [
   './',
@@ -32,12 +32,24 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+
+  // 1. IGNORE FIREBASE/GOOGLE APIs (Prevent offline conflicts)
+  if (url.hostname.includes('firebase') || 
+      url.hostname.includes('firestore') || 
+      url.hostname.includes('googleapis')) {
+    return;
+  }
+
+  // 2. Navigation Fallback (For SPA)
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => caches.match('./index.html'))
     );
     return;
   }
+
+  // 3. Cache Strategy
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       return cachedResponse || fetch(e.request).then(response => {
