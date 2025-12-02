@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v4.3.0'; // Bumped version
+const CACHE_NAME = 'fatima-store-v4.3.0';
 
 // 1. CORE ASSETS: These MUST be cached or the app won't open.
 const CORE_ASSETS = [
@@ -29,10 +29,8 @@ self.addEventListener('install', (e) => {
       }
 
       // Step B: Cache External Files (Best Effort)
-      // We loop through them one by one so one failure doesn't stop the rest
       for (const url of EXTERNAL_ASSETS) {
         try {
-          // specific fetch to handle CORS and redirects gracefully
           const request = new Request(url, { mode: 'cors' });
           const response = await fetch(request);
           if (response.ok) {
@@ -67,7 +65,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2. Navigation Fallback (The "Offline Refresh" Fix)
+  // 2. Navigation Fallback
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => {
@@ -91,7 +89,6 @@ self.addEventListener('fetch', (e) => {
           return response;
         });
       }).catch(() => {
-        // If external asset fails and not in cache, just return nothing (prevents errors)
         return null; 
       });
     })
