@@ -153,7 +153,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
-        const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "maryam2003abubakar@gmail.com"];
+        const ALLOWED_ADMINS = [
+    "abdulkadirbukar2006@gmail.com", 
+    "maryam2003abubakar@gmail.com", 
+    "ahmedzainabukar@gmail.com"
+];
+
 
         enableIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
