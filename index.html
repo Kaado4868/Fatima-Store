@@ -143,7 +143,8 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+        // ADDED: setPersistence and browserLocalPersistence to imports
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
@@ -300,9 +301,14 @@
                 }
             } else {
                 const provider = new GoogleAuthProvider();
-                signInWithPopup(auth, provider).catch((error) => {
-                    alert("Login failed: " + error.message);
-                });
+                // UPDATED: Force persistence to LOCAL before signing in
+                setPersistence(auth, browserLocalPersistence)
+                    .then(() => {
+                        return signInWithPopup(auth, provider);
+                    })
+                    .catch((error) => {
+                        alert("Login failed: " + error.message);
+                    });
             }
         };
 
@@ -314,5 +320,3 @@
     </script>
 </body>
 </html>
-
-
