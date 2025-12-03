@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.1.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.1.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.1.1">
+    <link rel="manifest" href="./manifest.json?v=1.1.3">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.1.3">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.1.3">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=1.1.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.1.3" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -59,7 +59,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.1.1</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.1.3</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -67,7 +67,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=1.1.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.1.3" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
                             <div id="role-badge" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
@@ -144,10 +144,10 @@
                         <h3 class="font-bold text-slate-900 leading-tight">Admin HQ</h3>
                         <div class="flex items-center gap-2 mt-0.5">
                             <span class="relative flex h-2 w-2">
-                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              <span id="admin-status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span id="admin-status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            <span class="text-[10px] font-medium text-slate-400 tracking-wide uppercase">System Online</span>
+                            <span id="admin-status-text" class="text-[10px] font-medium text-slate-400 tracking-wide uppercase">System Online</span>
                         </div>
                     </div>
                 </div>
@@ -291,7 +291,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, query, limit, orderBy, writeBatch, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, getDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, query, limit, orderBy, writeBatch, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
         const app = initializeApp(firebaseConfig);
@@ -330,7 +330,20 @@
         });
 
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
-        function updateOnlineStatus() { document.body.classList.toggle('offline', !navigator.onLine); }
+        function updateOnlineStatus() { 
+            const isOnline = navigator.onLine;
+            document.body.classList.toggle('offline', !isOnline);
+            const adminPing = document.getElementById('admin-status-ping');
+            const adminDot = document.getElementById('admin-status-dot');
+            const adminText = document.getElementById('admin-status-text');
+            if (adminPing && adminDot && adminText) {
+                if (isOnline) {
+                    adminPing.classList.remove('hidden'); adminDot.classList.replace('bg-red-500', 'bg-emerald-500'); adminText.innerText = "System Online"; adminText.classList.replace('text-red-400', 'text-slate-400');
+                } else {
+                    adminPing.classList.add('hidden'); adminDot.classList.replace('bg-emerald-500', 'bg-red-500'); adminText.innerText = "System Offline"; adminText.classList.replace('text-slate-400', 'text-red-400');
+                }
+            }
+        }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
 
         async function init() {
@@ -364,9 +377,18 @@
         function getCollectionRef() { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); return collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); }
         function getLogCollectionRef() { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); return collection(db, 'artifacts', appId, 'public', 'logs', `pk_store_${safeName}`); }
 
-        async function logAction(action, details) {
+        // Updated Log Action to accept META data (id, previous data)
+        async function logAction(action, details, meta = {}) {
             if (!isSuperAdmin && !isManager) return; 
-            try { await addDoc(getLogCollectionRef(), { action: action, details: details, user: currentUser.email || "Unknown", timestamp: serverTimestamp() }); } catch(e) { console.error("Log failed", e); }
+            try { 
+                await addDoc(getLogCollectionRef(), { 
+                    action: action, 
+                    details: details, 
+                    user: currentUser.email || "Unknown", 
+                    timestamp: serverTimestamp(),
+                    meta: meta // Store recovery data
+                }); 
+            } catch(e) { console.error("Log failed", e); }
         }
 
         function startDataSync() { 
@@ -414,7 +436,13 @@
 
         window.softDeleteItem = async (id) => { 
             if (!isManager || !confirm("Move to Trash?")) return;
-            try { await updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }); await logAction("Soft Delete", `Deleted item ID: ${id}`); } catch(e) { alert(e.message); } 
+            const item = visibleItems.find(i => i.id === id);
+            const itemName = item ? item.name : "Unknown Item";
+            try { 
+                await updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }); 
+                // Store ID for revert
+                await logAction("Soft Delete", `Deleted '${itemName}'`, { itemId: id }); 
+            } catch(e) { alert(e.message); } 
         };
 
         document.getElementById('item-form').addEventListener('submit', async (e) => {
@@ -424,8 +452,18 @@
             const data = { barcode: document.getElementById('barcode-input').value.trim(), name: document.getElementById('name-input').value.trim(), price: parseFloat(document.getElementById('price-input').value), bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), isDeleted: false, updatedAt: serverTimestamp() };
             if (!id) data.createdAt = serverTimestamp();
             try {
-                if (id) { await updateDoc(doc(getCollectionRef(), id), data); await logAction("Edit", data.name); } 
-                else { await addDoc(getCollectionRef(), data); await logAction("Create", data.name); }
+                if (id) { 
+                    // Capture PREVIOUS data for revert
+                    const oldItem = allItems.find(i => i.id === id);
+                    await updateDoc(doc(getCollectionRef(), id), data); 
+                    // Sanitize old item (remove ID from data body) to avoid duplicates
+                    const oldData = { ...oldItem }; delete oldData.id;
+                    await logAction("Edit", `Updated '${data.name}'`, { itemId: id, previousData: oldData }); 
+                } 
+                else { 
+                    const docRef = await addDoc(getCollectionRef(), data); 
+                    await logAction("Create", `Created '${data.name}'`, { itemId: docRef.id }); 
+                }
                 window.closeModal('modal');
             } catch (err) { alert(err.message); }
             btn.disabled = false; btn.innerText = "Save Item";
@@ -444,16 +482,13 @@
 
         function updateStats() {
             if (!isSuperAdmin) return;
-            // UPDATE: Detailed Stats
             document.getElementById('stat-active-count').innerText = visibleItems.length;
-            document.getElementById('stat-db-count').innerText = allItems.length; // The requested "Database Total"
+            document.getElementById('stat-db-count').innerText = allItems.length; 
             document.getElementById('stat-trash-count').innerText = deletedItems.length;
-            
             if (visibleItems.length > 0) { const total = visibleItems.reduce((acc, curr) => acc + (curr.price || 0), 0); document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; }
             else { document.getElementById('stat-avg').innerText = '₦0'; }
         }
 
-        // Feature: Recent Logs on Dashboard
         async function loadRecentLogs() {
              const list = document.getElementById('stats-recent-logs');
              try {
@@ -471,25 +506,87 @@
              } catch(e) {}
         }
 
+        // Updated Log Loader with Revert Button
         async function loadLogs() {
             const list = document.getElementById('logs-list'); list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>';
             try {
                 const snap = await getDocs(query(getLogCollectionRef(), orderBy('timestamp', 'desc'), limit(50)));
                 list.innerHTML = '';
                 if (snap.empty) { list.innerHTML = '<div class="text-center text-slate-400 text-sm">No logs found</div>'; return; }
-                snap.forEach(doc => { const d = doc.data(); const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now'; const div = document.createElement('div'); div.className = "bg-white p-3 rounded-lg border border-slate-100 text-sm shadow-sm"; div.innerHTML = `<div class="flex justify-between font-bold text-slate-700"><span>${d.action}</span><span class="text-[10px] text-slate-400 font-normal">${date}</span></div><div class="text-slate-600 mt-1">${d.details}</div><div class="text-[10px] text-indigo-500 mt-1 font-medium">${d.user}</div>`; list.appendChild(div); });
+                snap.forEach(doc => { 
+                    const d = doc.data(); 
+                    const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now'; 
+                    // Check if reversible
+                    let revertBtn = '';
+                    if (d.meta && d.meta.itemId && ['Edit', 'Soft Delete', 'Restore', 'Create'].includes(d.action)) {
+                         revertBtn = `<button onclick="window.revertAction('${doc.id}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Revert Action"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>`;
+                    }
+                    const div = document.createElement('div'); 
+                    div.className = "bg-white p-3 rounded-lg border border-slate-100 text-sm shadow-sm flex justify-between items-start"; 
+                    div.innerHTML = `<div class="flex-1"><div class="flex justify-between font-bold text-slate-700"><span>${d.action}</span><span class="text-[10px] text-slate-400 font-normal ml-2">${date}</span></div><div class="text-slate-600 mt-1">${d.details}</div><div class="text-[10px] text-indigo-500 mt-1 font-medium">${d.user}</div></div>${revertBtn}`; 
+                    list.appendChild(div); 
+                });
+                lucide.createIcons();
             } catch(e) { list.innerHTML = `<div class="text-red-500 text-sm text-center">Update Firestore Rules to view logs.</div>`; }
         }
+
+        // NEW: Revert Logic
+        window.revertAction = async (logId) => {
+            if (!confirm("Are you sure you want to undo this action?")) return;
+            try {
+                const logSnap = await getDoc(doc(getLogCollectionRef(), logId));
+                if (!logSnap.exists()) return alert("Log not found");
+                const logData = logSnap.data();
+                const meta = logData.meta;
+                if (!meta || !meta.itemId) return alert("Cannot revert: missing data.");
+
+                const itemRef = doc(getCollectionRef(), meta.itemId);
+
+                if (logData.action === 'Edit') {
+                    if (!meta.previousData) return alert("Cannot revert: no backup data.");
+                    await updateDoc(itemRef, meta.previousData);
+                    await logAction("Revert", `Undid edit on item`, { itemId: meta.itemId });
+                } 
+                else if (logData.action === 'Soft Delete') {
+                    await updateDoc(itemRef, { isDeleted: false });
+                    await logAction("Revert", `Restored item (Undo Delete)`, { itemId: meta.itemId });
+                }
+                else if (logData.action === 'Restore') {
+                    await updateDoc(itemRef, { isDeleted: true });
+                    await logAction("Revert", `Deleted item (Undo Restore)`, { itemId: meta.itemId });
+                }
+                else if (logData.action === 'Create') {
+                    await updateDoc(itemRef, { isDeleted: true });
+                    await logAction("Revert", `Deleted created item`, { itemId: meta.itemId });
+                }
+                
+                alert("Action reverted successfully.");
+                loadLogs(); // Refresh UI
+            } catch(e) {
+                alert("Revert failed: " + e.message);
+            }
+        };
 
         function renderTrash() {
             const list = document.getElementById('trash-list'); list.innerHTML = '';
             if (deletedItems.length === 0) { list.innerHTML = '<div class="text-center text-slate-400 py-10 flex flex-col items-center"><i data-lucide="trash" class="w-8 h-8 mb-2 opacity-50"></i><span class="text-sm">Recycle bin is empty</span></div>'; return; }
             deletedItems.forEach(item => { const div = document.createElement('div'); div.className = "bg-white p-3 rounded-lg border border-rose-100 flex justify-between items-center shadow-sm"; div.innerHTML = `<div><div class="font-bold text-slate-800">${escape(item.name)}</div><div class="text-xs text-rose-400 font-medium">Deleted</div></div><button onclick="window.restoreItem('${item.id}')" class="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg border border-indigo-200 text-xs font-bold hover:bg-indigo-100 transition-colors">Restore</button>`; list.appendChild(div); });
         }
-        window.restoreItem = async (id) => { try { await updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }); await logAction("Restore", `Restored item ID: ${id}`); renderTrash(); } catch(e) { alert(e.message); } };
-        window.emptyTrash = async () => { if(confirm("PERMANENTLY delete trash?")) { const batch = writeBatch(db); deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); await batch.commit(); await logAction("Empty Trash", `Deleted ${deletedItems.length} items`); renderTrash(); } };
+        
+        window.restoreItem = async (id) => { 
+            const item = deletedItems.find(i => i.id === id);
+            const itemName = item ? item.name : "Unknown Item";
+            try { 
+                await updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }); 
+                // Log ID for revert
+                await logAction("Restore", `Restored '${itemName}'`, { itemId: id }); 
+                renderTrash(); 
+            } catch(e) { alert(e.message); } 
+        };
+        
+        window.emptyTrash = async () => { if(confirm("PERMANENTLY delete trash?")) { const batch = writeBatch(db); deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); await batch.commit(); await logAction("Empty Trash", `Permanently deleted ${deletedItems.length} items`); renderTrash(); } };
 
-        // --- NEW TOOL LOGIC ---
+        // --- TOOL LOGIC ---
         window.setBulkScope = (scope) => {
             bulkScope = scope;
             document.querySelectorAll('.scope-btn').forEach(b => { 
@@ -510,13 +607,11 @@
         };
 
         function renderTools() {
-            // Populate Categories
             const catSelect = document.getElementById('tool-category-input');
             const cats = new Set(); visibleItems.forEach(i => { if(i.category) cats.add(i.category.trim()); });
             catSelect.innerHTML = '<option value="">Choose Category...</option>';
             cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); });
 
-            // Populate Manual List
             const manList = document.getElementById('manual-list');
             manList.innerHTML = '';
             visibleItems.forEach(item => {
@@ -544,33 +639,35 @@
             if (isNaN(val) || val === 0) return alert("Enter percentage");
 
             let targetItems = [];
+            let logDetail = "";
             
             if (bulkScope === 'all') {
                 targetItems = visibleItems;
+                logDetail = `${val}% on All Items`;
             } else if (bulkScope === 'category') {
                 const cat = document.getElementById('tool-category-input').value;
                 if (!cat) return alert("Select a category");
                 targetItems = visibleItems.filter(i => i.category === cat);
+                logDetail = `${val}% on Category: ${cat}`;
             } else if (bulkScope === 'manual') {
                 const checked = Array.from(document.querySelectorAll('.manual-check:checked')).map(c => c.value);
                 if (checked.length === 0) return alert("Select items");
                 targetItems = visibleItems.filter(i => checked.includes(i.id));
+                logDetail = `${val}% on ${checked.length} Manually Selected Items`;
             }
 
             if (!confirm(`Apply ${val}% change to ${targetItems.length} items?`)) return;
 
             try {
                 const batch = writeBatch(db);
-                // Batch limit 500
                 targetItems.slice(0, 490).forEach(item => {
                     const newPrice = Math.ceil(item.price * (1 + (val / 100)));
                     batch.update(doc(getCollectionRef(), item.id), { price: newPrice, updatedAt: serverTimestamp() });
                 });
                 await batch.commit();
-                await logAction("Bulk Update", `${val}% on ${targetItems.length} items (${bulkScope})`);
+                await logAction("Bulk Update", logDetail);
                 alert("Updated!");
                 document.getElementById('inflation-input').value = '';
-                // Reset manual
                 document.querySelectorAll('.manual-check').forEach(c => c.checked = false);
                 window.updateManualCount();
             } catch(e) { alert("Error: " + e.message); }
