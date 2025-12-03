@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=5.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=5.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=5.0">
+    <link rel="manifest" href="./manifest.json?v=5.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=5.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=5.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,12 +26,14 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         #reader { width: 100% !important; height: 100% !important; background: black; border: none !important; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-        #reader__scan_region { display: none !important; }
         .scanner-viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; height: 200px; pointer-events: none; z-index: 20; }
         .scanner-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #ef4444; box-shadow: 0 0 4px #ef4444; animation: scan 1.5s infinite ease-in-out; opacity: 0.9; }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
         /* Tabs for Admin */
         .tab-btn.active { border-bottom: 2px solid #4f46e5; color: #4f46e5; }
+        /* Custom Checkbox for Manual Select */
+        .custom-checkbox:checked + div { background-color: #eff6ff; border-color: #6366f1; }
+        .custom-checkbox:checked + div .check-icon { display: block; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -39,7 +41,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=5.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=5.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -51,7 +53,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v5.0 Super Admin</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v5.1 Super Admin</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
@@ -65,7 +67,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=5.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=5.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
                             <div id="role-badge" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
@@ -73,7 +75,6 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="window.openSuperAdmin()" id="super-admin-btn" class="hidden text-amber-500 hover:text-amber-600 p-2 rounded-full border border-amber-100 bg-amber-50 relative animate-pulse"><i data-lucide="shield-alert" class="w-4 h-4"></i></button>
-                        
                         <button onclick="window.toggleAuth()" id="auth-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative"><i data-lucide="lock" class="w-4 h-4"></i></button>
                         <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
                     </div>
@@ -162,13 +163,6 @@
                             <div class="text-2xl font-black text-indigo-600" id="stat-avg">₦0</div>
                         </div>
                     </div>
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase mb-1">Database Size</div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-xl font-bold text-slate-800" id="stat-db-size">Checking...</div>
-                            <span class="text-xs text-slate-400">(Public Documents)</span>
-                        </div>
-                    </div>
                 </div>
 
                 <div id="view-logs" class="hidden space-y-2">
@@ -184,18 +178,41 @@
                     <div id="trash-list" class="space-y-2"></div>
                 </div>
 
-                <div id="view-tools" class="hidden space-y-6">
-                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
-                        <h4 class="font-bold text-amber-800 flex items-center gap-2"><i data-lucide="trending-up" class="w-5 h-5"></i> Bulk Price Update</h4>
-                        <p class="text-xs text-amber-700 mt-1">Apply inflation or discounts to ALL items at once.</p>
+                <div id="view-tools" class="hidden space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-2 mb-4"><i data-lucide="trending-up" class="w-5 h-5 text-amber-500"></i> Bulk Price Update</h4>
                         
-                        <div class="mt-4">
+                        <div class="mb-4">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Apply To</label>
+                            <div class="grid grid-cols-3 gap-2 mt-1">
+                                <button onclick="window.setBulkScope('all')" id="scope-all" class="scope-btn p-2 rounded-lg border border-indigo-600 bg-indigo-50 text-indigo-700 text-xs font-bold">All Items</button>
+                                <button onclick="window.setBulkScope('category')" id="scope-category" class="scope-btn p-2 rounded-lg border border-slate-200 text-slate-500 text-xs font-bold">Category</button>
+                                <button onclick="window.setBulkScope('manual')" id="scope-manual" class="scope-btn p-2 rounded-lg border border-slate-200 text-slate-500 text-xs font-bold">Manual</button>
+                            </div>
+                        </div>
+
+                        <div id="tool-selection-area" class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            
+                            <div id="tool-cat-select" class="hidden">
+                                <label class="text-xs font-bold text-slate-700">Select Category</label>
+                                <select id="tool-category-input" class="w-full mt-1 p-2 rounded border border-slate-300 text-sm bg-white"></select>
+                            </div>
+
+                            <div id="tool-manual-select" class="hidden">
+                                <label class="text-xs font-bold text-slate-700 mb-1 block">Select Items (<span id="manual-count">0</span>)</label>
+                                <div id="manual-list" class="h-48 overflow-y-auto space-y-1 pr-1"></div>
+                            </div>
+                            
+                            <div id="tool-all-msg" class="text-xs text-slate-500 italic text-center">Applying to all items in store.</div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-4">
                             <label class="text-xs font-bold text-amber-800">Percentage Change (%)</label>
                             <div class="flex gap-2 mt-1">
                                 <input type="number" id="inflation-input" class="flex-1 p-2 rounded-lg border border-amber-300 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="e.g. 10 or -5">
-                                <button onclick="window.applyBulkUpdate()" class="bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Apply</button>
+                                <button onclick="window.applyBulkUpdate()" class="bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg shadow-amber-600/20 active:scale-95 transition-transform">Apply</button>
                             </div>
-                            <p class="text-[10px] text-amber-600 mt-2">Example: Enter <strong>10</strong> to increase all prices by 10%. Enter <strong>-5</strong> to decrease.</p>
+                            <p class="text-[10px] text-amber-600 mt-2">Enter <strong>10</strong> to increase by 10%. Enter <strong>-5</strong> to decrease.</p>
                         </div>
                     </div>
                 </div>
@@ -233,32 +250,25 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
 
-        // --- ROLE CONFIGURATION ---
         const SUPER_ADMIN_EMAIL = "abdulkadirbukar2006@gmail.com";
         const MANAGERS = ["ahmedzainabukar@gmail.com", "maryam2003abubakar@gmail.com"];
         
-        // Persistence
         enableMultiTabIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
 
-        // State
         let currentUser = null; 
         let currentStoreName = localStorage.getItem('pk_store_name'); 
         let unsubscribe = null; 
-        let allItems = []; // Raw data including deleted
-        let visibleItems = []; // Filtered data
-        let deletedItems = []; // Trash data
-        
-        let isSuperAdmin = false; 
-        let isManager = false; 
-        
+        let allItems = []; let visibleItems = []; let deletedItems = [];
+        let isSuperAdmin = false; let isManager = false; 
         let selectedCategory = 'All'; 
         let scanner = null; let scanMode = null; let audioCtx = null;
         let lastBackPressTime = 0; let trapActive = false;
+        
+        // Tool State
+        let bulkScope = 'all'; 
 
-        // Sound & Hardware
         function playBeep() { try { if (navigator.vibrate) navigator.vibrate(200); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.type = 'square'; oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.15); } catch (e) { console.error("Sound Fail", e); } }
 
-        // Back Button Logic
         function engageTrap() { if (trapActive) return; try { if (!history.state || history.state.page !== 'trap') { window.history.pushState({ page: 'trap' }, "", ""); trapActive = true; } } catch(e) { trapActive = false; } }
         ['touchstart', 'touchmove', 'click', 'keydown'].forEach(evt => { window.addEventListener(evt, () => { if (!trapActive) engageTrap(); }, { passive: true, capture: true }); });
         window.addEventListener('popstate', (event) => { 
@@ -270,7 +280,6 @@
             if (now - lastBackPressTime < 2000) { } else { lastBackPressTime = now; const t = document.getElementById('toast'); t.innerText = "Press back again to exit"; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); setTimeout(engageTrap, 50); } 
         });
 
-        // Initialization
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
         function updateOnlineStatus() { document.body.classList.toggle('offline', !navigator.onLine); }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
@@ -285,17 +294,12 @@
             if (currentStoreName) { showApp(); } else { showLogin(); }
         }
 
-        // --- AUTH & ROLES ---
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
                 const email = user.email ? user.email.toLowerCase() : "";
-                
-                // Determine Roles
                 isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
                 isManager = isSuperAdmin || MANAGERS.map(e=>e.toLowerCase()).includes(email);
-                
-                console.log(`Role: ${isSuperAdmin ? 'Super Admin' : (isManager ? 'Manager' : 'Guest')}`);
             } else { 
                 currentUser = null; isSuperAdmin = false; isManager = false;
                 if (currentStoreName && navigator.onLine) signInAnonymously(auth).catch(e => console.error(e));
@@ -308,350 +312,223 @@
         function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); startDataSync(); updateUI(); engageTrap(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
 
-        // --- DATA SYNC & LOGIC ---
-        function getCollectionRef() {
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
-            return collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
-        }
-        
-        // New: Log Collection Ref
-        function getLogCollectionRef() {
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
-            return collection(db, 'artifacts', appId, 'public', 'logs', `pk_store_${safeName}`);
-        }
+        function getCollectionRef() { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); return collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); }
+        function getLogCollectionRef() { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); return collection(db, 'artifacts', appId, 'public', 'logs', `pk_store_${safeName}`); }
 
-        // Feature 1: Audit Logger
         async function logAction(action, details) {
-            if (!isSuperAdmin && !isManager) return; // Only log authorized changes
-            try {
-                const logRef = getLogCollectionRef();
-                await addDoc(logRef, {
-                    action: action,
-                    details: details,
-                    user: currentUser.email || "Unknown Manager",
-                    timestamp: serverTimestamp()
-                });
-            } catch(e) { console.error("Logging failed", e); }
+            if (!isSuperAdmin && !isManager) return; 
+            try { await addDoc(getLogCollectionRef(), { action: action, details: details, user: currentUser.email || "Unknown", timestamp: serverTimestamp() }); } catch(e) { console.error("Log failed", e); }
         }
 
         function startDataSync() { 
             if (unsubscribe) unsubscribe(); 
-            const colRef = getCollectionRef();
-            const spinner = document.getElementById('data-loading'); 
-            const emptyEl = document.getElementById('empty-state');
-            
+            const spinner = document.getElementById('data-loading'); const emptyEl = document.getElementById('empty-state');
             const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
 
-            unsubscribe = onSnapshot(colRef, (snapshot) => {
-                clearTimeout(spinnerTimeout);
-                spinner.classList.add('hidden');
-                
+            unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
+                clearTimeout(spinnerTimeout); spinner.classList.add('hidden');
                 allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
-                
-                // Feature 3 Logic: Separate Active and Trash
                 visibleItems = allItems.filter(i => !i.isDeleted);
                 deletedItems = allItems.filter(i => i.isDeleted);
-
-                renderCategories(); 
-                renderList();
-                updateStats(); // Feature 2: Live Stats
-            }, (err) => { 
-                clearTimeout(spinnerTimeout);
-                spinner.classList.add('hidden'); 
+                renderCategories(); renderList(); updateStats();
             }); 
         }
 
-        // --- UI RENDERING ---
         function renderCategories() { const cats = new Set(['All']); visibleItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
         
-        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; }
         function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
         function renderList() { 
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim(); const searchWords = rawTerm.split(" ").filter(word => word.length > 0); const listEl = document.getElementById('item-list'); const emptyEl = document.getElementById('empty-state'); 
-            
-            // Filter Visible Items Only
             const filtered = visibleItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
-            
-            listEl.innerHTML = ''; 
-            if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; } 
-            emptyEl.classList.add('hidden'); 
-            
+            listEl.innerHTML = ''; if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; } emptyEl.classList.add('hidden'); 
             filtered.forEach(item => { 
                 const freshness = formatFreshness(item.updatedAt || item.createdAt); 
-                const div = document.createElement('div'); 
-                div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors"; 
-                // Only Manager/SuperAdmin can see Edit/Delete
+                const div = document.createElement('div'); div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors"; 
                 const adminButtons = isManager ? `<div class="flex gap-2"><button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button><button onclick="window.softDeleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div>` : ''; 
-                
                 div.innerHTML = `<div class="flex-1" ${isManager ? `onclick="window.editItem('${item.id}')"` : ''}><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>${item.bulkPrice ? `<span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100"><i data-lucide="package" class="w-3 h-3"></i>${escape(item.bulkPrice)}</span>` : ''}</div><div class="flex items-center gap-2 mt-0.5"><div class="text-2xl font-bold text-indigo-600">₦${formatMoney(item.price)}</div>${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}</div><div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div></div>${adminButtons}`; 
                 listEl.appendChild(div); 
             }); 
             lucide.createIcons(); 
         }
 
-        // --- CRUD OPERATIONS ---
+        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; }
+
         window.openItemModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
         window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
         
         window.editItem = (id) => { 
-            if (!isManager) return; 
-            const item = visibleItems.find(i => i.id === id); if (!item) return; 
-            document.getElementById('item-id').value = item.id; 
-            document.getElementById('barcode-input').value = item.barcode || ''; 
-            document.getElementById('name-input').value = item.name; 
-            document.getElementById('price-input').value = item.price; 
-            document.getElementById('bulk-input').value = item.bulkPrice || ''; 
-            document.getElementById('category-input').value = item.category || ''; 
-            document.getElementById('modal-title').innerText = "Edit Item"; 
-            document.getElementById('modal').classList.remove('hidden'); 
+            if (!isManager) return; const item = visibleItems.find(i => i.id === id); if (!item) return; 
+            document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); 
         };
 
-        // Soft Delete (Feature 3)
         window.softDeleteItem = async (id) => { 
-            if (!isManager) return;
-            if (confirm("Move to Trash?")) { 
-                try { 
-                    const colRef = getCollectionRef();
-                    const item = visibleItems.find(i=>i.id===id);
-                    await updateDoc(doc(colRef, id), { isDeleted: true, updatedAt: serverTimestamp() }); 
-                    await logAction("Soft Delete", `Moved '${item.name}' to trash`);
-                } catch(e) { alert("Error: " + e.message); } 
-            } 
+            if (!isManager || !confirm("Move to Trash?")) return;
+            try { await updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }); await logAction("Soft Delete", `Deleted item ID: ${id}`); } catch(e) { alert(e.message); } 
         };
 
         document.getElementById('item-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!isManager) return;
+            e.preventDefault(); if (!isManager) return;
             const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving...";
             const id = document.getElementById('item-id').value;
-            const data = {
-                barcode: document.getElementById('barcode-input').value.trim(),
-                name: document.getElementById('name-input').value.trim(),
-                price: parseFloat(document.getElementById('price-input').value),
-                bulkPrice: document.getElementById('bulk-input').value.trim(),
-                category: document.getElementById('category-input').value.trim(),
-                isDeleted: false, // Ensure it's visible
-                updatedAt: serverTimestamp()
-            };
+            const data = { barcode: document.getElementById('barcode-input').value.trim(), name: document.getElementById('name-input').value.trim(), price: parseFloat(document.getElementById('price-input').value), bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), isDeleted: false, updatedAt: serverTimestamp() };
             if (!id) data.createdAt = serverTimestamp();
             try {
-                const colRef = getCollectionRef();
-                if (id) { 
-                    await updateDoc(doc(colRef, id), data); 
-                    await logAction("Edit Item", `Updated ${data.name} - ₦${data.price}`);
-                } else { 
-                    await addDoc(colRef, data); 
-                    await logAction("Create Item", `Created ${data.name} - ₦${data.price}`);
-                }
+                if (id) { await updateDoc(doc(getCollectionRef(), id), data); await logAction("Edit", data.name); } 
+                else { await addDoc(getCollectionRef(), data); await logAction("Create", data.name); }
                 window.closeModal('modal');
-            } catch (err) { alert("Error saving: " + err.message); }
+            } catch (err) { alert(err.message); }
             btn.disabled = false; btn.innerText = "Save Item";
         });
 
-        // --- SUPER ADMIN FEATURES ---
-        
-        window.openSuperAdmin = () => {
-            if (!isSuperAdmin) return;
-            document.getElementById('admin-modal').classList.remove('hidden');
-            window.switchAdminTab('stats');
-        };
-
+        // --- SUPER ADMIN ---
+        window.openSuperAdmin = () => { if (isSuperAdmin) { document.getElementById('admin-modal').classList.remove('hidden'); window.switchAdminTab('stats'); } };
         window.switchAdminTab = (tab) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            ['stats','logs','trash','tools'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            
-            if (tab === 'logs') loadLogs();
-            if (tab === 'trash') renderTrash();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(`tab-${tab}`).classList.add('active');
+            ['stats','logs','trash','tools'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden')); document.getElementById(`view-${tab}`).classList.remove('hidden');
+            if (tab === 'logs') loadLogs(); if (tab === 'trash') renderTrash(); if (tab === 'tools') renderTools();
         };
 
-        // Feature 2: Stats Logic
         function updateStats() {
             if (!isSuperAdmin) return;
             document.getElementById('stat-count').innerText = visibleItems.length;
-            document.getElementById('stat-db-size').innerText = allItems.length;
-            
-            if (visibleItems.length > 0) {
-                const total = visibleItems.reduce((acc, curr) => acc + (curr.price || 0), 0);
-                const avg = total / visibleItems.length;
-                document.getElementById('stat-avg').innerText = `₦${Math.floor(avg).toLocaleString()}`;
-            }
+            if (visibleItems.length > 0) { const total = visibleItems.reduce((acc, curr) => acc + (curr.price || 0), 0); document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; }
         }
 
-        // Feature 1: Logs Logic
         async function loadLogs() {
-            const list = document.getElementById('logs-list');
-            list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>';
+            const list = document.getElementById('logs-list'); list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>';
             try {
-                const q = query(getLogCollectionRef(), orderBy('timestamp', 'desc'), limit(50));
-                const snap = await getDocs(q);
+                const snap = await getDocs(query(getLogCollectionRef(), orderBy('timestamp', 'desc'), limit(50)));
                 list.innerHTML = '';
                 if (snap.empty) { list.innerHTML = '<div class="text-center text-slate-400 text-sm">No logs found</div>'; return; }
-                
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now';
-                    const div = document.createElement('div');
-                    div.className = "bg-white p-3 rounded-lg border border-slate-100 text-sm";
-                    div.innerHTML = `<div class="flex justify-between font-bold text-slate-700"><span>${d.action}</span><span class="text-[10px] text-slate-400 font-normal">${date}</span></div><div class="text-slate-600 mt-1">${d.details}</div><div class="text-[10px] text-indigo-500 mt-1">${d.user}</div>`;
-                    list.appendChild(div);
-                });
-            } catch(e) { list.innerHTML = `<div class="text-red-500 text-sm">Error loading logs: ${e.message}</div>`; }
+                snap.forEach(doc => { const d = doc.data(); const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now'; const div = document.createElement('div'); div.className = "bg-white p-3 rounded-lg border border-slate-100 text-sm"; div.innerHTML = `<div class="flex justify-between font-bold text-slate-700"><span>${d.action}</span><span class="text-[10px] text-slate-400 font-normal">${date}</span></div><div class="text-slate-600 mt-1">${d.details}</div><div class="text-[10px] text-indigo-500 mt-1">${d.user}</div>`; list.appendChild(div); });
+            } catch(e) { list.innerHTML = `<div class="text-red-500 text-sm text-center">Update Firestore Rules to view logs.</div>`; }
         }
 
-        // Feature 3: Trash Logic
         function renderTrash() {
-            const list = document.getElementById('trash-list');
-            list.innerHTML = '';
+            const list = document.getElementById('trash-list'); list.innerHTML = '';
             if (deletedItems.length === 0) { list.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">Trash is empty</div>'; return; }
-            
-            deletedItems.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center";
-                div.innerHTML = `<div><div class="font-bold text-slate-800">${escape(item.name)}</div><div class="text-xs text-slate-500">Deleted</div></div><button onclick="window.restoreItem('${item.id}')" class="bg-white text-indigo-600 px-3 py-1 rounded border border-indigo-200 text-xs font-bold">Restore</button>`;
-                list.appendChild(div);
-            });
+            deletedItems.forEach(item => { const div = document.createElement('div'); div.className = "bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center"; div.innerHTML = `<div><div class="font-bold text-slate-800">${escape(item.name)}</div><div class="text-xs text-slate-500">Deleted</div></div><button onclick="window.restoreItem('${item.id}')" class="bg-white text-indigo-600 px-3 py-1 rounded border border-indigo-200 text-xs font-bold">Restore</button>`; list.appendChild(div); });
         }
-        
-        window.restoreItem = async (id) => {
-            try {
-                const item = deletedItems.find(i=>i.id===id);
-                await updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() });
-                await logAction("Restore Item", `Restored '${item.name}' from trash`);
-                renderTrash();
-            } catch(e) { alert("Restore failed: " + e.message); }
+        window.restoreItem = async (id) => { try { await updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }); renderTrash(); } catch(e) { alert(e.message); } };
+        window.emptyTrash = async () => { if(confirm("PERMANENTLY delete trash?")) { const batch = writeBatch(db); deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); await batch.commit(); renderTrash(); } };
+
+        // --- NEW TOOL LOGIC ---
+        window.setBulkScope = (scope) => {
+            bulkScope = scope;
+            document.querySelectorAll('.scope-btn').forEach(b => { b.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-600'); b.classList.add('text-slate-500', 'border-slate-200'); });
+            const activeBtn = document.getElementById(`scope-${scope}`); activeBtn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-600'); activeBtn.classList.remove('text-slate-500', 'border-slate-200');
+
+            document.getElementById('tool-cat-select').classList.add('hidden');
+            document.getElementById('tool-manual-select').classList.add('hidden');
+            document.getElementById('tool-all-msg').classList.add('hidden');
+
+            if (scope === 'category') document.getElementById('tool-cat-select').classList.remove('hidden');
+            else if (scope === 'manual') document.getElementById('tool-manual-select').classList.remove('hidden');
+            else document.getElementById('tool-all-msg').classList.remove('hidden');
         };
 
-        window.emptyTrash = async () => {
-            if(!confirm("PERMANENTLY delete all items in trash? This cannot be undone.")) return;
-            const batch = writeBatch(db);
-            const col = getCollectionRef();
-            deletedItems.forEach(item => { batch.delete(doc(col, item.id)); });
-            try { await batch.commit(); await logAction("Empty Trash", "Permanently deleted all trash items"); renderTrash(); } catch(e) { alert("Error: " + e.message); }
+        function renderTools() {
+            // Populate Categories
+            const catSelect = document.getElementById('tool-category-input');
+            const cats = new Set(); visibleItems.forEach(i => { if(i.category) cats.add(i.category.trim()); });
+            catSelect.innerHTML = '<option value="">Choose...</option>';
+            cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); });
+
+            // Populate Manual List
+            const manList = document.getElementById('manual-list');
+            manList.innerHTML = '';
+            visibleItems.forEach(item => {
+                const div = document.createElement('label');
+                div.className = "flex items-center gap-3 p-2 rounded hover:bg-white cursor-pointer group";
+                div.innerHTML = `
+                    <input type="checkbox" value="${item.id}" class="manual-check w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" onchange="window.updateManualCount()">
+                    <div class="text-sm">
+                        <div class="font-bold text-slate-800">${escape(item.name)}</div>
+                        <div class="text-xs text-slate-500">₦${item.price}</div>
+                    </div>
+                `;
+                manList.appendChild(div);
+            });
+            window.setBulkScope(bulkScope);
+        }
+
+        window.updateManualCount = () => {
+            const count = document.querySelectorAll('.manual-check:checked').length;
+            document.getElementById('manual-count').innerText = count;
         };
 
-        // Feature 4: Bulk Inflation Logic
         window.applyBulkUpdate = async () => {
             const val = parseFloat(document.getElementById('inflation-input').value);
-            if (isNaN(val) || val === 0) return alert("Please enter a percentage (e.g. 10 or -5)");
+            if (isNaN(val) || val === 0) return alert("Enter percentage");
+
+            let targetItems = [];
             
-            const isIncrease = val > 0;
-            const word = isIncrease ? "INCREASE" : "DECREASE";
-            if (!confirm(`Are you sure you want to ${word} ALL prices by ${Math.abs(val)}%?\n\nThis affects ${visibleItems.length} items.`)) return;
-            
+            if (bulkScope === 'all') {
+                targetItems = visibleItems;
+            } else if (bulkScope === 'category') {
+                const cat = document.getElementById('tool-category-input').value;
+                if (!cat) return alert("Select a category");
+                targetItems = visibleItems.filter(i => i.category === cat);
+            } else if (bulkScope === 'manual') {
+                const checked = Array.from(document.querySelectorAll('.manual-check:checked')).map(c => c.value);
+                if (checked.length === 0) return alert("Select items");
+                targetItems = visibleItems.filter(i => checked.includes(i.id));
+            }
+
+            if (!confirm(`Apply ${val}% change to ${targetItems.length} items?`)) return;
+
             try {
                 const batch = writeBatch(db);
-                let count = 0;
-                
-                // Firestore batch limit is 500. For simplicity in this demo, we handle up to 500. 
-                // In production with >500 items, you would need to loop batches.
-                const itemsToUpdate = visibleItems.slice(0, 490); 
-                
-                itemsToUpdate.forEach(item => {
-                    const oldPrice = item.price;
-                    const newPrice = oldPrice * (1 + (val / 100));
-                    // Round to nearest 5 or 10 if desired, currently strict math
-                    const roundedPrice = Math.ceil(newPrice); 
-                    
-                    batch.update(doc(getCollectionRef(), item.id), { 
-                        price: roundedPrice, 
-                        updatedAt: serverTimestamp() 
-                    });
-                    count++;
+                // Batch limit 500
+                targetItems.slice(0, 490).forEach(item => {
+                    const newPrice = Math.ceil(item.price * (1 + (val / 100)));
+                    batch.update(doc(getCollectionRef(), item.id), { price: newPrice, updatedAt: serverTimestamp() });
                 });
-                
                 await batch.commit();
-                await logAction("Bulk Update", `Applied ${val}% adjustment to ${count} items`);
-                alert("Prices updated successfully!");
+                await logAction("Bulk Update", `${val}% on ${targetItems.length} items (${bulkScope})`);
+                alert("Updated!");
                 document.getElementById('inflation-input').value = '';
-            } catch(e) { alert("Bulk update failed: " + e.message); }
+                // Reset manual
+                document.querySelectorAll('.manual-check').forEach(c => c.checked = false);
+                window.updateManualCount();
+            } catch(e) { alert("Error: " + e.message); }
         };
 
-        // --- COMMON UTILS ---
+        // --- COMMON ---
         window.startScanner = (mode) => {
-            scanMode = mode; 
-            document.getElementById('scanner-overlay').classList.remove('hidden');
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
-            if (audioCtx.state === 'suspended') audioCtx.resume(); 
+            scanMode = mode; document.getElementById('scanner-overlay').classList.remove('hidden');
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); 
             const silentOsc = audioCtx.createOscillator(); silentOsc.connect(audioCtx.destination); silentOsc.start(); silentOsc.stop(audioCtx.currentTime + 0.001);
-
-            const config = { fps: 20, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
             scanner = new Html5Qrcode("reader");
             let isProcessing = false;
-
-            scanner.start({ facingMode: "environment" }, config, (decodedText) => { 
+            scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 250, height: 250 } }, (decodedText) => { 
                 if (isProcessing) return; isProcessing = true; playBeep(); 
-                if (scanMode === 'search') { 
-                    const searchInput = document.getElementById('search-input'); searchInput.value = decodedText; searchInput.dispatchEvent(new Event('input')); 
-                } else if (scanMode === 'edit') { 
-                    document.getElementById('barcode-input').value = decodedText; 
-                    // Optional: Fetch logic here
-                } 
+                if (scanMode === 'search') { const s = document.getElementById('search-input'); s.value = decodedText; s.dispatchEvent(new Event('input')); }
+                else if (scanMode === 'edit') { document.getElementById('barcode-input').value = decodedText; } 
                 window.stopScanner(); 
             }, () => {}).then(() => { document.getElementById('flash-btn').classList.remove('hidden'); }).catch(console.log);
         };
-
-        window.toggleFlash = () => { if (!scanner) return; try { const track = scanner.html5QrcodeScanner.getHtml5Qrcode().getRunningTrackCameraCapabilities().torch; scanner.html5QrcodeScanner.getHtml5Qrcode().applyVideoConstraints({ advanced: [{ torch: !track }] }); } catch(e) {} }; // Simplified flash
+        window.toggleFlash = () => { if(scanner) try { const t = scanner.html5QrcodeScanner.getHtml5Qrcode().getRunningTrackCameraCapabilities().torch; scanner.html5QrcodeScanner.getHtml5Qrcode().applyVideoConstraints({ advanced: [{ torch: !t }] }); } catch(e){} };
         window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }); };
-
-        // Search Input Logic
-        document.getElementById('search-input').addEventListener('input', (e) => { const hasText = e.target.value.length > 0; document.getElementById('clear-search').classList.toggle('hidden', !hasText); renderList(); });
+        
+        document.getElementById('search-input').addEventListener('input', (e) => { document.getElementById('clear-search').classList.toggle('hidden', !e.target.value); renderList(); });
         document.getElementById('clear-search').addEventListener('click', () => { document.getElementById('search-input').value = ''; document.getElementById('clear-search').classList.add('hidden'); renderList(); });
         
-        // Auth Toggle
-        window.toggleAuth = () => {
-            if (currentUser && !currentUser.isAnonymous) {
-                if(confirm("Log out of Admin account?")) signOut(auth).then(()=>signInAnonymously(auth));
-            } else {
-                const provider = new GoogleAuthProvider();
-                setPersistence(auth, browserLocalPersistence).then(() => signInWithPopup(auth, provider)).catch(e => alert("Login failed: " + e.message));
-            }
-        };
+        window.toggleAuth = () => { if (currentUser && !currentUser.isAnonymous) { if(confirm("Log out Admin?")) signOut(auth).then(()=>signInAnonymously(auth)); } else { setPersistence(auth, browserLocalPersistence).then(() => signInWithPopup(auth, new GoogleAuthProvider())).catch(e => alert(e.message)); } };
 
         function updateUI() { 
-            const lockBtn = document.getElementById('auth-btn'); 
-            const superBtn = document.getElementById('super-admin-btn');
-            const fab = document.getElementById('fab-container'); 
-            const roleBadge = document.getElementById('role-badge');
-            
-            // 1. Super Admin View
-            if (isSuperAdmin) {
-                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600"></i>';
-                lockBtn.className = "text-amber-600 bg-amber-50 p-2 rounded-full border border-amber-200";
-                superBtn.classList.remove('hidden');
-                fab.classList.remove('hidden');
-                roleBadge.innerText = "SUPER ADMIN";
-                roleBadge.className = "text-[10px] text-amber-500 font-bold uppercase tracking-wide";
-            } 
-            // 2. Manager View
-            else if (isManager) {
-                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>';
-                lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200";
-                superBtn.classList.add('hidden');
-                fab.classList.remove('hidden');
-                roleBadge.innerText = "MANAGER";
-                roleBadge.className = "text-[10px] text-indigo-500 font-bold uppercase tracking-wide";
-            } 
-            // 3. Guest View
-            else {
-                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
-                lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200";
-                superBtn.classList.add('hidden');
-                fab.classList.add('hidden');
-                roleBadge.innerText = "PRICE KEEPER";
-                roleBadge.className = "text-[10px] text-slate-400 font-mono uppercase tracking-wide";
-            }
+            const lockBtn = document.getElementById('auth-btn'); const superBtn = document.getElementById('super-admin-btn'); const fab = document.getElementById('fab-container'); const roleBadge = document.getElementById('role-badge');
+            if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600"></i>'; lockBtn.className = "text-amber-600 bg-amber-50 p-2 rounded-full border border-amber-200"; superBtn.classList.remove('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 font-bold uppercase tracking-wide"; } 
+            else if (isManager) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; superBtn.classList.add('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 font-bold uppercase tracking-wide"; } 
+            else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; superBtn.classList.add('hidden'); fab.classList.add('hidden'); roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 font-mono uppercase tracking-wide"; }
             renderList(); updateStats(); lucide.createIcons(); 
         }
 
-        window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
+        window.logout = () => { if (confirm("Exit?")) { localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); } };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        
-        lucide.createIcons();
-        init();
+        lucide.createIcons(); init();
     </script>
 </body>
 </html>
