@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=5.2">
-    <link rel="icon" type="image/png" href="./logo.png?v=5.2">
-    <link rel="apple-touch-icon" href="./logo.png?v=5.2">
+    <link rel="manifest" href="./manifest.json?v=1.1.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.1.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.1.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,7 +30,6 @@
         .scanner-viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; height: 200px; pointer-events: none; z-index: 20; }
         .scanner-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #ef4444; box-shadow: 0 0 4px #ef4444; animation: scan 1.5s infinite ease-in-out; opacity: 0.9; }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-        /* Modal Transitions */
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
@@ -40,7 +39,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=5.2" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.1.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -52,7 +51,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v5.2</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.1.1</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
@@ -66,9 +65,9 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=5.2" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.1.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
-                            <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
+                            <h1 id="app-title" class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
                             <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
@@ -82,7 +81,11 @@
                     </div>
                 </div>
                 <div class="relative flex gap-2">
-                    <div class="relative flex-1"><i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i><input type="text" id="search-input" class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Search..."><button id="clear-search" class="absolute right-3 top-3 text-slate-400 hidden"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
+                        <input type="text" id="search-input" onkeyup="window.renderList()" class="block w-full pl-10 pr-10 py-3 rounded-xl bg-slate-100 border-none text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Search...">
+                        <button id="clear-search" onclick="window.clearSearch()" class="absolute right-3 top-3 text-slate-400 hidden"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
                     <button onclick="window.startScanner('search')" class="bg-indigo-50 text-indigo-600 p-3 rounded-xl border border-indigo-100 active:scale-95 transition-transform"><i data-lucide="scan-line" class="w-6 h-6"></i></button>
                 </div>
                 <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1"></div>
@@ -183,25 +186,11 @@
                 <div id="view-tools" class="hidden space-y-4">
                     <div class="bg-white p-4 rounded-xl border border-slate-200">
                         <h4 class="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-600"></i> Bulk Price Update</h4>
-                        <p class="text-xs text-slate-500 mb-3">Increase/Decrease prices for a specific category.</p>
-                        
                         <div class="space-y-3">
-                            <div>
-                                <label class="text-xs font-bold text-slate-600">Category</label>
-                                <select id="bulk-category" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"></select>
-                            </div>
+                            <div><label class="text-xs font-bold text-slate-600">Category</label><select id="bulk-category" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"></select></div>
                             <div class="flex gap-2">
-                                <div class="flex-1">
-                                    <label class="text-xs font-bold text-slate-600">Type</label>
-                                    <select id="bulk-type" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none">
-                                        <option value="percent">Percentage (%)</option>
-                                        <option value="flat">Flat Amount (₦)</option>
-                                    </select>
-                                </div>
-                                <div class="flex-1">
-                                    <label class="text-xs font-bold text-slate-600">Value</label>
-                                    <input type="number" id="bulk-value" placeholder="10" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none">
-                                </div>
+                                <div class="flex-1"><label class="text-xs font-bold text-slate-600">Type</label><select id="bulk-type" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"><option value="percent">Percentage (%)</option><option value="flat">Flat Amount (₦)</option></select></div>
+                                <div class="flex-1"><label class="text-xs font-bold text-slate-600">Value</label><input type="number" id="bulk-value" placeholder="10" class="w-full mt-1 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm outline-none"></div>
                             </div>
                             <button onclick="window.previewBulkUpdate()" class="w-full py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700">Apply Update</button>
                         </div>
@@ -214,18 +203,12 @@
     <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-center items-center">
         <div class="absolute top-0 w-full p-4 z-20 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent">
             <h3 class="font-bold text-lg">Scan Barcode</h3>
-            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
+            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button>
         </div>
         <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
             <div id="reader" class="w-full h-full"></div>
-            <div class="scanner-viewfinder z-10">
-                <div class="scanner-line"></div>
-            </div>
-            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all">
-                <i data-lucide="flashlight" class="w-6 h-6 text-white"></i>
-            </button>
+            <div class="scanner-viewfinder z-10"><div class="scanner-line"></div></div>
+            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button>
         </div>
     </div>
 
@@ -258,40 +241,31 @@
         let audioCtx = null;
         let trashItems = []; 
 
-        // --- AUTHENTICATION LISTENER (The Brain) ---
+        // --- AUTH & STATE ---
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
                 const userEmail = user.email ? user.email.toLowerCase().trim() : "";
                 
-                // 1. CHECK IF USER IS A MANAGER
+                // --- FIXED ADMIN CHECK ---
                 if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { 
                     isAdmin = true; 
-                    
-                    // 2. CHECK IF USER IS THE OWNER
                     if (userEmail === SUPER_ADMIN.toLowerCase()) {
                         isSuperAdmin = true;
-                        showToast("Owner Mode Active");
+                        showToast("Owner Access Granted");
                     } else {
                         isSuperAdmin = false;
-                        showToast("Manager Mode Active");
+                        showToast("Manager Access Granted");
                     }
                 } else { 
-                    // Logged in but not an admin (e.g. random gmail)
-                    isAdmin = false; 
-                    isSuperAdmin = false;
+                    isAdmin = false; isSuperAdmin = false;
                 }
             } else { 
-                // No user found
                 currentUser = null; isAdmin = false; isSuperAdmin = false;
-                
-                // If we are offline or just starting, try anonymous login so the app works
-                if (currentStoreName) {
+                if (currentStoreName && navigator.onLine) {
                     signInAnonymously(auth).catch(e => console.error("Anon Auth Error", e));
                 }
             }
-            
-            // 3. ALWAYS UPDATE UI WHEN AUTH CHANGES
             if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             updateAdminUI(); 
         });
@@ -316,123 +290,51 @@
 
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
                 
-                renderCategories(); 
-                renderList();
+                window.renderCategories(); 
+                window.renderList();
                 if(isSuperAdmin && !document.getElementById('super-admin-modal').classList.contains('hidden')) {
                     updateStats(); updateTrashList(); 
                 }
             }, (err) => console.log(err.code)); 
         }
 
-        // --- UI UPDATER (Handles Icons) ---
+        // --- UI UPDATER ---
         function updateAdminUI() { 
             const lockBtn = document.getElementById('admin-lock-btn'); 
             const fab = document.getElementById('fab-container'); 
             const superBtn = document.getElementById('super-admin-btn');
-            const badgeContainer = document.querySelector('h1');
+            const titleEl = document.getElementById('app-title');
             
-            // Clear existing badge if any
             const existingBadge = document.getElementById('owner-badge');
             if(existingBadge) existingBadge.remove();
 
             if (isAdmin) { 
-                // MANAGER IS LOGGED IN
-                // 1. Change Lock Icon to Unlock
                 lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i>'; 
                 lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200 transition-all"; 
-                
-                // 2. Show Add Button
                 fab.classList.remove('hidden'); 
                 
-                // 3. Super Admin Specifics
                 if(isSuperAdmin) {
                     superBtn.classList.remove('hidden');
-                    // Add Owner Badge
                     const badge = document.createElement('span');
                     badge.id = 'owner-badge';
                     badge.className = "ml-2 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200";
                     badge.innerText = "OWNER";
-                    badgeContainer.appendChild(badge);
+                    titleEl.appendChild(badge);
                 } else {
                     superBtn.classList.add('hidden');
                 }
             } else { 
-                // NO ONE IS LOGGED IN
                 lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; 
                 lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200 relative"; 
                 fab.classList.add('hidden'); 
                 superBtn.classList.add('hidden');
             } 
-            
-            renderList(); 
-            lucide.createIcons(); // IMPORTANT: This draws the new lock/unlock icon
+            window.renderList(); 
+            lucide.createIcons(); 
         }
 
-        // --- LOGIN/LOGOUT LOGIC (Fixed) ---
-        window.toggleAdmin = () => {
-            if (isAdmin) { 
-                // LOGOUT
-                if(confirm("Exit Manager Mode?")) { 
-                    signOut(auth).then(() => {
-                        // We sign in anonymously immediately so the app keeps working for customers
-                        signInAnonymously(auth);
-                        showToast("Logged Out");
-                    });
-                } 
-            } else { 
-                // LOGIN
-                const provider = new GoogleAuthProvider(); 
-                // We use local persistence so you stay logged in even if you close the browser
-                setPersistence(auth, browserLocalPersistence)
-                    .then(() => {
-                        return signInWithPopup(auth, provider);
-                    })
-                    .catch((error) => {
-                        // Only show alert if it's an actual error, not just closing the popup
-                        if (error.code !== 'auth/popup-closed-by-user') {
-                            alert("Login failed: " + error.message);
-                        }
-                    });
-            }
-        };
-
-        // --- HELPER: Toast Notification ---
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
-        // --- MODERN TIME FORMATTING ---
-        function formatFreshness(timestamp) { 
-            if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; 
-            const date = timestamp.toDate(); 
-            const now = new Date();
-            const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const diffTime = nowMidnight - dateMidnight;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) {
-                const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                return { text: `Today at ${timeStr}`, color: "text-green-600 font-bold" };
-            } 
-            if (diffDays === 1) return { text: "Yesterday", color: "text-slate-500" };
-            if (diffDays < 7) return { text: `${diffDays} days ago`, color: "text-slate-400" };
-            return { text: date.toLocaleDateString(), color: "text-slate-400" }; 
-        }
-
-        // --- AUDIT LOGGING ---
-        async function logAction(action, details) {
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}_logs`);
-            const userLabel = isSuperAdmin ? "Owner" : (currentUser.email ? currentUser.email.split('@')[0] : "Manager");
-            try { await addDoc(logsRef, { action: action, details: details, user: userLabel, timestamp: serverTimestamp() }); } catch(e) { console.error("Log failed", e); }
-        }
-
-        // --- CORE UI RENDER ---
-        function renderCategories() { 
+        // --- GLOBAL FUNCTIONS (Window Scope for HTML Access) ---
+        window.renderCategories = () => { 
             const cats = new Set(['All']); allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); 
             const container = document.getElementById('category-container'); container.innerHTML = ''; 
             const bulkSelect = document.getElementById('bulk-category');
@@ -447,18 +349,29 @@
                 const isActive = cat === selectedCategory; 
                 btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'}`; 
                 btn.innerText = cat; 
-                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; 
+                btn.onclick = () => { selectedCategory = cat; window.renderCategories(); window.renderList(); }; 
                 container.appendChild(btn); 
             }); 
-        }
-        function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        };
 
-        function renderList() { 
-            const rawTerm = document.getElementById('search-input').value.toLowerCase().trim(); const searchWords = rawTerm.split(" ").filter(word => word.length > 0); const listEl = document.getElementById('item-list'); const emptyEl = document.getElementById('empty-state'); 
-            const filtered = allItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
+        window.renderList = () => { 
+            const rawTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search');
+            if (rawTerm.length > 0) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden');
+
+            const searchWords = rawTerm.split(" ").filter(word => word.length > 0); 
+            const listEl = document.getElementById('item-list'); 
+            const emptyEl = document.getElementById('empty-state'); 
+            
+            const filtered = allItems.filter(item => { 
+                const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); 
+                return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); 
+            }); 
+            
             listEl.innerHTML = ''; 
             if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; } 
             emptyEl.classList.add('hidden'); 
+            
             filtered.forEach(item => { 
                 const freshness = formatFreshness(item.updatedAt || item.createdAt); 
                 const div = document.createElement('div'); 
@@ -468,110 +381,52 @@
                 listEl.appendChild(div); 
             }); 
             lucide.createIcons(); 
-        }
-
-        // --- CRUD OPERATIONS ---
-        window.openModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
-        window.closeModal = () => { document.getElementById('modal').classList.add('hidden'); };
-        window.editItem = (id) => { const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
-
-        window.deleteItem = async (id, name) => { 
-            if (confirm(`Delete "${name}"?`)) { 
-                try { 
-                    const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id), { deleted: true, updatedAt: serverTimestamp() });
-                    logAction("DELETE", `Moved '${name}' to trash`);
-                } catch(e) { alert("Error deleting: " + e.message); } 
-            } 
-        };
-        
-        document.getElementById('item-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving...";
-            const id = document.getElementById('item-id').value;
-            const name = document.getElementById('name-input').value.trim();
-            const price = parseFloat(document.getElementById('price-input').value);
-            const data = { barcode: document.getElementById('barcode-input').value.trim(), name: name, price: price, bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), updatedAt: serverTimestamp(), deleted: false };
-            if (!id) data.createdAt = serverTimestamp();
-            try {
-                const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
-                if (id) { await updateDoc(doc(colRef, id), data); logAction("EDIT", `Updated '${name}' to ₦${price}`); } 
-                else { await addDoc(colRef, data); logAction("CREATE", `Added '${name}' at ₦${price}`); }
-                window.closeModal();
-            } catch (err) { alert("Error saving: " + err.message); }
-            btn.disabled = false; btn.innerText = "Save Item";
-        });
-
-        // --- SUPER ADMIN PANEL ---
-        window.openSuperAdmin = () => { if(!isSuperAdmin) return; document.getElementById('super-admin-modal').classList.remove('hidden'); window.switchAdminTab('stats'); updateStats(); };
-        window.closeSuperAdmin = () => { document.getElementById('super-admin-modal').classList.add('hidden'); };
-        
-        window.switchAdminTab = (tab) => {
-            ['stats', 'logs', 'trash', 'tools'].forEach(t => { document.getElementById(`view-${t}`).classList.add('hidden'); const btn = document.getElementById(`tab-${t}`); btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600', 'bg-indigo-50'); btn.classList.add('text-slate-500'); });
-            document.getElementById(`view-${tab}`).classList.remove('hidden'); const activeBtn = document.getElementById(`tab-${tab}`); activeBtn.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600', 'bg-indigo-50'); activeBtn.classList.remove('text-slate-500');
-            if(tab === 'logs') fetchLogs(); if(tab === 'trash') updateTrashList();
         };
 
-        function updateStats() {
-            document.getElementById('stat-count').innerText = allItems.length;
-            const totalVal = allItems.reduce((sum, i) => sum + (i.price || 0), 0);
-            document.getElementById('stat-value').innerText = "₦" + formatMoney(totalVal);
-            const catCounts = {}; allItems.forEach(i => { const c = i.category || 'Uncategorized'; catCounts[c] = (catCounts[c] || 0) + 1; });
-            document.getElementById('stat-breakdown').innerHTML = Object.entries(catCounts).sort((a,b) => b[1] - a[1]).map(([k,v]) => `<div class="flex justify-between border-b border-slate-100 py-1"><span>${k}</span><span class="font-bold text-slate-700">${v}</span></div>`).join('');
-        }
+        window.clearSearch = () => { document.getElementById('search-input').value = ''; window.renderList(); };
 
-        async function fetchLogs() {
-            const list = document.getElementById('log-list'); list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>';
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}_logs`);
-            const q = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
-            onSnapshot(q, (snap) => {
-                const logs = snap.docs.map(d => d.data());
-                if(logs.length === 0) { list.innerHTML = '<div class="text-center text-sm text-slate-400">No activity logs found.</div>'; return; }
-                list.innerHTML = logs.map(l => {
-                    const time = l.timestamp ? l.timestamp.toDate().toLocaleString() : 'Just now';
-                    const color = l.action === 'DELETE' ? 'text-red-600' : (l.action === 'CREATE' ? 'text-green-600' : 'text-blue-600');
-                    return `<div class="bg-white p-3 rounded-lg border border-slate-200 text-sm"><div class="flex justify-between mb-1"><span class="font-bold ${color} text-xs">${l.action}</span><span class="text-xs text-slate-400">${time}</span></div><div class="text-slate-800 font-medium">${escape(l.details)}</div><div class="text-xs text-slate-400 mt-1">by ${l.user || 'Unknown'}</div></div>`;
-                }).join('');
-            });
-        }
-
-        function updateTrashList() {
-            const list = document.getElementById('trash-list'); if(trashItems.length === 0) { list.innerHTML = '<div class="text-center text-sm text-slate-400 py-4">Trash is empty.</div>'; return; }
-            list.innerHTML = trashItems.map(i => `<div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center"><div><div class="font-bold text-slate-700">${escape(i.name)}</div><div class="text-xs text-slate-400">₦${i.price}</div></div><button onclick="window.restoreItem('${i.id}', '${escape(i.name)}')" class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200">Restore</button></div>`).join('');
-        }
-
-        window.restoreItem = async (id, name) => { if(!confirm(`Restore "${name}"?`)) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id), { deleted: false }); logAction("RESTORE", `Restored '${name}' from trash`); updateTrashList(); };
-
-        window.previewBulkUpdate = async () => {
-            const cat = document.getElementById('bulk-category').value; const type = document.getElementById('bulk-type').value; const val = parseFloat(document.getElementById('bulk-value').value);
-            if(!val) return alert("Please enter a value");
-            const targetItems = allItems.filter(i => cat === 'All' || i.category === cat); const count = targetItems.length;
-            if(count === 0) return alert("No items found.");
-            if(confirm(`Update ${count} items?\nType: ${type}\nValue: +${val}`)) {
-                const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const batchLimit = 400; const chunks = [];
-                for (let i = 0; i < targetItems.length; i += batchLimit) { chunks.push(targetItems.slice(i, i + batchLimit)); }
-                for (const chunk of chunks) { const batch = writeBatch(db); chunk.forEach(item => { let newPrice = item.price; if(type === 'percent') { newPrice = item.price + (item.price * (val / 100)); } else { newPrice = item.price + val; } newPrice = Math.round(newPrice * 100) / 100; const ref = doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, item.id); batch.update(ref, { price: newPrice, updatedAt: serverTimestamp() }); }); await batch.commit(); }
-                logAction("BULK_UPDATE", `Updated ${count} items in '${cat}' by ${val}${type}`); alert("Update complete!"); window.closeSuperAdmin();
+        // --- AUTH/ADMIN TOGGLE ---
+        window.toggleAdmin = () => {
+            if (isAdmin) { 
+                if(confirm("Exit Manager Mode?")) { 
+                    signOut(auth).then(() => { signInAnonymously(auth); showToast("Logged Out"); });
+                } 
+            } else { 
+                const provider = new GoogleAuthProvider(); 
+                setPersistence(auth, browserLocalPersistence)
+                    .then(() => signInWithPopup(auth, provider))
+                    .catch((error) => { if (error.code !== 'auth/popup-closed-by-user') alert("Login failed: " + error.message); });
             }
         };
 
-        // --- AUTH & OTHER ---
+        // --- CRUD & HELPERS ---
+        window.openModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
+        window.closeModal = () => { document.getElementById('modal').classList.add('hidden'); };
+        window.editItem = (id) => { const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
+        window.deleteItem = async (id, name) => { if (confirm(`Delete "${name}"?`)) { try { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id), { deleted: true, updatedAt: serverTimestamp() }); logAction("DELETE", `Moved '${name}' to trash`); } catch(e) { alert("Error deleting: " + e.message); } } };
+        
+        // --- SUPER ADMIN ---
+        window.openSuperAdmin = () => { if(!isSuperAdmin) return; document.getElementById('super-admin-modal').classList.remove('hidden'); window.switchAdminTab('stats'); updateStats(); };
+        window.closeSuperAdmin = () => { document.getElementById('super-admin-modal').classList.add('hidden'); };
+        window.switchAdminTab = (tab) => { ['stats', 'logs', 'trash', 'tools'].forEach(t => { document.getElementById(`view-${t}`).classList.add('hidden'); const btn = document.getElementById(`tab-${t}`); btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600', 'bg-indigo-50'); btn.classList.add('text-slate-500'); }); document.getElementById(`view-${tab}`).classList.remove('hidden'); const activeBtn = document.getElementById(`tab-${tab}`); activeBtn.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600', 'bg-indigo-50'); activeBtn.classList.remove('text-slate-500'); if(tab === 'logs') fetchLogs(); if(tab === 'trash') updateTrashList(); };
+        function updateStats() { document.getElementById('stat-count').innerText = allItems.length; const totalVal = allItems.reduce((sum, i) => sum + (i.price || 0), 0); document.getElementById('stat-value').innerText = "₦" + formatMoney(totalVal); const catCounts = {}; allItems.forEach(i => { const c = i.category || 'Uncategorized'; catCounts[c] = (catCounts[c] || 0) + 1; }); document.getElementById('stat-breakdown').innerHTML = Object.entries(catCounts).sort((a,b) => b[1] - a[1]).map(([k,v]) => `<div class="flex justify-between border-b border-slate-100 py-1"><span>${k}</span><span class="font-bold text-slate-700">${v}</span></div>`).join(''); }
+        async function fetchLogs() { const list = document.getElementById('log-list'); list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>'; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const logsRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}_logs`); const q = query(logsRef, orderBy('timestamp', 'desc'), limit(50)); onSnapshot(q, (snap) => { const logs = snap.docs.map(d => d.data()); if(logs.length === 0) { list.innerHTML = '<div class="text-center text-sm text-slate-400">No activity logs found.</div>'; return; } list.innerHTML = logs.map(l => { const time = l.timestamp ? l.timestamp.toDate().toLocaleString() : 'Just now'; const color = l.action === 'DELETE' ? 'text-red-600' : (l.action === 'CREATE' ? 'text-green-600' : 'text-blue-600'); return `<div class="bg-white p-3 rounded-lg border border-slate-200 text-sm"><div class="flex justify-between mb-1"><span class="font-bold ${color} text-xs">${l.action}</span><span class="text-xs text-slate-400">${time}</span></div><div class="text-slate-800 font-medium">${escape(l.details)}</div><div class="text-xs text-slate-400 mt-1">by ${l.user || 'Unknown'}</div></div>`; }).join(''); }); }
+        function updateTrashList() { const list = document.getElementById('trash-list'); if(trashItems.length === 0) { list.innerHTML = '<div class="text-center text-sm text-slate-400 py-4">Trash is empty.</div>'; return; } list.innerHTML = trashItems.map(i => `<div class="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center"><div><div class="font-bold text-slate-700">${escape(i.name)}</div><div class="text-xs text-slate-400">₦${i.price}</div></div><button onclick="window.restoreItem('${i.id}', '${escape(i.name)}')" class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold hover:bg-green-200">Restore</button></div>`).join(''); }
+        window.restoreItem = async (id, name) => { if(!confirm(`Restore "${name}"?`)) return; const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id), { deleted: false }); logAction("RESTORE", `Restored '${name}' from trash`); updateTrashList(); };
+        window.previewBulkUpdate = async () => { const cat = document.getElementById('bulk-category').value; const type = document.getElementById('bulk-type').value; const val = parseFloat(document.getElementById('bulk-value').value); if(!val) return alert("Please enter a value"); const targetItems = allItems.filter(i => cat === 'All' || i.category === cat); const count = targetItems.length; if(count === 0) return alert("No items found."); if(confirm(`Update ${count} items?\nType: ${type}\nValue: +${val}`)) { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const batchLimit = 400; const chunks = []; for (let i = 0; i < targetItems.length; i += batchLimit) { chunks.push(targetItems.slice(i, i + batchLimit)); } for (const chunk of chunks) { const batch = writeBatch(db); chunk.forEach(item => { let newPrice = item.price; if(type === 'percent') { newPrice = item.price + (item.price * (val / 100)); } else { newPrice = item.price + val; } newPrice = Math.round(newPrice * 100) / 100; const ref = doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, item.id); batch.update(ref, { price: newPrice, updatedAt: serverTimestamp() }); }); await batch.commit(); } logAction("BULK_UPDATE", `Updated ${count} items in '${cat}' by ${val}${type}`); alert("Update complete!"); window.closeSuperAdmin(); } };
+
+        // --- INIT & UTILS ---
+        document.getElementById('item-form').addEventListener('submit', async (e) => { e.preventDefault(); const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving..."; const id = document.getElementById('item-id').value; const name = document.getElementById('name-input').value.trim(); const price = parseFloat(document.getElementById('price-input').value); const data = { barcode: document.getElementById('barcode-input').value.trim(), name: name, price: price, bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), updatedAt: serverTimestamp(), deleted: false }; if (!id) data.createdAt = serverTimestamp(); try { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); if (id) { await updateDoc(doc(colRef, id), data); logAction("EDIT", `Updated '${name}' to ₦${price}`); } else { await addDoc(colRef, data); logAction("CREATE", `Added '${name}' at ₦${price}`); } window.closeModal(); } catch (err) { alert("Error saving: " + err.message); } btn.disabled = false; btn.innerText = "Save Item"; });
         function showLogin() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
         function showApp() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); startDataSync(); updateAdminUI(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); window.location.reload(); });
         window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); window.location.reload(); };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        
-        // --- SCANNER LOGIC ---
+        function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(date.getFullYear(), date.getMonth(), date.getDate())) / (1000 * 60 * 60 * 24)); if (diffDays === 0) return { text: `Today at ${date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`, color: "text-green-600 font-bold" }; if (diffDays === 1) return { text: "Yesterday", color: "text-slate-500" }; return { text: date.toLocaleDateString(), color: "text-slate-400" }; }
         function playBeep() { try { if (navigator.vibrate) navigator.vibrate(200); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type = 'square'; o.frequency.setValueAtTime(1200, audioCtx.currentTime); g.gain.setValueAtTime(0.5, audioCtx.currentTime); o.start(); o.stop(audioCtx.currentTime + 0.15); } catch (e) {} }
-        window.startScanner = (mode) => {
-            scanMode = mode; document.getElementById('scanner-overlay').classList.remove('hidden');
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume();
-            scanner = new Html5Qrcode("reader", { verbose: false });
-            scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 250, height: 250 } }, (txt) => { playBeep(); if (scanMode === 'search') { const s = document.getElementById('search-input'); s.value = txt; s.dispatchEvent(new Event('input')); } else if (scanMode === 'edit') { document.getElementById('barcode-input').value = txt; } window.stopScanner(); }).catch(err => { alert("Camera error"); window.stopScanner(); });
-        };
+        window.startScanner = (mode) => { scanMode = mode; document.getElementById('scanner-overlay').classList.remove('hidden'); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); scanner = new Html5Qrcode("reader", { verbose: false }); scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 250, height: 250 } }, (txt) => { playBeep(); if (scanMode === 'search') { const s = document.getElementById('search-input'); s.value = txt; window.renderList(); } else if (scanMode === 'edit') { document.getElementById('barcode-input').value = txt; } window.stopScanner(); }).catch(err => { alert("Camera error"); window.stopScanner(); }); };
         window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }); else document.getElementById('scanner-overlay').classList.add('hidden'); };
         
         lucide.createIcons();
