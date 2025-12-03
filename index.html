@@ -81,7 +81,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.2.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.2.1</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -455,9 +455,11 @@
             if (currentStoreName) { showApp(); } else { showLogin(); }
         }
 
-        // --- HELPER TO GET CONFIG PATH CORRECTLY ---
+        // --- HELPER TO GET CONFIG PATH CORRECTLY (FIXED) ---
         function getConfigRef() {
-            return doc(getCollectionRef().parent, '_config');
+            // FIX: Removed .parent to ensure the path has even segments (6)
+            // Path: artifacts/appId/public/data/storeName/_config
+            return doc(getCollectionRef(), '_config');
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -543,7 +545,6 @@
             renderStaffList();
             try {
                 // For Maps, simplest way to delete a key is re-writing the map without it
-                // Or using deleteField(), but reading+writing entire map is safer for now
                 const newStaffMap = {};
                 staffList.forEach(s => newStaffMap[s.email] = s.role);
                 await setDoc(getConfigRef(), { staff: newStaffMap });
@@ -595,6 +596,29 @@
         }
         function renderCategories() { const cats = new Set(['All']); visibleItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
         function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        
+        // --- MODERN TIME FORMATTING ---
+        function formatFreshness(timestamp) {
+            if (!timestamp) return { text: "New", color: "text-green-500 font-bold" };
+            
+            const date = timestamp.toDate();
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDays = Math.floor(diffHour / 24);
+
+            if (diffSec < 60) return { text: "Just now", color: "text-emerald-500 font-bold" };
+            if (diffMin < 60) return { text: `${diffMin}m ago`, color: "text-indigo-500 font-bold" };
+            if (diffHour < 24) return { text: `${diffHour}h ago`, color: "text-slate-500 dark:text-slate-400" };
+            if (diffDays < 7) return { text: `${diffDays}d ago`, color: "text-slate-400" };
+            
+            // Standard Date for older items (e.g. 12 Oct)
+            const options = { month: 'short', day: 'numeric' };
+            return { text: date.toLocaleDateString('en-GB', options), color: "text-slate-300" };
+        }
+
         function renderList() { 
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim(); const searchWords = rawTerm.split(" ").filter(word => word.length > 0); const listEl = document.getElementById('item-list'); const emptyEl = document.getElementById('empty-state'); 
             const filtered = visibleItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
@@ -608,8 +632,7 @@
             }); 
             lucide.createIcons(); 
         }
-        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; }
-
+        
         window.openItemModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
         window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
         window.editItem = (id) => { if (!isManager) return; const item = visibleItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
@@ -747,9 +770,4 @@
         
         window.updateManualCount = () => { document.getElementById('manual-count').innerText = document.querySelectorAll('.manual-check:checked').length; };
         window.applyBulkUpdate = async () => { const val = parseFloat(document.getElementById('inflation-input').value); if (isNaN(val) || val === 0) return alert("Enter percentage"); let targetItems = []; let logDetail = ""; if (bulkScope === 'all') { targetItems = visibleItems; logDetail = `${val}% on All Items`; } else if (bulkScope === 'category') { const cat = document.getElementById('tool-category-input').value; if (!cat) return alert("Select a category"); targetItems = visibleItems.filter(i => i.category === cat); logDetail = `${val}% on Category: ${cat}`; } else if (bulkScope === 'manual') { const checked = Array.from(document.querySelectorAll('.manual-check:checked')).map(c => c.value); if (checked.length === 0) return alert("Select items"); targetItems = visibleItems.filter(i => checked.includes(i.id)); logDetail = `${val}% on ${checked.length} Manually Selected Items`; } if (!confirm(`Apply ${val}% change to ${targetItems.length} items?`)) return; try { const batch = writeBatch(db); targetItems.slice(0, 490).forEach(item => { const newPrice = Math.ceil(item.price * (1 + (val / 100))); batch.update(doc(getCollectionRef(), item.id), { price: newPrice, updatedAt: serverTimestamp() }); }); await batch.commit(); await logAction("Bulk Update", logDetail); alert("Updated!"); document.getElementById('inflation-input').value = ''; document.querySelectorAll('.manual-check').forEach(c => c.checked = false); window.updateManualCount(); } catch(e) { alert("Error: " + e.message); } };
-        function renderTools() { const catSelect = document.getElementById('tool-category-input'); const cats = new Set(); visibleItems.forEach(i => { if(i.category) cats.add(i.category.trim()); }); catSelect.innerHTML = '<option value="">Choose Category...</option>'; cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); }); const manList = document.getElementById('manual-list'); manList.innerHTML = ''; visibleItems.forEach(item => { const div = document.createElement('label'); div.className = "flex items-center gap-3 p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group transition-colors"; div.innerHTML = `<input type="checkbox" value="${item.id}" class="manual-check w-4 h-4 rounded border-slate-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 transition-all" onchange="window.updateManualCount()"><div class="text-sm"><div class="font-bold text-slate-800 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors">${escape(item.name)}</div><div class="text-[10px] text-slate-500 dark:text-slate-400">₦${item.price}</div></div>`; manList.appendChild(div); }); window.setBulkScope(bulkScope); }
-
-        lucide.createIcons(); init();
-    </script>
-</body>
-</html>
+        function renderTools() { const catSelect = document.getElementById('tool-category-input'); const cats = new Set(); visibleItems.forEach(i => { if(i.category) cats.add(i.category.trim()); }); catSelect.innerHTML = '<option value="">Choose Category...</option>'; cats.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.innerText = c; catSelect.appendChild(opt); }); const manList = document.getElementById('manual-list'); manList.innerHTML = ''; visibleItems.forEach(item => { const div = document.createElement('label'); div.className = "flex items-center gap-3 p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group transition-colors"; div.innerHTML = `<input type="checkbox" value="${item.id}" class="manual-check w-4 h-4 rounded border-slate-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 transition-all" onchange="window.updateManualCount()"><div class="text-sm"><div class="font-bold text-slate-800 dark:text-white group-hover:text-indigo-7
