@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=5.1">
-    <link rel="icon" type="image/png" href="./logo.png?v=5.1">
-    <link rel="apple-touch-icon" href="./logo.png?v=5.1">
+    <link rel="manifest" href="./manifest.json?v=5.2">
+    <link rel="icon" type="image/png" href="./logo.png?v=5.2">
+    <link rel="apple-touch-icon" href="./logo.png?v=5.2">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=5.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=5.2" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -52,7 +52,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v5.1</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v5.2</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
@@ -66,19 +66,19 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=5.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=5.2" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
                             <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="window.openSuperAdmin()" id="super-admin-btn" class="hidden text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full border border-amber-200 shadow-sm">
+                        <button onclick="window.openSuperAdmin()" id="super-admin-btn" class="hidden text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full border border-amber-200 shadow-sm transition-transform active:scale-95">
                             <i data-lucide="shield-check" class="w-4 h-4"></i>
                         </button>
 
-                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative"><i data-lucide="lock" class="w-4 h-4"></i></button>
-                        <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
+                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative transition-colors"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                        <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200 transition-colors">Log Out</button>
                     </div>
                 </div>
                 <div class="relative flex gap-2">
@@ -240,7 +240,7 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
         
-        // --- PERMISSION CONFIG ---
+        // --- CONFIGURATION ---
         const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "maryam2003abubakar@gmail.com", "ahmedzainabukar@gmail.com"];
         const SUPER_ADMIN = "abdulkadirbukar2006@gmail.com"; 
 
@@ -258,29 +258,40 @@
         let audioCtx = null;
         let trashItems = []; 
 
-        // --- AUTHENTICATION ---
+        // --- AUTHENTICATION LISTENER (The Brain) ---
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
                 const userEmail = user.email ? user.email.toLowerCase().trim() : "";
                 
-                // CHECK IF EMAIL IS IN LIST
+                // 1. CHECK IF USER IS A MANAGER
                 if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { 
                     isAdmin = true; 
                     
-                    // CHECK IF EMAIL IS YOURS (Super Admin)
+                    // 2. CHECK IF USER IS THE OWNER
                     if (userEmail === SUPER_ADMIN.toLowerCase()) {
                         isSuperAdmin = true;
+                        showToast("Owner Mode Active");
                     } else {
                         isSuperAdmin = false;
+                        showToast("Manager Mode Active");
                     }
                 } else { 
-                    isAdmin = false; isSuperAdmin = false;
+                    // Logged in but not an admin (e.g. random gmail)
+                    isAdmin = false; 
+                    isSuperAdmin = false;
                 }
             } else { 
+                // No user found
                 currentUser = null; isAdmin = false; isSuperAdmin = false;
-                if (currentStoreName && navigator.onLine) signInAnonymously(auth).catch(e => console.error(e));
+                
+                // If we are offline or just starting, try anonymous login so the app works
+                if (currentStoreName) {
+                    signInAnonymously(auth).catch(e => console.error("Anon Auth Error", e));
+                }
             }
+            
+            // 3. ALWAYS UPDATE UI WHEN AUTH CHANGES
             if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             updateAdminUI(); 
         });
@@ -307,11 +318,90 @@
                 
                 renderCategories(); 
                 renderList();
-                // Live update super admin panel if open
                 if(isSuperAdmin && !document.getElementById('super-admin-modal').classList.contains('hidden')) {
                     updateStats(); updateTrashList(); 
                 }
             }, (err) => console.log(err.code)); 
+        }
+
+        // --- UI UPDATER (Handles Icons) ---
+        function updateAdminUI() { 
+            const lockBtn = document.getElementById('admin-lock-btn'); 
+            const fab = document.getElementById('fab-container'); 
+            const superBtn = document.getElementById('super-admin-btn');
+            const badgeContainer = document.querySelector('h1');
+            
+            // Clear existing badge if any
+            const existingBadge = document.getElementById('owner-badge');
+            if(existingBadge) existingBadge.remove();
+
+            if (isAdmin) { 
+                // MANAGER IS LOGGED IN
+                // 1. Change Lock Icon to Unlock
+                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i>'; 
+                lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200 transition-all"; 
+                
+                // 2. Show Add Button
+                fab.classList.remove('hidden'); 
+                
+                // 3. Super Admin Specifics
+                if(isSuperAdmin) {
+                    superBtn.classList.remove('hidden');
+                    // Add Owner Badge
+                    const badge = document.createElement('span');
+                    badge.id = 'owner-badge';
+                    badge.className = "ml-2 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200";
+                    badge.innerText = "OWNER";
+                    badgeContainer.appendChild(badge);
+                } else {
+                    superBtn.classList.add('hidden');
+                }
+            } else { 
+                // NO ONE IS LOGGED IN
+                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; 
+                lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200 relative"; 
+                fab.classList.add('hidden'); 
+                superBtn.classList.add('hidden');
+            } 
+            
+            renderList(); 
+            lucide.createIcons(); // IMPORTANT: This draws the new lock/unlock icon
+        }
+
+        // --- LOGIN/LOGOUT LOGIC (Fixed) ---
+        window.toggleAdmin = () => {
+            if (isAdmin) { 
+                // LOGOUT
+                if(confirm("Exit Manager Mode?")) { 
+                    signOut(auth).then(() => {
+                        // We sign in anonymously immediately so the app keeps working for customers
+                        signInAnonymously(auth);
+                        showToast("Logged Out");
+                    });
+                } 
+            } else { 
+                // LOGIN
+                const provider = new GoogleAuthProvider(); 
+                // We use local persistence so you stay logged in even if you close the browser
+                setPersistence(auth, browserLocalPersistence)
+                    .then(() => {
+                        return signInWithPopup(auth, provider);
+                    })
+                    .catch((error) => {
+                        // Only show alert if it's an actual error, not just closing the popup
+                        if (error.code !== 'auth/popup-closed-by-user') {
+                            alert("Login failed: " + error.message);
+                        }
+                    });
+            }
+        };
+
+        // --- HELPER: Toast Notification ---
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
 
         // --- MODERN TIME FORMATTING ---
@@ -341,7 +431,7 @@
             try { await addDoc(logsRef, { action: action, details: details, user: userLabel, timestamp: serverTimestamp() }); } catch(e) { console.error("Log failed", e); }
         }
 
-        // --- CORE UI ---
+        // --- CORE UI RENDER ---
         function renderCategories() { 
             const cats = new Set(['All']); allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); 
             const container = document.getElementById('category-container'); container.innerHTML = ''; 
@@ -467,65 +557,10 @@
             }
         };
 
-        // --- AUTH & RELOAD FIX ---
+        // --- AUTH & OTHER ---
         function showLogin() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
         function showApp() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); startDataSync(); updateAdminUI(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); window.location.reload(); });
-        
-        // FIXED TOGGLE ADMIN (Force Reloads)
-        window.toggleAdmin = () => {
-            if (isAdmin) { 
-                if(confirm("Lock Manager Mode?")) { 
-                    signOut(auth).then(() => {
-                         // FORCE REFRESH TO CLEAR STATE
-                         window.location.reload();
-                    });
-                } 
-            } else { 
-                const provider = new GoogleAuthProvider(); 
-                setPersistence(auth, browserLocalPersistence)
-                    .then(() => signInWithPopup(auth, provider))
-                    .then(() => {
-                        // FORCE REFRESH TO APPLY SUPER ADMIN UI
-                        window.location.reload();
-                    })
-                    .catch((error) => alert("Login failed: " + error.message)); 
-            }
-        };
-
-        function updateAdminUI() { 
-            const lockBtn = document.getElementById('admin-lock-btn'); 
-            const fab = document.getElementById('fab-container'); 
-            const superBtn = document.getElementById('super-admin-btn');
-            
-            if (isAdmin) { 
-                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; 
-                lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; 
-                fab.classList.remove('hidden'); 
-                
-                // SUPER ADMIN CHECK
-                if(isSuperAdmin) {
-                    superBtn.classList.remove('hidden');
-                    // Add visible Owner badge if not exists
-                    if(!document.getElementById('owner-badge')) {
-                        const badge = document.createElement('span');
-                        badge.id = 'owner-badge';
-                        badge.className = "ml-2 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200";
-                        badge.innerText = "OWNER";
-                        document.querySelector('h1').appendChild(badge);
-                    }
-                } else {
-                    superBtn.classList.add('hidden');
-                }
-            } else { 
-                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; 
-                lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; 
-                fab.classList.add('hidden'); 
-                superBtn.classList.add('hidden');
-            } 
-            renderList(); lucide.createIcons(); 
-        }
-
         window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); window.location.reload(); };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
         
