@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.4">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.4">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.4">
+    <link rel="manifest" href="./manifest.json?v=1.5">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.5">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.5">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,26 +22,12 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* --- STATE SYSTEM (The Magic Fix) --- */
-        
-        /* Default: Hide Admin Stuff */
-        .show-owner, .show-manager, .show-admin { display: none !important; }
-        
-        /* State: MANAGER */
-        body[data-role="manager"] .show-manager { display: inline-flex !important; }
-        body[data-role="manager"] .show-admin { display: inline-flex !important; }
-        body[data-role="manager"] .hide-if-admin { display: none !important; }
-        
-        /* State: OWNER */
-        body[data-role="owner"] .show-owner { display: inline-flex !important; }
-        body[data-role="owner"] .show-admin { display: inline-flex !important; }
-        body[data-role="owner"] .hide-if-admin { display: none !important; }
-
         /* Badges */
-        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 8px; letter-spacing: 0.5px; }
-        .badge-owner { background-color: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
-        .badge-manager { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
-        
+        .badge-owner { background-color: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 5px; }
+        .badge-manager { background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 5px; }
+        .badge-offline { background-color: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: none; }
+        .offline .badge-offline { display: inline-block; }
+
         /* Scanner */
         #reader { width: 100%; height: 100%; background: black; }
         #reader video { object-fit: cover; width: 100%; height: 100%; }
@@ -50,16 +36,16 @@
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen" data-role="guest">
+<body class="bg-slate-100 text-slate-900 min-h-screen">
 
     <div id="debug-box" class="fixed bottom-0 left-0 right-0 bg-black text-green-400 text-[10px] font-mono p-2 z-[200] opacity-90 transition-opacity duration-1000">
-        System Ready v1.4
+        System v1.5 Loading...
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=1.4" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.5" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -70,7 +56,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v1.4</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v1.5</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
@@ -84,27 +70,20 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=1.4" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.5" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
-                            <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">
-                                Fatima Store 
-                                <span class="show-owner badge badge-owner">OWNER</span>
-                                <span class="show-manager badge badge-manager">MANAGER</span>
+                            <h1 id="header-title" class="text-lg font-bold tracking-tight leading-none flex items-center">
+                                Fatima Store <span class="badge-offline">OFFLINE</span>
                             </h1>
                             <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="window.openSuperAdmin()" class="show-owner text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full border border-amber-200 shadow-sm transition-transform active:scale-95">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    
+                    <div id="header-actions" class="flex items-center gap-2">
+                        <button onclick="window.toggleAdmin()" class="p-2 rounded-full border border-slate-200 bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         </button>
-
-                        <button onclick="window.toggleAdmin()" class="p-2 rounded-full border border-slate-200 bg-slate-50 transition-colors hover:bg-slate-100">
-                            <span class="hide-if-admin text-slate-400"><i data-lucide="lock" class="w-4 h-4"></i></span>
-                            <span class="show-admin text-indigo-600"><i data-lucide="unlock" class="w-4 h-4"></i></span>
-                        </button>
-
-                        <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200 transition-colors">Log Out</button>
+                        <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
                     </div>
                 </div>
                 
@@ -133,7 +112,7 @@
             <div id="item-list" class="space-y-3"></div>
         </div>
 
-        <div id="fab-container" class="fixed bottom-14 right-6 z-20 show-admin">
+        <div id="fab-container" class="fixed bottom-14 right-6 z-20 hidden">
             <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button>
         </div>
     </div>
@@ -228,18 +207,6 @@
         </div>
     </div>
 
-    <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-center items-center">
-        <div class="absolute top-0 w-full p-4 z-20 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent">
-            <h3 class="font-bold text-lg">Scan Barcode</h3>
-            <button onclick="window.stopScanner()" class="bg-white/20 p-2 rounded-full backdrop-blur-md active:bg-white/30"><i data-lucide="x" class="w-6 h-6"></i></button>
-        </div>
-        <div class="relative w-full h-full bg-black flex flex-col justify-center overflow-hidden">
-            <div id="reader" class="w-full h-full"></div>
-            <div class="scanner-viewfinder z-10"></div>
-            <button id="flash-btn" onclick="window.toggleFlash()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 bg-white/20 p-4 rounded-full backdrop-blur-md border border-white/30 hidden hover:bg-white/30 active:scale-95 transition-all"><i data-lucide="flashlight" class="w-6 h-6 text-white"></i></button>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
@@ -251,12 +218,14 @@
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
         
-        // --- SEPARATE PERMISSION LISTS (Cleaner Logic) ---
+        // --- CONFIGURATION ---
         const SUPER_ADMIN_EMAIL = "abdulkadirbukar2006@gmail.com";
-        const MANAGER_EMAILS = [
-            "maryam2003abubakar@gmail.com", 
-            "ahmedzainabukar@gmail.com"
-        ]; 
+        const MANAGER_EMAILS = ["maryam2003abubakar@gmail.com", "ahmedzainabukar@gmail.com"]; 
+
+        // --- RAW SVGs (To avoid library timing issues) ---
+        const SVG_LOCK = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+        const SVG_UNLOCK = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>`;
+        const SVG_SHIELD = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`;
 
         // --- DEBUG LOGGER ---
         function debug(msg) {
@@ -273,7 +242,7 @@
         let currentStoreName = localStorage.getItem('pk_store_name'); 
         let unsubscribe = null; 
         let allItems = []; 
-        let currentRole = 'guest'; // guest, manager, owner
+        let currentRole = 'guest'; 
         let selectedCategory = 'All'; 
         let scanner = null; 
         let scanMode = null; 
@@ -285,7 +254,7 @@
             if (user) { 
                 currentUser = user; 
                 const userEmail = user.email ? user.email.trim().toLowerCase() : "anon";
-                debug(`User: ${userEmail}`);
+                debug(`Auth: ${userEmail}`);
                 
                 // --- DETERMINISTIC ROLE CHECK ---
                 if (userEmail === SUPER_ADMIN_EMAIL.toLowerCase()) {
@@ -307,16 +276,54 @@
             }
             if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
             
-            // UPDATE THE STATE IMMEDIATELY
-            updateAppState();
+            // UPDATE UI IMMEDIATELY
+            updateHeaderUI();
         });
 
-        // --- THE NEW STATE MANAGER (Pure CSS Power) ---
-        function updateAppState() {
-            // 1. Set the role on the Body (CSS handles visibility)
-            document.body.setAttribute('data-role', currentRole);
+        // --- UI UPDATER (DIRECT INJECTION METHOD) ---
+        function updateHeaderUI() { 
+            const titleEl = document.getElementById('header-title');
+            const actionsEl = document.getElementById('header-actions');
+            const fab = document.getElementById('fab-container');
+
+            if (currentRole === 'owner') {
+                // OWNER HEADER
+                titleEl.innerHTML = `Fatima Store <span class="badge-owner">OWNER</span> <span class="badge-offline">OFFLINE</span>`;
+                actionsEl.innerHTML = `
+                    <button onclick="window.openSuperAdmin()" class="text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-full border border-amber-200 shadow-sm transition-transform active:scale-95">
+                        ${SVG_SHIELD}
+                    </button>
+                    <button onclick="window.toggleAdmin()" class="p-2 rounded-full border border-indigo-200 bg-indigo-50 transition-colors">
+                        ${SVG_UNLOCK}
+                    </button>
+                    <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
+                `;
+                fab.classList.remove('hidden');
+
+            } else if (currentRole === 'manager') {
+                // MANAGER HEADER
+                titleEl.innerHTML = `Fatima Store <span class="badge-manager">MANAGER</span> <span class="badge-offline">OFFLINE</span>`;
+                actionsEl.innerHTML = `
+                    <button onclick="window.toggleAdmin()" class="p-2 rounded-full border border-indigo-200 bg-indigo-50 transition-colors">
+                        ${SVG_UNLOCK}
+                    </button>
+                    <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
+                `;
+                fab.classList.remove('hidden');
+
+            } else {
+                // GUEST HEADER
+                titleEl.innerHTML = `Fatima Store <span class="badge-offline">OFFLINE</span>`;
+                actionsEl.innerHTML = `
+                    <button onclick="window.toggleAdmin()" class="p-2 rounded-full border border-slate-200 bg-slate-50 transition-colors">
+                        ${SVG_LOCK}
+                    </button>
+                    <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
+                `;
+                fab.classList.add('hidden');
+            }
             
-            // 2. Re-render list to show/hide edit buttons
+            // Re-render list to show/hide pencil icons
             window.renderList();
         }
 
@@ -342,7 +349,6 @@
                 
                 window.renderCategories(); 
                 window.renderList();
-                // Update Super Admin panels if open
                 if(currentRole === 'owner' && !document.getElementById('super-admin-modal').classList.contains('hidden')) {
                     updateStats(); updateTrashList(); 
                 }
@@ -409,7 +415,7 @@
                 if(confirm("Exit Admin Mode?")) { 
                     signOut(auth).then(() => { 
                         currentRole = 'guest'; 
-                        updateAppState();
+                        updateHeaderUI();
                         signInAnonymously(auth); 
                         showToast("Logged Out"); 
                     });
@@ -441,7 +447,7 @@
         // --- INIT & UTILS ---
         document.getElementById('item-form').addEventListener('submit', async (e) => { e.preventDefault(); const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving..."; const id = document.getElementById('item-id').value; const name = document.getElementById('name-input').value.trim(); const price = parseFloat(document.getElementById('price-input').value); const data = { barcode: document.getElementById('barcode-input').value.trim(), name: name, price: price, bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), updatedAt: serverTimestamp(), deleted: false }; if (!id) data.createdAt = serverTimestamp(); try { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); if (id) { await updateDoc(doc(colRef, id), data); logAction("EDIT", `Updated '${name}' to ₦${price}`); } else { await addDoc(colRef, data); logAction("CREATE", `Added '${name}' at ₦${price}`); } window.closeModal(); } catch (err) { alert("Error saving: " + err.message); } btn.disabled = false; btn.innerText = "Save Item"; });
         function showLogin() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('app-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
-        function showApp() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); startDataSync(); updateAppState(); }
+        function showApp() { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden'); startDataSync(); updateHeaderUI(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); window.location.reload(); });
         window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); window.location.reload(); };
         function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
