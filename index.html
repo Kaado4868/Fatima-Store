@@ -628,9 +628,15 @@
             document.getElementById('stat-db-count').innerText = allItems.length; 
             document.getElementById('stat-trash-count').innerText = deletedItems.length;
             
-            // Fix for NaN/String issues
+            // AGGRESSIVE FIX: Force clean prices before calculating
             if (visibleItems.length > 0) { 
-                const total = visibleItems.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0); 
+                const cleanPrice = (p) => {
+                    if (typeof p === 'number') return p;
+                    if (typeof p === 'string') return parseFloat(p.replace(/[^0-9.]/g, '')) || 0;
+                    return 0;
+                };
+                
+                const total = visibleItems.reduce((acc, curr) => acc + cleanPrice(curr.price), 0); 
                 document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; 
             }
             else { document.getElementById('stat-avg').innerText = '₦0'; }
