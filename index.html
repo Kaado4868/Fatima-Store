@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.3.0">
+    <link rel="manifest" href="./manifest.json?v=2.4.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -12,12 +12,12 @@
     <script>
         window.onerror = function(msg, url, line) {
             console.error("Global Error:", msg);
+            // Ignore benign errors
             if (msg.includes("Script error") || msg.includes("firebase")) return false;
             
             const overlay = document.getElementById('loading-overlay');
-            if(overlay) {
-                overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">App Crashed</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="localStorage.clear(); window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">Reset & Reload</button></div>`;
-                overlay.classList.remove('hidden');
+            if(overlay && !overlay.classList.contains('hidden')) {
+                overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">Startup Error</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="localStorage.clear(); window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">Reset & Reload</button></div>`;
             }
             return false;
         };
@@ -81,7 +81,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.3.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.4.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -236,6 +236,7 @@
                                 <button type="submit" class="bg-indigo-600 text-white px-5 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20">Add</button>
                             </div>
                         </form>
+                        <p class="text-[10px] text-slate-400 mt-2 italic"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> IMPORTANT: After adding a manager, click <b>"Copy Rules"</b> in Tools and update Firebase to grant them access.</p>
                     </div>
                     
                     <div id="staff-list" class="space-y-2"></div>
@@ -283,7 +284,7 @@
                                 <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="shield" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
                                 <div>
                                     <h4 class="font-bold text-slate-800 dark:text-white text-sm">Security Rules</h4>
-                                    <p class="text-[10px] text-slate-400">Generates Standard Rules.</p>
+                                    <p class="text-[10px] text-slate-400">Generates Standard Security Rules.</p>
                                 </div>
                             </div>
                             <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-purple-600">Copy Rules</button>
@@ -469,7 +470,30 @@
             if (now - lastBackPressTime < 2000) { } else { lastBackPressTime = now; const t = document.getElementById('toast'); t.innerText = "Press back again to exit"; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); setTimeout(engageTrap, 50); } 
         });
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
-        function updateOnlineStatus() { const isOnline = navigator.onLine; document.body.classList.toggle('offline', !isOnline); const adminPing = document.getElementById('admin-status-ping'); const adminDot = document.getElementById('admin-status-dot'); const adminText = document.getElementById('admin-status-text'); if (adminPing && adminDot && adminText) { if (isOnline) { adminPing.classList.remove('hidden'); adminDot.classList.replace('bg-red-500', 'bg-emerald-500'); adminText.innerText = "System Online"; adminText.classList.replace('text-red-400', 'text-slate-400'); } else { adminPing.classList.add('hidden'); adminDot.classList.replace('bg-emerald-500', 'bg-red-500'); adminText.innerText = "System Offline"; adminText.classList.replace('text-slate-400', 'text-red-400'); } } }
+        function updateOnlineStatus() { 
+            const isOnline = navigator.onLine; 
+            document.body.classList.toggle('offline', !isOnline); 
+            const adminPing = document.getElementById('admin-status-ping'); 
+            const adminDot = document.getElementById('admin-status-dot'); 
+            const adminText = document.getElementById('admin-status-text'); 
+            const netStatus = document.getElementById('net-status');
+            
+            if(netStatus) netStatus.classList.toggle('hidden', isOnline);
+
+            if (adminPing && adminDot && adminText) { 
+                if (isOnline) { 
+                    adminPing.classList.remove('hidden'); 
+                    adminDot.classList.replace('bg-red-500', 'bg-emerald-500'); 
+                    adminText.innerText = "System Online"; 
+                    adminText.classList.replace('text-red-400', 'text-slate-400'); 
+                } else { 
+                    adminPing.classList.add('hidden'); 
+                    adminDot.classList.replace('bg-emerald-500', 'bg-red-500'); 
+                    adminText.innerText = "System Offline"; 
+                    adminText.classList.replace('text-slate-400', 'text-red-400'); 
+                } 
+            } 
+        }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
 
         async function init() {
@@ -664,13 +688,36 @@ service cloud.firestore {
             const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
             unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
                 clearTimeout(spinnerTimeout); spinner.classList.add('hidden');
-                allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()})).filter(item => item.id !== '_config');
+                // ROBUST DISPLAY: Filter out _config AND handle missing items
+                allItems = snapshot.docs.map(d => {
+                    try { return {id: d.id, ...d.data()}; } catch(e) { return null; }
+                }).filter(item => item && item.id !== '_config');
+                
                 allItems.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 visibleItems = allItems.filter(i => !i.isDeleted);
                 deletedItems = allItems.filter(i => i.isDeleted);
                 renderCategories(); renderList(); updateStats();
             }); 
         }
+
+        function formatFreshness(timestamp) {
+            if (!timestamp) return { text: "Unknown date", color: "text-slate-300" };
+            let date;
+            if (timestamp && typeof timestamp.toDate === 'function') {
+                date = timestamp.toDate();
+            } else if (timestamp instanceof Date) {
+                date = timestamp;
+            } else {
+                date = new Date(timestamp);
+            }
+            if (isNaN(date.getTime())) return { text: "Unknown date", color: "text-slate-300" };
+
+            const now = new Date();
+            const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24));
+            if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" };
+            return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" };
+        }
+
         function renderCategories() { const cats = new Set(['All']); visibleItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
         
         function formatMoney(amount) { 
@@ -692,7 +739,6 @@ service cloud.firestore {
             }); 
             if(window.lucide) lucide.createIcons();
         }
-        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; }
 
         window.openItemModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
         window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
