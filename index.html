@@ -4,20 +4,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.6.1">
+    <link rel="manifest" href="./manifest.json?v=2.6.2">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script>
         window.onerror = function(msg, url, line) {
-            if (msg.includes("Script error") || msg.includes("firebase")) return false;
             const overlay = document.getElementById('loading-overlay');
-            if(overlay && !overlay.classList.contains('hidden')) {
+            if(overlay) {
                 overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">Startup Error</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="localStorage.clear(); window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">Reset & Reload</button></div>`;
+                overlay.classList.remove('hidden');
             }
-            return false;
         };
+        // Fail-safe timer: If stuck for 5 seconds, show reset button
+        setTimeout(() => {
+            const loadingText = document.getElementById('loading-text');
+            const resetBtn = document.getElementById('reset-btn');
+            if (loadingText && document.getElementById('app-screen').classList.contains('hidden') && document.getElementById('login-screen').classList.contains('hidden')) {
+                loadingText.innerText = "Taking too long? Connection or Rules issue.";
+                loadingText.classList.add('text-red-500');
+                if(resetBtn) resetBtn.classList.remove('hidden');
+            }
+        }, 5000);
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +71,7 @@
              <img src="./logo.png?v=1.2.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Starting System...</p>
-        <button onclick="localStorage.removeItem('pk_store_name'); window.location.reload()" class="absolute bottom-10 text-xs text-slate-400 underline">Reset App</button>
+        <button id="reset-btn" onclick="localStorage.removeItem('pk_store_name'); window.location.reload()" class="hidden mt-6 bg-red-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg animate-bounce">Force Reset</button>
     </div>
 
     <div id="update-toast" class="toast"><span>New Update Available</span><button class="update-btn" onclick="window.location.reload()">Update</button></div>
@@ -78,7 +87,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.6.1</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.6.2 (Safe Mode)</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -535,6 +544,7 @@
                         updateUI(); 
                     }, (error) => {
                         console.log("Config sync error", error);
+                        // Do NOT hang here, assume basic perms
                         isManager = isSuperAdmin;
                         updateUI();
                     });
@@ -665,6 +675,8 @@ service cloud.firestore {
             if (unsubscribe) unsubscribe(); 
             const spinner = document.getElementById('data-loading'); const emptyEl = document.getElementById('empty-state');
             const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
+            
+            // CRITICAL FIX: Add error handler to onSnapshot to prevent freezing if Rules reject the request
             unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
                 clearTimeout(spinnerTimeout); spinner.classList.add('hidden');
                 // SAFE LOAD: Handle malformed docs
@@ -676,6 +688,15 @@ service cloud.firestore {
                 visibleItems = allItems.filter(i => !i.isDeleted);
                 deletedItems = allItems.filter(i => i.isDeleted);
                 renderCategories(); renderList(); updateStats();
+            }, (error) => {
+                console.error("Snapshot error:", error);
+                clearTimeout(spinnerTimeout);
+                spinner.classList.add('hidden');
+                // Don't leave user hanging - show empty state or error toast
+                const toast = document.getElementById('toast');
+                toast.innerText = "Connection/Permission Error. Check Rules.";
+                toast.classList.add('show', 'bg-red-500');
+                setTimeout(()=>toast.classList.remove('show'), 4000);
             }); 
         }
 
@@ -967,4 +988,12 @@ service cloud.firestore {
             if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full border border-amber-200 dark:border-amber-800"; superBtn.classList.remove('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 dark:text-amber-400 font-bold uppercase tracking-wide"; updateChartTheme(); } 
             else if (isManager) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>'; lockBtn.className = "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-full border border-indigo-200 dark:border-indigo-800"; superBtn.classList.add('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide"; } 
             else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700"; superBtn.classList.add('hidden'); fab.classList.add('hidden'); roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide"; }
-            renderList(); updateStats(); if
+            renderList(); updateStats(); if(window.lucide) lucide.createIcons(); 
+        }
+        window.logout = () => { if (confirm("Exit?")) { localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); } };
+        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+        
+        if(window.lucide) lucide.createIcons(); init();
+    </script>
+</body>
+</html>
