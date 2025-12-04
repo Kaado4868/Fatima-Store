@@ -4,17 +4,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.0.0">
+    <link rel="manifest" href="./manifest.json?v=2.1.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
     
+    <!-- Crash Handler -->
     <script>
         window.onerror = function(msg, url, line) {
             console.error("Global Error:", msg);
-            // Only show overlay for critical loading errors, not background sync issues
             if (msg.includes("Script error") || msg.includes("firebase")) return false;
-            
             const overlay = document.getElementById('loading-overlay');
             if(overlay && !overlay.classList.contains('hidden')) {
                 overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">Startup Error</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="localStorage.clear(); window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">Reset & Reload</button></div>`;
@@ -80,7 +79,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.0.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.1.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -233,7 +232,7 @@
                                 <button type="submit" class="bg-indigo-600 text-white px-5 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20">Add</button>
                             </div>
                         </form>
-                        <p class="text-[10px] text-slate-400 mt-2 italic"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> IMPORTANT: After adding a manager, click <b>"Copy Rules"</b> in Tools and update Firebase.</p>
+                        <p class="text-[10px] text-slate-400 mt-2 italic"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> IMPORTANT: After adding a manager, go to <b>Tools</b> > <b>Copy Rules</b> and update Firebase to grant them access.</p>
                     </div>
                     
                     <div id="staff-list" class="space-y-2"></div>
@@ -281,7 +280,7 @@
                                 <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="shield" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
                                 <div>
                                     <h4 class="font-bold text-slate-800 dark:text-white text-sm">Security Rules</h4>
-                                    <p class="text-[10px] text-slate-400">Update Firebase to allow Managers.</p>
+                                    <p class="text-[10px] text-slate-400">Generates SECURE rules for managers.</p>
                                 </div>
                             </div>
                             <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-purple-600">Copy Rules</button>
@@ -552,12 +551,12 @@
             document.body.removeChild(link);
         };
 
-        // ===== SECURE RULES GENERATOR (STRICT) =====
+        // ===== SMART SECURE RULES GENERATOR =====
         window.copyRules = () => {
             if(!currentStoreName) return alert("Please open a store first.");
             const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
             
-            // Build explicit whitelist of managers
+            // Build dynamic whitelist of managers
             let allowedEmails = [`'${SUPER_ADMIN_EMAIL}'`];
             staffList.forEach(s => {
                 if(s.role === 'manager' && s.email) {
@@ -569,7 +568,7 @@
             const rules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. PUBLIC READ: Anyone can view items
+    // 1. PUBLIC READ: Anyone can view items (Anonymous or Signed In)
     match /{document=**} {
       allow read: if true;
     }
@@ -580,7 +579,7 @@ service cloud.firestore {
     }
 
     // 3. SECURE WRITE: Only Super Admin and Listed Managers can change items
-    // If your email is NOT in this list, you CANNOT edit.
+    // If you are logged in but NOT on this list, you will be blocked.
     match /artifacts/fatima-store-1f63f/public/data/pk_store_${safeName}/{item} {
       allow write: if request.auth.token.email in ${emailListString};
     }
@@ -591,7 +590,7 @@ service cloud.firestore {
     }
   }
 }`;
-            navigator.clipboard.writeText(rules).then(() => alert("✅ SECURE RULES COPIED!\n\nThis whitelist allows ONLY:\n" + allowedEmails.join('\n') + "\n\n1. Go to Firebase Console > Firestore > Rules\n2. Delete everything\n3. Paste these new rules\n4. Click Publish"));
+            navigator.clipboard.writeText(rules).then(() => alert("✅ SECURE RULES COPIED!\n\nThis rule allows ONLY:\n" + allowedEmails.join('\n') + "\n\n1. Go to Firebase Console > Firestore > Rules\n2. Delete everything\n3. Paste these new rules\n4. Click Publish"));
         };
 
         document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
@@ -756,9 +755,9 @@ service cloud.firestore {
                 const logData = logSnap.data();
                 const meta = logData.meta;
 
-                // FIX: Check if meta.previousData exists before using it
+                // SAFE UNDO CHECK: Prevent crash if data missing
                 if (!meta.previousData && logData.action !== 'Bulk Update') {
-                    return alert("Cannot Undo: No backup data found for this specific edit.");
+                    return alert("Cannot Undo: No backup data found for this specific edit (likely an old log).");
                 }
 
                 if (logData.action === 'Bulk Update' && meta.backupData) {
