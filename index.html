@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.5.0">
+    <link rel="manifest" href="./manifest.json?v=1.6.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -13,15 +13,10 @@
         window.onerror = function(msg, url, line) {
             const overlay = document.getElementById('loading-overlay');
             if(overlay) {
-                document.getElementById('loading-text').innerText = "Error Detected";
-                document.getElementById('loading-text').classList.add('text-red-500');
-                const btn = document.createElement('button');
-                btn.innerText = "⚠️ Reset & Reload";
-                btn.className = "mt-4 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg";
-                btn.onclick = () => { localStorage.clear(); window.location.reload(); };
-                overlay.appendChild(btn);
+                overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">System Error</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform">Reload App</button></div>`;
+                overlay.classList.remove('hidden');
             }
-            return false; // Let default handler run too
+            return false;
         };
     </script>
 
@@ -35,7 +30,9 @@
         tailwind.config = {
             darkMode: 'class',
             theme: {
-                extend: { colors: { slate: { 850: '#151f32', 950: '#020617' } } }
+                extend: {
+                    colors: { slate: { 850: '#151f32', 950: '#020617' } }
+                }
             }
         }
     </script>
@@ -83,7 +80,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.5.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.6.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -238,8 +235,13 @@
                         </form>
                     </div>
                     
-                    <div id="staff-list" class="space-y-2">
-                        </div>
+                    <div id="staff-list" class="space-y-2"></div>
+                    
+                    <div class="mt-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 text-center">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wide font-bold">Your Status</div>
+                        <div class="text-xs font-mono text-slate-600 dark:text-slate-300 mt-1" id="debug-email">Checking...</div>
+                        <div class="text-xs font-bold text-indigo-500 mt-1" id="debug-role">...</div>
+                    </div>
                 </div>
 
                 <div id="view-logs" class="hidden space-y-3 animate-[fadeIn_0.3s_ease-out]">
@@ -269,6 +271,19 @@
                                 </div>
                             </div>
                             <button onclick="window.exportData()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-emerald-600">Download</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="file-code" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 dark:text-white text-sm">Database Rules</h4>
+                                    <p class="text-[10px] text-slate-400">Fix permission denied errors.</p>
+                                </div>
+                            </div>
+                            <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-purple-600">Copy Rules</button>
                         </div>
                     </div>
 
@@ -468,11 +483,12 @@
                 const email = user.email ? user.email.toLowerCase() : "";
                 isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
                 
+                document.getElementById('debug-email').innerText = email || "Anonymous User";
+                document.getElementById('debug-role').innerText = isSuperAdmin ? "Super Admin" : "Checking...";
+
                 if (currentStoreName) {
-                    // REAL-TIME CONFIG SYNC (Fixes Manager Lag)
                     if(configUnsubscribe) configUnsubscribe();
                     const configRef = doc(getCollectionRef(), '_config');
-                    // Safety: if permission denied, catch it
                     configUnsubscribe = onSnapshot(configRef, (docSnap) => {
                         if (docSnap.exists()) {
                             staffList = docSnap.data().staff || [];
@@ -481,10 +497,14 @@
                         }
                         const staffMember = staffList.find(s => s.email.toLowerCase() === email);
                         isManager = isSuperAdmin || (staffMember && staffMember.role === 'manager');
+                        
+                        // Debug UI
+                        const roleText = isSuperAdmin ? "Super Admin" : (isManager ? "Manager" : "Staff (Read Only)");
+                        document.getElementById('debug-role').innerText = roleText;
+                        
                         updateUI(); 
                     }, (error) => {
-                        console.log("Config sync error (permission or offline)", error);
-                        // Fallback: If we can't read config, assume not manager unless super admin
+                        console.log("Config sync error", error);
                         isManager = isSuperAdmin;
                         updateUI();
                     });
@@ -514,7 +534,6 @@
 
         async function logAction(action, details, meta = {}) {
             if (!isSuperAdmin && !isManager) return; 
-            // Fire and forget log
             addDoc(getLogCollectionRef(), { action: action, details: details, user: currentUser.email || "Unknown", timestamp: serverTimestamp(), meta: meta }).catch(e=>console.log("Log pending"));
         }
 
@@ -531,22 +550,28 @@
             document.body.removeChild(link);
         };
 
+        // NEW RULES COPIER
+        window.copyRules = () => {
+            const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
+            navigator.clipboard.writeText(rules).then(() => alert("Rules copied!\n\n1. Go to Firebase Console > Firestore > Rules\n2. Paste these rules\n3. Click Publish"));
+        };
+
         document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('new-staff-email').value.trim().toLowerCase();
             const role = document.getElementById('new-staff-role').value;
             if (!email) return;
             staffList.push({ email, role });
-            // Optimistic update handled by onSnapshot
             document.getElementById('new-staff-email').value = '';
-            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => console.error("Sync pending"));
-            alert("Staff added!");
+            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true })
+                .then(() => alert("Staff added!"))
+                .catch(e => { alert("Permission Denied: Database Rejected Save."); console.error(e); });
         });
 
         window.removeStaff = async (email) => {
             if (!confirm(`Remove ${email}?`)) return;
             staffList = staffList.filter(s => s.email !== email);
-            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => console.error("Sync pending"));
+            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => alert("Permission Denied"));
         };
 
         function renderStaffList() {
@@ -602,16 +627,17 @@
         window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
         window.editItem = (id) => { if (!isManager) return; const item = visibleItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
         
-        // NO AWAIT - OFFLINE FRIENDLY
         window.softDeleteItem = (id) => { 
             if (!isManager || !confirm("Move to Trash?")) return;
             const item = visibleItems.find(i => i.id === id);
             const itemName = item ? item.name : "Unknown Item";
-            updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }).catch(e => console.error("Sync pending"));
+            updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }).catch(e => {
+                alert("Permission Denied: You cannot delete this item.");
+            });
             logAction("Soft Delete", `Deleted '${itemName}'`, { itemId: id }); 
         };
 
-        // NO AWAIT - OFFLINE FRIENDLY
+        // EXPLICIT ERROR HANDLING ON SAVE
         document.getElementById('item-form').addEventListener('submit', (e) => {
             e.preventDefault(); if (!isManager) return;
             const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving...";
@@ -619,18 +645,19 @@
             const data = { barcode: document.getElementById('barcode-input').value.trim(), name: document.getElementById('name-input').value.trim(), price: parseFloat(document.getElementById('price-input').value), bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), isDeleted: false, updatedAt: serverTimestamp() };
             if (!id) data.createdAt = serverTimestamp();
             
-            if (id) { 
-                const oldItem = allItems.find(i => i.id === id);
-                const oldData = { ...oldItem }; delete oldData.id;
-                updateDoc(doc(getCollectionRef(), id), data).catch(e => console.error("Sync pending"));
-                logAction("Edit", `Updated '${data.name}'`, { itemId: id, previousData: oldData }); 
-            } else { 
-                const newRef = doc(collection(getCollectionRef().firestore, getCollectionRef().path));
-                setDoc(newRef, data).catch(e => console.error("Sync pending"));
-                logAction("Create", `Created '${data.name}'`, { itemId: newRef.id }); 
-            }
-            window.closeModal('modal');
-            btn.disabled = false; btn.innerText = "Save Item";
+            const action = id ? 
+                updateDoc(doc(getCollectionRef(), id), data) : 
+                setDoc(doc(collection(getCollectionRef().firestore, getCollectionRef().path)), data);
+
+            action.then(() => {
+                logAction(id ? "Edit" : "Create", `${id ? "Updated" : "Created"} '${data.name}'`, { itemId: id });
+                window.closeModal('modal');
+            }).catch(e => {
+                alert("PERMISSION DENIED: The database rejected your change.\n\nGo to Admin > Tools > Copy Rules and paste them in Firebase Console.");
+                console.error(e);
+            }).finally(() => {
+                btn.disabled = false; btn.innerText = "Save Item";
+            });
         });
 
         window.openSuperAdmin = () => { if (isSuperAdmin) { document.getElementById('admin-modal').classList.remove('hidden'); window.switchAdminTab('stats'); } };
@@ -687,15 +714,14 @@
                     meta.backupData.forEach(item => {
                         batch.update(doc(getCollectionRef(), item.id), { price: item.oldPrice, updatedAt: serverTimestamp() });
                     });
-                    // Batch writes must await, but usually work offline in SDK
-                    batch.commit().catch(e => console.error("Sync pending"));
+                    batch.commit().catch(e => alert("Revert Failed: Permission Denied"));
                 } else {
                     const itemRef = doc(getCollectionRef(), meta.itemId);
-                    if (logData.action === 'Edit') updateDoc(itemRef, meta.previousData);
-                    else if (logData.action === 'Soft Delete') updateDoc(itemRef, { isDeleted: false });
-                    else if (logData.action === 'Restore' || logData.action === 'Create') updateDoc(itemRef, { isDeleted: true });
+                    if (logData.action === 'Edit') updateDoc(itemRef, meta.previousData).catch(e => alert("Revert Failed"));
+                    else if (logData.action === 'Soft Delete') updateDoc(itemRef, { isDeleted: false }).catch(e => alert("Revert Failed"));
+                    else if (logData.action === 'Restore' || logData.action === 'Create') updateDoc(itemRef, { isDeleted: true }).catch(e => alert("Revert Failed"));
                 }
-                updateDoc(doc(getLogCollectionRef(), logId), { reverted: true }).catch(e => console.error("Sync pending"));
+                updateDoc(doc(getLogCollectionRef(), logId), { reverted: true });
                 alert("Action undone."); loadLogs(); 
             } catch(e) { alert("Revert failed: " + e.message); }
         };
@@ -708,7 +734,7 @@
         
         window.restoreItem = async (id) => { 
             const item = deletedItems.find(i => i.id === id); const itemName = item ? item.name : "Unknown Item";
-            updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }).catch(e => console.error("Sync pending"));
+            updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }).catch(e => alert("Permission Denied"));
             logAction("Restore", `Restored '${itemName}'`, { itemId: id }); 
         };
         
@@ -717,7 +743,7 @@
                 const count = deletedItems.length; if(count === 0) return alert("Trash already empty"); 
                 const batch = writeBatch(db); 
                 deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); 
-                batch.commit().catch(e => console.error("Sync pending")); 
+                batch.commit().catch(e => alert("Permission Denied: Only Admins can empty trash.")); 
                 logAction("Empty Trash", `Permanently deleted ${count} items`); renderTrash(); 
             } 
         };
@@ -754,13 +780,15 @@
                     backupData.push({ id: item.id, oldPrice: oldPrice });
                     batch.update(doc(getCollectionRef(), item.id), { price: newPrice, updatedAt: serverTimestamp() }); 
                 }); 
-                // Offline friendly
-                batch.commit().catch(e => console.error("Sync pending")); 
-                logAction("Bulk Update", logDetail, { backupData: backupData }); 
-                alert("Updated!"); 
-                document.getElementById('inflation-input').value = ''; 
-                document.querySelectorAll('.manual-check').forEach(c => c.checked = false); 
-                window.updateManualCount(); 
+                
+                batch.commit().then(() => {
+                    logAction("Bulk Update", logDetail, { backupData: backupData }); 
+                    alert("Updated!"); 
+                    document.getElementById('inflation-input').value = ''; 
+                    document.querySelectorAll('.manual-check').forEach(c => c.checked = false); 
+                    window.updateManualCount();
+                }).catch(e => alert("Permission Denied: Bulk Update Rejected"));
+                 
             } catch(e) { alert("Error: " + e.message); } 
         };
 
