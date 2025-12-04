@@ -557,7 +557,14 @@
             }); 
         }
         function renderCategories() { const cats = new Set(['All']); visibleItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
-        function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        
+        // CRITICAL FIX: Safe formatMoney that handles strings/nulls
+        function formatMoney(amount) { 
+            const val = parseFloat(amount);
+            if (isNaN(val)) return '0.00';
+            return val.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+        }
+        
         function renderList() { 
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim(); const searchWords = rawTerm.split(" ").filter(word => word.length > 0); const listEl = document.getElementById('item-list'); const emptyEl = document.getElementById('empty-state'); 
             const filtered = visibleItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
@@ -628,16 +635,18 @@
             document.getElementById('stat-db-count').innerText = allItems.length; 
             document.getElementById('stat-trash-count').innerText = deletedItems.length;
             
-            // AGGRESSIVE FIX: Force clean prices before calculating
+            // CRITICAL FIX: Aggressive price cleaning
             if (visibleItems.length > 0) { 
-                const cleanPrice = (p) => {
-                    if (typeof p === 'number') return p;
-                    if (typeof p === 'string') return parseFloat(p.replace(/[^0-9.]/g, '')) || 0;
-                    return 0;
-                };
+                let total = 0;
+                visibleItems.forEach(item => {
+                    // Try parsing, default to 0 if NaN
+                    let p = parseFloat(item.price);
+                    if (isNaN(p)) p = 0;
+                    total += p;
+                });
                 
-                const total = visibleItems.reduce((acc, curr) => acc + cleanPrice(curr.price), 0); 
-                document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; 
+                const avg = Math.floor(total / visibleItems.length);
+                document.getElementById('stat-avg').innerText = `₦${avg.toLocaleString()}`; 
             }
             else { document.getElementById('stat-avg').innerText = '₦0'; }
             
