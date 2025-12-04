@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.6.0">
+    <link rel="manifest" href="./manifest.json?v=1.10.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -80,7 +80,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.6.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.10.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -233,6 +233,7 @@
                                 <button type="submit" class="bg-indigo-600 text-white px-5 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20">Add</button>
                             </div>
                         </form>
+                        <p class="text-[10px] text-slate-400 mt-2 italic"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> IMPORTANT: After adding a manager, go to <b>Tools</b> > <b>Copy Rules</b> and update Firebase to grant them access.</p>
                     </div>
                     
                     <div id="staff-list" class="space-y-2"></div>
@@ -277,10 +278,10 @@
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="file-code" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
+                                <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="shield" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
                                 <div>
-                                    <h4 class="font-bold text-slate-800 dark:text-white text-sm">Database Rules</h4>
-                                    <p class="text-[10px] text-slate-400">Fix permission denied errors.</p>
+                                    <h4 class="font-bold text-slate-800 dark:text-white text-sm">Security Rules</h4>
+                                    <p class="text-[10px] text-slate-400">Generates custom rules for YOUR managers.</p>
                                 </div>
                             </div>
                             <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-purple-600">Copy Rules</button>
@@ -381,7 +382,9 @@
         const SUPER_ADMIN_EMAIL = "abdulkadirbukar2006@gmail.com";
         
         try {
-            enableMultiTabIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
+            enableMultiTabIndexedDbPersistence(db)
+                .then(() => console.log('Offline Persistence Enabled'))
+                .catch(err => console.log('Persistence:', err.code));
         } catch(e) { console.error("Init Error", e); }
 
         let currentUser = null; 
@@ -498,7 +501,6 @@
                         const staffMember = staffList.find(s => s.email.toLowerCase() === email);
                         isManager = isSuperAdmin || (staffMember && staffMember.role === 'manager');
                         
-                        // Debug UI
                         const roleText = isSuperAdmin ? "Super Admin" : (isManager ? "Manager" : "Staff (Read Only)");
                         document.getElementById('debug-role').innerText = roleText;
                         
@@ -550,10 +552,45 @@
             document.body.removeChild(link);
         };
 
-        // NEW RULES COPIER
+        // ===== SECURE RULES GENERATOR (SMART) =====
         window.copyRules = () => {
-            const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
-            navigator.clipboard.writeText(rules).then(() => alert("Rules copied!\n\n1. Go to Firebase Console > Firestore > Rules\n2. Paste these rules\n3. Click Publish"));
+            if(!currentStoreName) return alert("Please open a store first.");
+            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
+            
+            // Build whitelist of managers
+            let allowedEmails = [`'${SUPER_ADMIN_EMAIL}'`];
+            staffList.forEach(s => {
+                if(s.role === 'manager' && s.email) {
+                    allowedEmails.push(`'${s.email.toLowerCase()}'`);
+                }
+            });
+            const emailListString = `[${allowedEmails.join(', ')}]`;
+
+            const rules = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. PUBLIC READ: Anyone can view items
+    match /{document=**} {
+      allow read: if true;
+    }
+    
+    // 2. STAFF LIST PROTECTION: Only Super Admin can change staff
+    match /artifacts/fatima-store-1f63f/public/data/pk_store_${safeName}/_config {
+      allow write: if request.auth.token.email == '${SUPER_ADMIN_EMAIL}';
+    }
+
+    // 3. SECURE WRITE: Only Super Admin and Listed Managers can change items
+    match /artifacts/fatima-store-1f63f/public/data/pk_store_${safeName}/{item} {
+      allow write: if request.auth.token.email in ${emailListString};
+    }
+    
+    // 4. LOGS: Managers can write logs
+    match /artifacts/fatima-store-1f63f/public/logs/pk_store_${safeName}/{log} {
+      allow write: if request.auth.token.email in ${emailListString};
+    }
+  }
+}`;
+            navigator.clipboard.writeText(rules).then(() => alert("✅ SECURE RULES COPIED!\n\nThis rule allows ONLY:\n" + allowedEmails.join('\n') + "\n\n1. Go to Firebase Console > Firestore > Rules\n2. Delete everything\n3. Paste these new rules\n4. Click Publish"));
         };
 
         document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
@@ -564,14 +601,16 @@
             staffList.push({ email, role });
             document.getElementById('new-staff-email').value = '';
             setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true })
-                .then(() => alert("Staff added!"))
-                .catch(e => { alert("Permission Denied: Database Rejected Save."); console.error(e); });
+                .then(() => alert("Staff added! Now click 'Copy Rules' to authorize them."))
+                .catch(e => { alert("Permission Denied: Check Database Rules."); console.error(e); });
         });
 
         window.removeStaff = async (email) => {
             if (!confirm(`Remove ${email}?`)) return;
             staffList = staffList.filter(s => s.email !== email);
-            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => alert("Permission Denied"));
+            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true })
+                .then(() => alert("Staff removed. Click 'Copy Rules' to update security."))
+                .catch(e => alert("Permission Denied"));
         };
 
         function renderStaffList() {
@@ -631,9 +670,11 @@
             if (!isManager || !confirm("Move to Trash?")) return;
             const item = visibleItems.find(i => i.id === id);
             const itemName = item ? item.name : "Unknown Item";
-            updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }).catch(e => {
-                alert("Permission Denied: You cannot delete this item.");
-            });
+            updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() })
+                .catch(e => {
+                    if (e.code === 'permission-denied') alert("Access Denied: Managers cannot delete items. Contact Admin.");
+                    else console.log("Offline delete queued");
+                });
             logAction("Soft Delete", `Deleted '${itemName}'`, { itemId: id }); 
         };
 
@@ -653,8 +694,13 @@
                 logAction(id ? "Edit" : "Create", `${id ? "Updated" : "Created"} '${data.name}'`, { itemId: id });
                 window.closeModal('modal');
             }).catch(e => {
-                alert("PERMISSION DENIED: The database rejected your change.\n\nGo to Admin > Tools > Copy Rules and paste them in Firebase Console.");
-                console.error(e);
+                if (e.code === 'permission-denied') {
+                    if(isSuperAdmin) alert("DATABASE ERROR: The security rules are blocking this save. Go to Admin HQ > Tools > Copy Rules.");
+                    else alert("ACCESS DENIED: You do not have permission to edit this item. Please contact the Store Owner.");
+                } else {
+                    console.log("Offline save queued");
+                    window.closeModal('modal'); // Close modal if offline
+                }
             }).finally(() => {
                 btn.disabled = false; btn.innerText = "Save Item";
             });
