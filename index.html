@@ -543,8 +543,14 @@
             const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
             unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
                 clearTimeout(spinnerTimeout); spinner.classList.add('hidden');
-                allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                allItems.sort((a, b) => a.name.localeCompare(b.name));
+                
+                // CRITICAL FIX: Filter out _config and Safe Sort
+                allItems = snapshot.docs
+                    .map(d => ({id: d.id, ...d.data()}))
+                    .filter(item => item.id !== '_config'); // Exclude the settings file
+                
+                allItems.sort((a, b) => (a.name || '').localeCompare(b.name || '')); // Safe sort
+                
                 visibleItems = allItems.filter(i => !i.isDeleted);
                 deletedItems = allItems.filter(i => i.isDeleted);
                 renderCategories(); renderList(); updateStats();
