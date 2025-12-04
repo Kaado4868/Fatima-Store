@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=5.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=5.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=5.0">
+    <link rel="manifest" href="./manifest.json?v=4.4">
+    <link rel="icon" type="image/png" href="./logo.png?v=4.4">
+    <link rel="apple-touch-icon" href="./logo.png?v=4.4">
     <meta name="theme-color" content="#4f46e5">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,8 +30,6 @@
         .scanner-viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; height: 200px; pointer-events: none; z-index: 20; }
         .scanner-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #ef4444; box-shadow: 0 0 4px #ef4444; animation: scan 1.5s infinite ease-in-out; opacity: 0.9; }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-        /* Tabs for Admin */
-        .tab-btn.active { border-bottom: 2px solid #4f46e5; color: #4f46e5; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -39,7 +37,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=5.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=4.4" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 font-medium animate-pulse">Starting Fatima Store...</p>
     </div>
@@ -51,7 +49,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain drop-shadow-md" alt="Logo"></div>
             <h1 class="text-2xl font-bold text-slate-900 mb-1">Fatima Store</h1>
-            <p class="text-xs text-indigo-400 font-bold mb-2">v5.0 Super Admin</p>
+            <p class="text-xs text-indigo-400 font-bold mb-2">v4.4</p>
             <p class="text-slate-500 mb-6 text-sm">Enter your store name to start.</p>
             <form id="login-form" class="space-y-4">
                 <input type="text" id="store-name-input" required class="block w-full rounded-xl border-slate-300 bg-slate-50 border p-4 text-center text-lg font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none uppercase" placeholder="STORE NAME">
@@ -65,16 +63,14 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600">
-                        <img src="./logo.png?v=5.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=4.4" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="offline-badge">OFFLINE</span></h1>
-                            <div id="role-badge" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
+                            <div class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">PRICE KEEPER</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="window.openSuperAdmin()" id="super-admin-btn" class="hidden text-amber-500 hover:text-amber-600 p-2 rounded-full border border-amber-100 bg-amber-50 relative animate-pulse"><i data-lucide="shield-alert" class="w-4 h-4"></i></button>
-                        
-                        <button onclick="window.toggleAuth()" id="auth-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative"><i data-lucide="lock" class="w-4 h-4"></i></button>
+                        <button onclick="window.toggleAdmin()" id="admin-lock-btn" class="text-slate-400 hover:text-indigo-600 p-2 rounded-full border border-slate-200 bg-slate-50 relative"><i data-lucide="lock" class="w-4 h-4"></i></button>
                         <button onclick="window.logout()" class="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 bg-slate-50 rounded border border-slate-200">Log Out</button>
                     </div>
                 </div>
@@ -100,16 +96,16 @@
         </div>
 
         <div id="fab-container" class="fixed bottom-6 right-6 z-20 hidden">
-            <button onclick="window.openItemModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button>
+            <button onclick="window.openModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button>
         </div>
     </div>
 
     <div id="modal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center px-4 py-6 sm:p-6">
-        <div onclick="window.closeModal('modal')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div onclick="window.closeModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
         <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-[slideUp_0.3s_ease-out]">
             <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h3 id="modal-title" class="font-bold text-lg text-slate-900">New Item</h3>
-                <button onclick="window.closeModal('modal')" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <button onclick="window.closeModal()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             <form id="item-form" class="p-6 space-y-4">
                 <input type="hidden" id="item-id">
@@ -128,79 +124,6 @@
                 <div><label class="text-sm font-bold text-slate-700">Category</label><input type="text" id="category-input" class="w-full mt-1 p-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-indigo-500 outline-none capitalize" placeholder="Optional (e.g. Drinks)"></div>
                 <button type="submit" id="save-btn" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed">Save Item</button>
             </form>
-        </div>
-    </div>
-
-    <div id="admin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-        <div onclick="window.closeModal('admin-modal')" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
-        <div class="relative bg-slate-50 w-full max-w-lg h-[80vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div class="bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="shield-check" class="w-5 h-5 text-amber-400"></i>
-                    <h3 class="font-bold">Super Admin HQ</h3>
-                </div>
-                <button onclick="window.closeModal('admin-modal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-            </div>
-            
-            <div class="flex bg-white border-b border-slate-200 overflow-x-auto">
-                <button onclick="window.switchAdminTab('stats')" class="tab-btn active flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50" id="tab-stats">Stats</button>
-                <button onclick="window.switchAdminTab('logs')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50" id="tab-logs">Logs</button>
-                <button onclick="window.switchAdminTab('trash')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50" id="tab-trash">Trash</button>
-                <button onclick="window.switchAdminTab('tools')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-50" id="tab-tools">Tools</button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                
-                <div id="view-stats" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-1">Total Items</div>
-                            <div class="text-2xl font-black text-slate-800" id="stat-count">0</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-slate-400 text-xs font-bold uppercase mb-1">Avg Price</div>
-                            <div class="text-2xl font-black text-indigo-600" id="stat-avg">₦0</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase mb-1">Database Size</div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-xl font-bold text-slate-800" id="stat-db-size">Checking...</div>
-                            <span class="text-xs text-slate-400">(Public Documents)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="view-logs" class="hidden space-y-2">
-                    <div class="text-xs text-center text-slate-400 mb-2">Recent activity by staff</div>
-                    <div id="logs-list" class="space-y-2"></div>
-                </div>
-
-                <div id="view-trash" class="hidden space-y-2">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-slate-500">Deleted Items</span>
-                        <button onclick="window.emptyTrash()" class="text-xs text-red-500 font-bold hover:underline">Empty Trash</button>
-                    </div>
-                    <div id="trash-list" class="space-y-2"></div>
-                </div>
-
-                <div id="view-tools" class="hidden space-y-6">
-                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
-                        <h4 class="font-bold text-amber-800 flex items-center gap-2"><i data-lucide="trending-up" class="w-5 h-5"></i> Bulk Price Update</h4>
-                        <p class="text-xs text-amber-700 mt-1">Apply inflation or discounts to ALL items at once.</p>
-                        
-                        <div class="mt-4">
-                            <label class="text-xs font-bold text-amber-800">Percentage Change (%)</label>
-                            <div class="flex gap-2 mt-1">
-                                <input type="number" id="inflation-input" class="flex-1 p-2 rounded-lg border border-amber-300 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="e.g. 10 or -5">
-                                <button onclick="window.applyBulkUpdate()" class="bg-amber-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Apply</button>
-                            </div>
-                            <p class="text-[10px] text-amber-600 mt-2">Example: Enter <strong>10</strong> to increase all prices by 10%. Enter <strong>-5</strong> to decrease.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </div>
     </div>
 
@@ -225,59 +148,39 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, query, limit, orderBy, writeBatch, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, serverTimestamp, enableMultiTabIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'fatima-store-1f63f'; 
+        const ALLOWED_ADMINS = ["abdulkadirbukar2006@gmail.com", "maryam2003abubakar@gmail.com", "ahmedzainabukar@gmail.com"];
 
-        // --- ROLE CONFIGURATION ---
-        const SUPER_ADMIN_EMAIL = "abdulkadirbukar2006@gmail.com";
-        const MANAGERS = ["ahmedzainabukar@gmail.com", "maryam2003abubakar@gmail.com"];
-        
-        // Persistence
-        enableMultiTabIndexedDbPersistence(db).catch(err => console.log('Persistence:', err.code));
-
-        // State
-        let currentUser = null; 
-        let currentStoreName = localStorage.getItem('pk_store_name'); 
-        let unsubscribe = null; 
-        let allItems = []; // Raw data including deleted
-        let visibleItems = []; // Filtered data
-        let deletedItems = []; // Trash data
-        
-        let isSuperAdmin = false; 
-        let isManager = false; 
-        
-        let selectedCategory = 'All'; 
-        let scanner = null; let scanMode = null; let audioCtx = null;
-        let lastBackPressTime = 0; let trapActive = false;
-
-        // Sound & Hardware
-        function playBeep() { try { if (navigator.vibrate) navigator.vibrate(200); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.type = 'square'; oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.15); } catch (e) { console.error("Sound Fail", e); } }
-
-        // Back Button Logic
-        function engageTrap() { if (trapActive) return; try { if (!history.state || history.state.page !== 'trap') { window.history.pushState({ page: 'trap' }, "", ""); trapActive = true; } } catch(e) { trapActive = false; } }
-        ['touchstart', 'touchmove', 'click', 'keydown'].forEach(evt => { window.addEventListener(evt, () => { if (!trapActive) engageTrap(); }, { passive: true, capture: true }); });
-        window.addEventListener('popstate', (event) => { 
-            trapActive = false; 
-            if (!document.getElementById('scanner-overlay').classList.contains('hidden')) { window.stopScanner(); setTimeout(engageTrap, 50); return; } 
-            if (!document.getElementById('modal').classList.contains('hidden')) { window.closeModal('modal'); setTimeout(engageTrap, 50); return; } 
-            if (!document.getElementById('admin-modal').classList.contains('hidden')) { window.closeModal('admin-modal'); setTimeout(engageTrap, 50); return; }
-            const now = new Date().getTime(); 
-            if (now - lastBackPressTime < 2000) { } else { lastBackPressTime = now; const t = document.getElementById('toast'); t.innerText = "Press back again to exit"; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); setTimeout(engageTrap, 50); } 
+        // 1. PERSISTENCE: Multi-tab support to avoid refresh failures
+        enableMultiTabIndexedDbPersistence(db).catch(err => {
+            if (err.code == 'failed-precondition') {
+                console.log('Persistence failed: Multiple tabs open.');
+            } else if (err.code == 'unimplemented') {
+                console.log('Persistence is not available in this browser');
+            }
         });
 
-        // Initialization
+        let currentUser = null; let currentStoreName = localStorage.getItem('pk_store_name'); let unsubscribe = null; let allItems = []; let isAdmin = false; let selectedCategory = 'All'; let scanner = null; let scanMode = null; let audioCtx = null;
+
+        function playBeep() { try { if (navigator.vibrate) navigator.vibrate(200); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.type = 'square'; oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.15); } catch (e) { console.error("Sound Fail", e); } }
+        let lastBackPressTime = 0; let trapActive = false; function engageTrap() { if (trapActive) return; try { if (!history.state || history.state.page !== 'trap') { window.history.pushState({ page: 'trap' }, "", ""); trapActive = true; } } catch(e) { trapActive = false; } }
+        ['touchstart', 'touchmove', 'click', 'keydown'].forEach(evt => { window.addEventListener(evt, () => { if (!trapActive) engageTrap(); }, { passive: true, capture: true }); });
+        window.addEventListener('popstate', (event) => { trapActive = false; const scannerOverlay = document.getElementById('scanner-overlay'); const modal = document.getElementById('modal'); if (!scannerOverlay.classList.contains('hidden')) { window.stopScanner(); setTimeout(engageTrap, 50); return; } if (!modal.classList.contains('hidden')) { window.closeModal(); setTimeout(engageTrap, 50); return; } const now = new Date().getTime(); if (now - lastBackPressTime < 2000) { } else { lastBackPressTime = now; const t = document.getElementById('toast'); t.innerText = "Press back again to exit"; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); setTimeout(engageTrap, 50); } });
+
         const loadingOverlay = document.getElementById('loading-overlay'); const loginScreen = document.getElementById('login-screen'); const appScreen = document.getElementById('app-screen');
-        function updateOnlineStatus() { document.body.classList.toggle('offline', !navigator.onLine); }
+        function updateOnlineStatus() { if (navigator.onLine) { document.body.classList.remove('offline'); } else { document.body.classList.add('offline'); } }
         window.addEventListener('online', updateOnlineStatus); window.addEventListener('offline', updateOnlineStatus); updateOnlineStatus();
 
         async function init() {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js').then(reg => {
+                    if (reg.waiting) document.getElementById('update-toast').classList.add('show');
                     reg.addEventListener('updatefound', () => { const newWorker = reg.installing; newWorker.addEventListener('statechange', () => { if (newWorker.state === 'installed' && navigator.serviceWorker.controller) { document.getElementById('update-toast').classList.add('show'); } }); });
                 });
                 navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
@@ -285,62 +188,43 @@
             if (currentStoreName) { showApp(); } else { showLogin(); }
         }
 
-        // --- AUTH & ROLES ---
         onAuthStateChanged(auth, (user) => {
             if (user) { 
                 currentUser = user; 
-                const email = user.email ? user.email.toLowerCase() : "";
-                
-                // Determine Roles
-                isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
-                isManager = isSuperAdmin || MANAGERS.map(e=>e.toLowerCase()).includes(email);
-                
-                console.log(`Role: ${isSuperAdmin ? 'Super Admin' : (isManager ? 'Manager' : 'Guest')}`);
+                const userEmail = user.email ? user.email.toLowerCase() : "";
+                if (userEmail && ALLOWED_ADMINS.map(e=>e.toLowerCase()).includes(userEmail)) { 
+                    isAdmin = true; 
+                    console.log("Manager session restored");
+                } else { 
+                    isAdmin = false; 
+                }
             } else { 
-                currentUser = null; isSuperAdmin = false; isManager = false;
-                if (currentStoreName && navigator.onLine) signInAnonymously(auth).catch(e => console.error(e));
+                currentUser = null; isAdmin = false;
+                if (currentStoreName && navigator.onLine) {
+                    signInAnonymously(auth).catch(e => console.error(e));
+                }
             }
             if (currentStoreName && appScreen.classList.contains('hidden')) showApp(); 
-            updateUI(); 
+            updateAdminUI(); 
         });
 
         function showLogin() { loadingOverlay.classList.add('hidden'); appScreen.classList.add('hidden'); loginScreen.classList.remove('hidden'); }
-        function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); startDataSync(); updateUI(); engageTrap(); }
+        function showApp() { loadingOverlay.classList.add('hidden'); loginScreen.classList.add('hidden'); appScreen.classList.remove('hidden'); startDataSync(); updateAdminUI(); engageTrap(); }
         document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); const inputName = document.getElementById('store-name-input').value.trim().toUpperCase(); if (inputName.length < 2) return alert("Invalid Name"); localStorage.setItem('pk_store_name', inputName); document.getElementById('login-btn').innerText = "Opening..."; setTimeout(() => window.location.reload(), 100); });
-
-        // --- DATA SYNC & LOGIC ---
-        function getCollectionRef() {
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
-            return collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
-        }
-        
-        // New: Log Collection Ref
-        function getLogCollectionRef() {
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
-            return collection(db, 'artifacts', appId, 'public', 'logs', `pk_store_${safeName}`);
-        }
-
-        // Feature 1: Audit Logger
-        async function logAction(action, details) {
-            if (!isSuperAdmin && !isManager) return; // Only log authorized changes
-            try {
-                const logRef = getLogCollectionRef();
-                await addDoc(logRef, {
-                    action: action,
-                    details: details,
-                    user: currentUser.email || "Unknown Manager",
-                    timestamp: serverTimestamp()
-                });
-            } catch(e) { console.error("Logging failed", e); }
-        }
 
         function startDataSync() { 
             if (unsubscribe) unsubscribe(); 
-            const colRef = getCollectionRef();
+            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); 
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`); 
+            
             const spinner = document.getElementById('data-loading'); 
             const emptyEl = document.getElementById('empty-state');
             
-            const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
+            // 200ms timeout to avoid flicker on fast loads
+            const spinnerTimeout = setTimeout(() => {
+                spinner.classList.remove('hidden');
+                emptyEl.classList.add('hidden');
+            }, 200);
 
             unsubscribe = onSnapshot(colRef, (snapshot) => {
                 clearTimeout(spinnerTimeout);
@@ -349,81 +233,35 @@
                 allItems = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
                 allItems.sort((a, b) => a.name.localeCompare(b.name));
                 
-                // Feature 3 Logic: Separate Active and Trash
-                visibleItems = allItems.filter(i => !i.isDeleted);
-                deletedItems = allItems.filter(i => i.isDeleted);
-
                 renderCategories(); 
                 renderList();
-                updateStats(); // Feature 2: Live Stats
             }, (err) => { 
                 clearTimeout(spinnerTimeout);
                 spinner.classList.add('hidden'); 
+                console.log(err.code);
             }); 
         }
-
-        // --- UI RENDERING ---
-        function renderCategories() { const cats = new Set(['All']); visibleItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
         
-        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffDays = Math.ceil(Math.abs(now - date) / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; }
+        function renderCategories() { const cats = new Set(['All']); allItems.forEach(i => { if (i.category) cats.add(i.category.trim()); }); const container = document.getElementById('category-container'); container.innerHTML = ''; cats.forEach(cat => { const btn = document.createElement('button'); const isActive = cat === selectedCategory; btn.className = `whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border border-slate-200'}`; btn.innerText = cat; btn.onclick = () => { selectedCategory = cat; renderCategories(); renderList(); }; container.appendChild(btn); }); }
+        function formatFreshness(timestamp) { if (!timestamp) return { text: "Unknown date", color: "text-slate-300" }; const date = timestamp.toDate(); const now = new Date(); const diffTime = Math.abs(now - date); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays <= 1) return { text: "Updated today", color: "text-slate-400" }; if (diffDays < 30) return { text: `Updated ${diffDays}d ago`, color: "text-slate-400" }; return { text: `Updated ${diffDays}d ago`, color: "text-amber-500 font-bold" }; }
         function formatMoney(amount) { return amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-
         function renderList() { 
             const rawTerm = document.getElementById('search-input').value.toLowerCase().trim(); const searchWords = rawTerm.split(" ").filter(word => word.length > 0); const listEl = document.getElementById('item-list'); const emptyEl = document.getElementById('empty-state'); 
-            
-            // Filter Visible Items Only
-            const filtered = visibleItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
-            
+            const filtered = allItems.filter(item => { const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase(); return searchWords.every(word => itemText.includes(word)) && (selectedCategory === 'All' || item.category === selectedCategory); }); 
             listEl.innerHTML = ''; 
             if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; } 
             emptyEl.classList.add('hidden'); 
-            
-            filtered.forEach(item => { 
-                const freshness = formatFreshness(item.updatedAt || item.createdAt); 
-                const div = document.createElement('div'); 
-                div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors"; 
-                // Only Manager/SuperAdmin can see Edit/Delete
-                const adminButtons = isManager ? `<div class="flex gap-2"><button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button><button onclick="window.softDeleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div>` : ''; 
-                
-                div.innerHTML = `<div class="flex-1" ${isManager ? `onclick="window.editItem('${item.id}')"` : ''}><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>${item.bulkPrice ? `<span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100"><i data-lucide="package" class="w-3 h-3"></i>${escape(item.bulkPrice)}</span>` : ''}</div><div class="flex items-center gap-2 mt-0.5"><div class="text-2xl font-bold text-indigo-600">₦${formatMoney(item.price)}</div>${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}</div><div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div></div>${adminButtons}`; 
-                listEl.appendChild(div); 
-            }); 
-            lucide.createIcons(); 
+            filtered.forEach(item => { const freshness = formatFreshness(item.updatedAt || item.createdAt); const div = document.createElement('div'); div.className = "bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center active:bg-slate-50 transition-colors"; const adminButtons = isAdmin ? `<div class="flex gap-2"><button onclick="window.editItem('${item.id}')" class="p-2 text-slate-400 hover:text-indigo-600"><i data-lucide="edit-2" class="w-5 h-5"></i></button><button onclick="window.deleteItem('${item.id}')" class="p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div>` : ''; div.innerHTML = `<div class="flex-1" ${isAdmin ? `onclick="window.editItem('${item.id}')"` : ''}><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-900 text-lg">${escape(item.name)}</h3>${item.bulkPrice ? `<span class="inline-flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-semibold border border-indigo-100"><i data-lucide="package" class="w-3 h-3"></i>${escape(item.bulkPrice)}</span>` : ''}</div><div class="flex items-center gap-2 mt-0.5"><div class="text-2xl font-bold text-indigo-600">₦${formatMoney(item.price)}</div>${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider border border-slate-100 px-1 rounded">${escape(item.category)}</span>` : ''}</div><div class="text-[10px] mt-1 ${freshness.color}">${freshness.text}</div></div>${adminButtons}`; listEl.appendChild(div); }); lucide.createIcons(); 
         }
 
-        // --- CRUD OPERATIONS ---
-        window.openItemModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
-        window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
+        // CRUD FUNCTIONS
+        window.openModal = () => { document.getElementById('modal').classList.remove('hidden'); document.getElementById('item-form').reset(); document.getElementById('item-id').value = ''; document.getElementById('modal-title').innerText = "New Item"; };
+        window.closeModal = () => { document.getElementById('modal').classList.add('hidden'); };
+        window.editItem = (id) => { const item = allItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
+        window.deleteItem = async (id) => { if (confirm("Delete this item?")) { try { const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase(); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`, id)); } catch(e) { alert("Error deleting: " + e.message); } } };
         
-        window.editItem = (id) => { 
-            if (!isManager) return; 
-            const item = visibleItems.find(i => i.id === id); if (!item) return; 
-            document.getElementById('item-id').value = item.id; 
-            document.getElementById('barcode-input').value = item.barcode || ''; 
-            document.getElementById('name-input').value = item.name; 
-            document.getElementById('price-input').value = item.price; 
-            document.getElementById('bulk-input').value = item.bulkPrice || ''; 
-            document.getElementById('category-input').value = item.category || ''; 
-            document.getElementById('modal-title').innerText = "Edit Item"; 
-            document.getElementById('modal').classList.remove('hidden'); 
-        };
-
-        // Soft Delete (Feature 3)
-        window.softDeleteItem = async (id) => { 
-            if (!isManager) return;
-            if (confirm("Move to Trash?")) { 
-                try { 
-                    const colRef = getCollectionRef();
-                    const item = visibleItems.find(i=>i.id===id);
-                    await updateDoc(doc(colRef, id), { isDeleted: true, updatedAt: serverTimestamp() }); 
-                    await logAction("Soft Delete", `Moved '${item.name}' to trash`);
-                } catch(e) { alert("Error: " + e.message); } 
-            } 
-        };
-
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!isManager) return;
             const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving...";
             const id = document.getElementById('item-id').value;
             const data = {
@@ -432,119 +270,132 @@
                 price: parseFloat(document.getElementById('price-input').value),
                 bulkPrice: document.getElementById('bulk-input').value.trim(),
                 category: document.getElementById('category-input').value.trim(),
-                isDeleted: false, // Ensure it's visible
                 updatedAt: serverTimestamp()
             };
             if (!id) data.createdAt = serverTimestamp();
             try {
-                const colRef = getCollectionRef();
-                if (id) { 
-                    await updateDoc(doc(colRef, id), data); 
-                    await logAction("Edit Item", `Updated ${data.name} - ₦${data.price}`);
-                } else { 
-                    await addDoc(colRef, data); 
-                    await logAction("Create Item", `Created ${data.name} - ₦${data.price}`);
-                }
-                window.closeModal('modal');
+                const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', `pk_store_${safeName}`);
+                if (id) { updateDoc(doc(colRef, id), data).catch(console.error); } 
+                else { addDoc(colRef, data).catch(console.error); }
+                window.closeModal();
             } catch (err) { alert("Error saving: " + err.message); }
             btn.disabled = false; btn.innerText = "Save Item";
         });
 
-        // --- SUPER ADMIN FEATURES ---
-        
-        window.openSuperAdmin = () => {
-            if (!isSuperAdmin) return;
-            document.getElementById('admin-modal').classList.remove('hidden');
-            window.switchAdminTab('stats');
-        };
+        let isFlashOn = false;
 
-        window.switchAdminTab = (tab) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            ['stats','logs','trash','tools'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            
-            if (tab === 'logs') loadLogs();
-            if (tab === 'trash') renderTrash();
-        };
+        // 2. SCANNER UPDATE: High Speed + Loop Protection
+        window.startScanner = (mode) => {
+            scanMode = mode; 
+            document.getElementById('scanner-overlay').classList.remove('hidden');
 
-        // Feature 2: Stats Logic
-        function updateStats() {
-            if (!isSuperAdmin) return;
-            document.getElementById('stat-count').innerText = visibleItems.length;
-            document.getElementById('stat-db-size').innerText = allItems.length;
-            
-            if (visibleItems.length > 0) {
-                const total = visibleItems.reduce((acc, curr) => acc + (curr.price || 0), 0);
-                const avg = total / visibleItems.length;
-                document.getElementById('stat-avg').innerText = `₦${Math.floor(avg).toLocaleString()}`;
-            }
-        }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            if (audioCtx.state === 'suspended') audioCtx.resume(); 
+            const silentOsc = audioCtx.createOscillator(); 
+            silentOsc.connect(audioCtx.destination); 
+            silentOsc.start(); 
+            silentOsc.stop(audioCtx.currentTime + 0.001);
 
-        // Feature 1: Logs Logic
-        async function loadLogs() {
-            const list = document.getElementById('logs-list');
-            list.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>';
-            try {
-                const q = query(getLogCollectionRef(), orderBy('timestamp', 'desc'), limit(50));
-                const snap = await getDocs(q);
-                list.innerHTML = '';
-                if (snap.empty) { list.innerHTML = '<div class="text-center text-slate-400 text-sm">No logs found</div>'; return; }
-                
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now';
-                    const div = document.createElement('div');
-                    div.className = "bg-white p-3 rounded-lg border border-slate-100 text-sm";
-                    div.innerHTML = `<div class="flex justify-between font-bold text-slate-700"><span>${d.action}</span><span class="text-[10px] text-slate-400 font-normal">${date}</span></div><div class="text-slate-600 mt-1">${d.details}</div><div class="text-[10px] text-indigo-500 mt-1">${d.user}</div>`;
-                    list.appendChild(div);
-                });
-            } catch(e) { list.innerHTML = `<div class="text-red-500 text-sm">Error loading logs: ${e.message}</div>`; }
-        }
+            const formats = [ 
+                Html5QrcodeSupportedFormats.UPC_A, 
+                Html5QrcodeSupportedFormats.UPC_E, 
+                Html5QrcodeSupportedFormats.EAN_13, 
+                Html5QrcodeSupportedFormats.EAN_8, 
+                Html5QrcodeSupportedFormats.CODE_128, 
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93
+            ];
 
-        // Feature 3: Trash Logic
-        function renderTrash() {
-            const list = document.getElementById('trash-list');
-            list.innerHTML = '';
-            if (deletedItems.length === 0) { list.innerHTML = '<div class="text-center text-slate-400 py-4 text-sm">Trash is empty</div>'; return; }
-            
-            deletedItems.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center";
-                div.innerHTML = `<div><div class="font-bold text-slate-800">${escape(item.name)}</div><div class="text-xs text-slate-500">Deleted</div></div><button onclick="window.restoreItem('${item.id}')" class="bg-white text-indigo-600 px-3 py-1 rounded border border-indigo-200 text-xs font-bold">Restore</button>`;
-                list.appendChild(div);
+            // Use Hardware Acceleration
+            scanner = new Html5Qrcode("reader", { 
+                formatsToSupport: formats, 
+                verbose: false,
+                useBarCodeDetectorIfSupported: true 
             });
-        }
-        
-        window.restoreItem = async (id) => {
-            try {
-                const item = deletedItems.find(i=>i.id===id);
-                await updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() });
-                await logAction("Restore Item", `Restored '${item.name}' from trash`);
-                renderTrash();
-            } catch(e) { alert("Restore failed: " + e.message); }
-        };
 
-        window.emptyTrash = async () => {
-            if(!confirm("PERMANENTLY delete all items in trash? This cannot be undone.")) return;
-            const batch = writeBatch(db);
-            const col = getCollectionRef();
-            deletedItems.forEach(item => { batch.delete(doc(col, item.id)); });
-            try { await batch.commit(); await logAction("Empty Trash", "Permanently deleted all trash items"); renderTrash(); } catch(e) { alert("Error: " + e.message); }
-        };
+            const config = { 
+                fps: 20, 
+                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    return { width: Math.floor(minEdge * 0.8), height: Math.floor(minEdge * 0.5) };
+                },
+                aspectRatio: 1.0, 
+                videoConstraints: { 
+                    facingMode: "environment", 
+                    focusMode: "continuous",
+                    width: { min: 640, ideal: 1280, max: 1920 }, 
+                    height: { min: 480, ideal: 720, max: 1080 } 
+                } 
+            };
 
-        // Feature 4: Bulk Inflation Logic
-        window.applyBulkUpdate = async () => {
-            const val = parseFloat(document.getElementById('inflation-input').value);
-            if (isNaN(val) || val === 0) return alert("Please enter a percentage (e.g. 10 or -5)");
-            
-            const isIncrease = val > 0;
-            const word = isIncrease ? "INCREASE" : "DECREASE";
-            if (!confirm(`Are you sure you want to ${word} ALL prices by ${Math.abs(val)}%?\n\nThis affects ${visibleItems.length} items.`)) return;
-            
-            try {
-                const batch = writeBatch(db);
-                let count = 0;
+            let isProcessingScan = false; // LOCK to prevent infinite beeping
+
+            scanner.start({ facingMode: "environment" }, config, (decodedText) => { 
+                if (isProcessingScan) return; // If locked, ignore
+                isProcessingScan = true;      // Lock immediately
+
+                playBeep(); 
                 
-                // Firestore batch limit is 500. For simplicity in this demo, we handle up to 500. 
- 
+                if (scanMode === 'search') { 
+                    const searchInput = document.getElementById('search-input'); 
+                    searchInput.value = decodedText; 
+                    searchInput.dispatchEvent(new Event('input')); 
+                } else if (scanMode === 'edit') { 
+                    document.getElementById('barcode-input').value = decodedText; 
+                    fetchProductName(decodedText); 
+                } 
+                window.stopScanner(); // Close scanner
+
+            }, () => {}).then(() => { 
+                document.getElementById('flash-btn').classList.remove('hidden'); 
+            }).catch(err => { 
+                alert("Camera error: " + err); 
+                window.stopScanner(); 
+            });
+        };
+
+        window.toggleFlash = () => { if (!scanner) return; try { isFlashOn = !isFlashOn; scanner.applyVideoConstraints({ advanced: [{ torch: isFlashOn }] }).catch(err => { isFlashOn = !isFlashOn; alert("Flash not supported."); }); const btn = document.getElementById('flash-btn'); if(isFlashOn) btn.classList.add('bg-yellow-400', 'text-black'); else btn.classList.remove('bg-yellow-400', 'text-black'); } catch(e) { alert("Flash control not available."); } };
+        window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }).catch(console.log); else document.getElementById('scanner-overlay').classList.add('hidden'); isFlashOn = false; const btn = document.getElementById('flash-btn'); btn.classList.remove('bg-yellow-400', 'text-black'); btn.classList.add('hidden'); };
+
+        async function fetchProductName(barcode) { 
+            const existingItem = allItems.find(i => i.barcode === barcode);
+            if (existingItem) { document.getElementById('name-input').value = existingItem.name; document.getElementById('price-input').value = existingItem.price; document.getElementById('category-input').value = existingItem.category; alert("Found in your store!"); return; }
+            const currentName = document.getElementById('name-input').value.trim(); if (currentName.length > 0) return; 
+            if (!navigator.onLine) return; 
+            const nameInput = document.getElementById('name-input'); nameInput.placeholder = "Searching databases..."; nameInput.value = ""; 
+            try { let endpoints = [ `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, `https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`, `https://world.openproductsfacts.org/api/v0/product/${barcode}.json`, `https://world.openpetfoodfacts.org/api/v0/product/${barcode}.json` ]; let found = false; for (let url of endpoints) { let response = await fetch(url); let data = await response.json(); if (data.status === 1 && data.product && data.product.product_name) { nameInput.value = data.product.product_name; if (data.product.categories) { const firstCat = data.product.categories.split(',')[0].trim(); document.getElementById('category-input').value = firstCat; } found = true; break; } } if (!found) nameInput.placeholder = "Not found, type name manually"; } catch (e) { nameInput.placeholder = "Error, type name manually"; } 
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => { const hasText = e.target.value.length > 0; document.getElementById('clear-search').classList.toggle('hidden', !hasText); renderList(); });
+        document.getElementById('clear-search').addEventListener('click', () => { document.getElementById('search-input').value = ''; document.getElementById('clear-search').classList.add('hidden'); renderList(); });
+        
+        // 3. AUTH UPDATE: Force Local Persistence
+        window.toggleAdmin = () => {
+            if (isAdmin) {
+                if(confirm("Lock Manager Mode?")) {
+                    signOut(auth).then(() => {
+                        signInAnonymously(auth); 
+                    });
+                }
+            } else {
+                const provider = new GoogleAuthProvider();
+                setPersistence(auth, browserLocalPersistence)
+                    .then(() => {
+                        return signInWithPopup(auth, provider);
+                    })
+                    .catch((error) => {
+                        alert("Login failed: " + error.message);
+                    });
+            }
+        };
+
+        function updateAdminUI() { const lockBtn = document.getElementById('admin-lock-btn'); const fab = document.getElementById('fab-container'); if (isAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600"></i>'; lockBtn.className = "text-indigo-600 bg-indigo-50 p-2 rounded-full border border-indigo-200"; fab.classList.remove('hidden'); } else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 bg-slate-50 p-2 rounded-full border border-slate-200"; fab.classList.add('hidden'); } renderList(); lucide.createIcons(); }
+        window.logout = () => { if (!confirm("Go back to store selection?")) return; localStorage.removeItem('pk_store_name'); currentStoreName = null; isAdmin = false; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); };
+        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+        lucide.createIcons();
+        init();
+    </script>
+</body>
+</html>
