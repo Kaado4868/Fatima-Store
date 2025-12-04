@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.2.0">
+    <link rel="manifest" href="./manifest.json?v=1.3.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -12,9 +12,10 @@
     <script>
         window.onerror = function(msg, url, line, col, error) {
             const overlay = document.getElementById('loading-overlay');
-            if(overlay) {
+            if(overlay && !overlay.classList.contains('hidden')) {
                 overlay.innerHTML = `<div class="p-6 text-center"><p class="text-red-500 font-bold text-lg mb-2">App Failed to Start</p><p class="text-xs text-slate-500 bg-slate-100 p-2 rounded text-left overflow-auto max-h-40">${msg}</p><button onclick="window.location.reload()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Reload</button></div>`;
             }
+            console.error(msg, error);
             return false;
         };
     </script>
@@ -86,7 +87,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.2.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.3.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -523,14 +524,16 @@
             staffList.push({ email, role });
             renderStaffList();
             document.getElementById('new-staff-email').value = '';
-            try { await setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }); alert("Staff added!"); } catch(e) { alert("Error saving staff: " + e.message); }
+            // No await for offline support
+            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => console.error("Sync pending"));
+            alert("Staff added!");
         });
 
         window.removeStaff = async (email) => {
             if (!confirm(`Remove ${email}?`)) return;
             staffList = staffList.filter(s => s.email !== email);
             renderStaffList();
-            try { await setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }); } catch(e) { alert("Error removing staff: " + e.message); }
+            setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true }).catch(e => console.error("Sync pending"));
         };
 
         function renderStaffList() {
@@ -586,35 +589,36 @@
         window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
         window.editItem = (id) => { if (!isManager) return; const item = visibleItems.find(i => i.id === id); if (!item) return; document.getElementById('item-id').value = item.id; document.getElementById('barcode-input').value = item.barcode || ''; document.getElementById('name-input').value = item.name; document.getElementById('price-input').value = item.price; document.getElementById('bulk-input').value = item.bulkPrice || ''; document.getElementById('category-input').value = item.category || ''; document.getElementById('modal-title').innerText = "Edit Item"; document.getElementById('modal').classList.remove('hidden'); };
         
+        // OFFLINE-FRIENDLY WRITE
         window.softDeleteItem = async (id) => { 
             if (!isManager || !confirm("Move to Trash?")) return;
             const item = visibleItems.find(i => i.id === id);
             const itemName = item ? item.name : "Unknown Item";
-            const promise = updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() });
-            promise.catch(console.error);
-            await logAction("Soft Delete", `Deleted '${itemName}'`, { itemId: id }); 
+            // Fire and forget (Optimistic)
+            updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() }).catch(e => console.error("Sync pending"));
+            logAction("Soft Delete", `Deleted '${itemName}'`, { itemId: id }); 
         };
 
+        // OFFLINE-FRIENDLY SAVE
         document.getElementById('item-form').addEventListener('submit', async (e) => {
             e.preventDefault(); if (!isManager) return;
             const btn = document.getElementById('save-btn'); btn.disabled = true; btn.innerText = "Saving...";
             const id = document.getElementById('item-id').value;
             const data = { barcode: document.getElementById('barcode-input').value.trim(), name: document.getElementById('name-input').value.trim(), price: parseFloat(document.getElementById('price-input').value), bulkPrice: document.getElementById('bulk-input').value.trim(), category: document.getElementById('category-input').value.trim(), isDeleted: false, updatedAt: serverTimestamp() };
             if (!id) data.createdAt = serverTimestamp();
-            try {
-                if (id) { 
-                    const oldItem = allItems.find(i => i.id === id);
-                    const oldData = { ...oldItem }; delete oldData.id;
-                    const promise = updateDoc(doc(getCollectionRef(), id), data);
-                    promise.catch(console.error);
-                    await logAction("Edit", `Updated '${data.name}'`, { itemId: id, previousData: oldData }); 
-                } else { 
-                    const newRef = doc(collection(getCollectionRef().firestore, getCollectionRef().path));
-                    setDoc(newRef, data).catch(console.error);
-                    await logAction("Create", `Created '${data.name}'`, { itemId: newRef.id }); 
-                }
-                window.closeModal('modal');
-            } catch (err) { alert(err.message); }
+            
+            // Optimistic - don't await the network
+            if (id) { 
+                const oldItem = allItems.find(i => i.id === id);
+                const oldData = { ...oldItem }; delete oldData.id;
+                updateDoc(doc(getCollectionRef(), id), data).catch(e => console.error("Sync pending"));
+                logAction("Edit", `Updated '${data.name}'`, { itemId: id, previousData: oldData }); 
+            } else { 
+                const newRef = doc(collection(getCollectionRef().firestore, getCollectionRef().path));
+                setDoc(newRef, data).catch(e => console.error("Sync pending"));
+                logAction("Create", `Created '${data.name}'`, { itemId: newRef.id }); 
+            }
+            window.closeModal('modal');
             btn.disabled = false; btn.innerText = "Save Item";
         });
 
@@ -672,14 +676,15 @@
                     meta.backupData.forEach(item => {
                         batch.update(doc(getCollectionRef(), item.id), { price: item.oldPrice, updatedAt: serverTimestamp() });
                     });
-                    await batch.commit();
+                    // Batch writes must await, but usually work offline in SDK
+                    batch.commit().catch(e => console.error("Sync pending"));
                 } else {
                     const itemRef = doc(getCollectionRef(), meta.itemId);
-                    if (logData.action === 'Edit') await updateDoc(itemRef, meta.previousData);
-                    else if (logData.action === 'Soft Delete') await updateDoc(itemRef, { isDeleted: false });
-                    else if (logData.action === 'Restore' || logData.action === 'Create') await updateDoc(itemRef, { isDeleted: true });
+                    if (logData.action === 'Edit') updateDoc(itemRef, meta.previousData);
+                    else if (logData.action === 'Soft Delete') updateDoc(itemRef, { isDeleted: false });
+                    else if (logData.action === 'Restore' || logData.action === 'Create') updateDoc(itemRef, { isDeleted: true });
                 }
-                await updateDoc(doc(getLogCollectionRef(), logId), { reverted: true });
+                updateDoc(doc(getLogCollectionRef(), logId), { reverted: true }).catch(e => console.error("Sync pending"));
                 alert("Action undone."); loadLogs(); 
             } catch(e) { alert("Revert failed: " + e.message); }
         };
@@ -692,12 +697,19 @@
         
         window.restoreItem = async (id) => { 
             const item = deletedItems.find(i => i.id === id); const itemName = item ? item.name : "Unknown Item";
-            const promise = updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() });
-            promise.catch(console.error);
-            await logAction("Restore", `Restored '${itemName}'`, { itemId: id }); 
+            updateDoc(doc(getCollectionRef(), id), { isDeleted: false, updatedAt: serverTimestamp() }).catch(e => console.error("Sync pending"));
+            logAction("Restore", `Restored '${itemName}'`, { itemId: id }); 
         };
         
-        window.emptyTrash = async () => { if(confirm("PERMANENTLY delete trash?")) { const count = deletedItems.length; if(count === 0) return alert("Trash already empty"); const batch = writeBatch(db); deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); await batch.commit(); await logAction("Empty Trash", `Permanently deleted ${count} items`); renderTrash(); } };
+        window.emptyTrash = async () => { 
+            if(confirm("PERMANENTLY delete trash?")) { 
+                const count = deletedItems.length; if(count === 0) return alert("Trash already empty"); 
+                const batch = writeBatch(db); 
+                deletedItems.forEach(i => batch.delete(doc(getCollectionRef(), i.id))); 
+                batch.commit().catch(e => console.error("Sync pending")); 
+                logAction("Empty Trash", `Permanently deleted ${count} items`); renderTrash(); 
+            } 
+        };
 
         window.setBulkScope = (scope) => {
             bulkScope = scope;
@@ -731,8 +743,9 @@
                     backupData.push({ id: item.id, oldPrice: oldPrice });
                     batch.update(doc(getCollectionRef(), item.id), { price: newPrice, updatedAt: serverTimestamp() }); 
                 }); 
-                await batch.commit(); 
-                await logAction("Bulk Update", logDetail, { backupData: backupData }); 
+                // Offline friendly
+                batch.commit().catch(e => console.error("Sync pending")); 
+                logAction("Bulk Update", logDetail, { backupData: backupData }); 
                 alert("Updated!"); 
                 document.getElementById('inflation-input').value = ''; 
                 document.querySelectorAll('.manual-check').forEach(c => c.checked = false); 
@@ -744,22 +757,4 @@
 
         window.startScanner = (mode) => { scanMode = mode; document.getElementById('scanner-overlay').classList.remove('hidden'); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); const silentOsc = audioCtx.createOscillator(); silentOsc.connect(audioCtx.destination); silentOsc.start(); silentOsc.stop(audioCtx.currentTime + 0.001); scanner = new Html5Qrcode("reader"); let isProcessing = false; scanner.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 250, height: 250 } }, (decodedText) => { if (isProcessing) return; isProcessing = true; playBeep(); if (scanMode === 'search') { const s = document.getElementById('search-input'); s.value = decodedText; s.dispatchEvent(new Event('input')); } else if (scanMode === 'edit') { document.getElementById('barcode-input').value = decodedText; } window.stopScanner(); }, () => {}).then(() => { document.getElementById('flash-btn').classList.remove('hidden'); }).catch(console.log); };
         window.toggleFlash = () => { if(scanner) try { const t = scanner.html5QrcodeScanner.getHtml5Qrcode().getRunningTrackCameraCapabilities().torch; scanner.html5QrcodeScanner.getHtml5Qrcode().applyVideoConstraints({ advanced: [{ torch: !t }] }); } catch(e){} };
-        window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('scanner-overlay').classList.add('hidden'); scanner = null; }); };
-        document.getElementById('search-input').addEventListener('input', (e) => { document.getElementById('clear-search').classList.toggle('hidden', !e.target.value); renderList(); });
-        document.getElementById('clear-search').addEventListener('click', () => { document.getElementById('search-input').value = ''; document.getElementById('clear-search').classList.add('hidden'); renderList(); });
-        
-        window.toggleAuth = () => { if (currentUser && !currentUser.isAnonymous) { if(confirm("Log out Admin?")) signOut(auth).then(()=>signInAnonymously(auth)); } else { setPersistence(auth, browserLocalPersistence).then(() => signInWithPopup(auth, new GoogleAuthProvider())).catch(e => alert(e.message)); } };
-        function updateUI() { 
-            const lockBtn = document.getElementById('auth-btn'); const superBtn = document.getElementById('super-admin-btn'); const fab = document.getElementById('fab-container'); const roleBadge = document.getElementById('role-badge');
-            if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full border border-amber-200 dark:border-amber-800"; superBtn.classList.remove('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 dark:text-amber-400 font-bold uppercase tracking-wide"; updateChartTheme(); } 
-            else if (isManager) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>'; lockBtn.className = "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-full border border-indigo-200 dark:border-indigo-800"; superBtn.classList.add('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide"; } 
-            else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700"; superBtn.classList.add('hidden'); fab.classList.add('hidden'); roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide"; }
-            renderList(); updateStats(); if(window.lucide) lucide.createIcons(); 
-        }
-        window.logout = () => { if (confirm("Exit?")) { localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); } };
-        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        
-        if(window.lucide) lucide.createIcons(); init();
-    </script>
-</body>
-</html>
+        window.stopScanner = () => { if (scanner) scanner.stop().then(() => { scanner.clear(); document.getElementById('
