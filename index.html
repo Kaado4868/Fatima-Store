@@ -4,19 +4,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.4.0">
+    <link rel="manifest" href="./manifest.json?v=1.5.0">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
     
     <script>
-        window.onerror = function(msg, url, line, col, error) {
+        window.onerror = function(msg, url, line) {
             const overlay = document.getElementById('loading-overlay');
             if(overlay) {
-                overlay.innerHTML = `<div class="p-6 text-center"><div class="text-red-500 font-bold text-xl mb-2">System Error</div><p class="text-xs text-slate-500 bg-slate-100 p-4 rounded text-left overflow-auto max-h-40 font-mono">${msg}</p><button onclick="window.location.reload()" class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform">Reload App</button></div>`;
-                overlay.classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Error Detected";
+                document.getElementById('loading-text').classList.add('text-red-500');
+                const btn = document.createElement('button');
+                btn.innerText = "⚠️ Reset & Reload";
+                btn.className = "mt-4 bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg";
+                btn.onclick = () => { localStorage.clear(); window.location.reload(); };
+                overlay.appendChild(btn);
             }
-            return false;
+            return false; // Let default handler run too
         };
     </script>
 
@@ -30,11 +35,7 @@
         tailwind.config = {
             darkMode: 'class',
             theme: {
-                extend: {
-                    colors: {
-                        slate: { 850: '#151f32', 950: '#020617' }
-                    }
-                }
+                extend: { colors: { slate: { 850: '#151f32', 950: '#020617' } } }
             }
         }
     </script>
@@ -42,23 +43,18 @@
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
         body, div, nav, button, input { transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
-        
         .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap; }
         .toast.show { opacity: 1; pointer-events: auto; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         #reader { width: 100% !important; height: 100% !important; background: black; border: none !important; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
         .scanner-viewfinder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; height: 200px; pointer-events: none; z-index: 20; }
         .scanner-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: #ef4444; box-shadow: 0 0 4px #ef4444; animation: scan 1.5s infinite ease-in-out; opacity: 0.9; }
         @keyframes scan { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-        
         .tab-btn.active { border-bottom: 2px solid #4f46e5; color: #4f46e5; }
         .custom-checkbox:checked + div { background-color: #eff6ff; border-color: #6366f1; }
         .dark .custom-checkbox:checked + div { background-color: #1e1b4b; border-color: #6366f1; }
-        
         .zoom-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .zoom-card:hover { transform: scale(1.03); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
     </style>
@@ -70,7 +66,8 @@
              <div class="absolute inset-0 bg-indigo-100 dark:bg-indigo-900 rounded-full animate-ping opacity-75"></div>
              <img src="./logo.png?v=1.2.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
-        <p id="loading-text" class="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Starting Fatima Store...</p>
+        <p id="loading-text" class="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Starting System...</p>
+        <button onclick="localStorage.removeItem('pk_store_name'); window.location.reload()" class="absolute bottom-10 text-xs text-slate-400 underline">Reset App</button>
     </div>
 
     <div id="update-toast" class="toast"><span>New Update Available</span><button class="update-btn" onclick="window.location.reload()">Update</button></div>
@@ -86,7 +83,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.4.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.5.0</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -475,17 +472,21 @@
                     // REAL-TIME CONFIG SYNC (Fixes Manager Lag)
                     if(configUnsubscribe) configUnsubscribe();
                     const configRef = doc(getCollectionRef(), '_config');
+                    // Safety: if permission denied, catch it
                     configUnsubscribe = onSnapshot(configRef, (docSnap) => {
                         if (docSnap.exists()) {
                             staffList = docSnap.data().staff || [];
                         } else if (isSuperAdmin) {
                             setDoc(configRef, { staff: [] });
                         }
-                        
-                        // Re-check role immediately upon sync
                         const staffMember = staffList.find(s => s.email.toLowerCase() === email);
                         isManager = isSuperAdmin || (staffMember && staffMember.role === 'manager');
-                        updateUI(); // Immediate UI refresh
+                        updateUI(); 
+                    }, (error) => {
+                        console.log("Config sync error (permission or offline)", error);
+                        // Fallback: If we can't read config, assume not manager unless super admin
+                        isManager = isSuperAdmin;
+                        updateUI();
                     });
                 }
             } else { 
@@ -774,4 +775,15 @@
         window.toggleAuth = () => { if (currentUser && !currentUser.isAnonymous) { if(confirm("Log out Admin?")) signOut(auth).then(()=>signInAnonymously(auth)); } else { setPersistence(auth, browserLocalPersistence).then(() => signInWithPopup(auth, new GoogleAuthProvider())).catch(e => alert(e.message)); } };
         function updateUI() { 
             const lockBtn = document.getElementById('auth-btn'); const superBtn = document.getElementById('super-admin-btn'); const fab = document.getElementById('fab-container'); const roleBadge = document.getElementById('role-badge');
-            if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full
+            if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full border border-amber-200 dark:border-amber-800"; superBtn.classList.remove('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 dark:text-amber-400 font-bold uppercase tracking-wide"; updateChartTheme(); } 
+            else if (isManager) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>'; lockBtn.className = "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-full border border-indigo-200 dark:border-indigo-800"; superBtn.classList.add('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide"; } 
+            else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700"; superBtn.classList.add('hidden'); fab.classList.add('hidden'); roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide"; }
+            renderList(); updateStats(); if(window.lucide) lucide.createIcons(); 
+        }
+        window.logout = () => { if (confirm("Exit?")) { localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); } };
+        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+        
+        if(window.lucide) lucide.createIcons(); init();
+    </script>
+</body>
+</html>
