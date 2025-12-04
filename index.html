@@ -502,30 +502,62 @@
         };
 
         // Staff Management Logic (Updated)
+  
+        // --- NEW STAFF LOGIC START ---
         document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('new-staff-email').value.trim().toLowerCase();
             const role = document.getElementById('new-staff-role').value;
             if (!email) return;
+
+            // Check if user already exists
+            if (staffList.some(s => s.email === email)) return alert("User already exists");
             
+            // 1. Update UI immediately (Optimistic)
             staffList.push({ email, role });
             renderStaffList();
             document.getElementById('new-staff-email').value = '';
 
+            // 2. Prepare Data for Security Rules
+            // We create simple lists so Rules can check "if email in manager_emails"
+            const managerEmails = staffList.filter(s => s.role === 'manager').map(s => s.email);
+            const allStaffEmails = staffList.map(s => s.email);
+
             try {
-                await setDoc(doc(getCollectionRef().parent, '_config'), { staff: staffList }, { merge: true });
-                alert("Staff added!");
-            } catch(e) { alert("Error saving staff: " + e.message); }
+                await setDoc(doc(getCollectionRef().parent, '_config'), { 
+                    staff: staffList,             // Complex data for UI
+                    manager_emails: managerEmails, // Simple list for Manager Rules
+                    staff_emails: allStaffEmails   // Simple list for Staff Rules
+                }, { merge: true });
+                alert("Staff access granted!");
+            } catch(e) { 
+                alert("Error saving staff: " + e.message);
+                // Revert on error
+                staffList = staffList.filter(s => s.email !== email);
+                renderStaffList();
+            }
         });
 
         window.removeStaff = async (email) => {
-            if (!confirm(`Remove ${email}?`)) return;
+            if (!confirm(`Remove access for ${email}?`)) return;
+            
+            // 1. Update UI
             staffList = staffList.filter(s => s.email !== email);
             renderStaffList();
+            
+            // 2. Update Database & Security Lists
+            const managerEmails = staffList.filter(s => s.role === 'manager').map(s => s.email);
+            const allStaffEmails = staffList.map(s => s.email);
+
             try {
-                await setDoc(doc(getCollectionRef().parent, '_config'), { staff: staffList }, { merge: true });
+                await setDoc(doc(getCollectionRef().parent, '_config'), { 
+                    staff: staffList,
+                    manager_emails: managerEmails,
+                    staff_emails: allStaffEmails
+                }, { merge: true });
             } catch(e) { alert("Error removing staff: " + e.message); }
         };
+        // --- NEW STAFF LOGIC END ---
 
         function renderStaffList() {
             const list = document.getElementById('staff-list');
