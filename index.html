@@ -192,8 +192,8 @@
                             <div class="text-2xl font-black text-slate-800 dark:text-white" id="stat-active-count">0</div>
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                            <div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Avg Price</div>
-                            <div class="text-2xl font-black text-slate-800 dark:text-white" id="stat-avg">₦0</div>
+                            <div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total In Database</div>
+                            <div class="text-2xl font-black text-slate-800 dark:text-white" id="stat-total-db">0</div>
                         </div>
                     </div>
                     
@@ -632,23 +632,9 @@
         function updateStats() {
             if (!isSuperAdmin) return;
             document.getElementById('stat-active-count').innerText = visibleItems.length;
-            document.getElementById('stat-db-count').innerText = allItems.length; 
+            // Update the Total DB count (including hidden/deleted)
+            document.getElementById('stat-total-db').innerText = allItems.length; 
             document.getElementById('stat-trash-count').innerText = deletedItems.length;
-            
-            // CRITICAL FIX: Aggressive price cleaning
-            if (visibleItems.length > 0) { 
-                let total = 0;
-                visibleItems.forEach(item => {
-                    // Try parsing, default to 0 if NaN
-                    let p = parseFloat(item.price);
-                    if (isNaN(p)) p = 0;
-                    total += p;
-                });
-                
-                const avg = Math.floor(total / visibleItems.length);
-                document.getElementById('stat-avg').innerText = `₦${avg.toLocaleString()}`; 
-            }
-            else { document.getElementById('stat-avg').innerText = '₦0'; }
             
             if(document.getElementById('view-stats').classList.contains('hidden') === false) renderCharts();
         }
