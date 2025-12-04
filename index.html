@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=2.6.0">
+    <link rel="manifest" href="./manifest.json?v=2.6.1">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -78,7 +78,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.6.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v2.6.1</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -280,7 +280,7 @@
                                 <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg"><i data-lucide="shield" class="w-5 h-5 text-purple-600 dark:text-purple-400"></i></div>
                                 <div>
                                     <h4 class="font-bold text-slate-800 dark:text-white text-sm">Security Rules</h4>
-                                    <p class="text-[10px] text-slate-400">Generates Standard Rules.</p>
+                                    <p class="text-[10px] text-slate-400">Generates Working Rules.</p>
                                 </div>
                             </div>
                             <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-purple-600">Copy Rules</button>
@@ -587,62 +587,44 @@
         };
 
         window.copyRules = () => {
-            if(!currentStoreName) return alert("Please open a store first.");
-            const safeName = currentStoreName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-            
             const rules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // --- SETUP ---
+    function getSuperAdmin() { return '${SUPER_ADMIN_EMAIL}'; }
     
-    // --- HELPER FUNCTIONS ---
-
-    // 1. Super Admin Check (Hardcoded Safety)
     function isSuperAdmin() {
-      return request.auth != null && 
-             request.auth.token.email.lower() == '${SUPER_ADMIN_EMAIL}';
+      return request.auth != null && request.auth.token.email.lower() == getSuperAdmin();
     }
 
-    // 2. Manager Check (Reads from the specific store's _config file)
-    function isManager() {
-      let configPath = /databases/$(database)/documents/artifacts/${appId}/public/data/pk_store_${safeName}/_config;
+    function isManager(storeCollection) {
+      let configPath = /databases/$(database)/documents/artifacts/${appId}/public/data/$(storeCollection)/_config;
       return isSuperAdmin() || (
-        exists(configPath) && 
-        get(configPath).data.staff[request.auth.token.email.lower()] == 'manager'
+        request.auth != null && request.auth.token.email != null &&
+        exists(configPath) && get(configPath).data.staff[request.auth.token.email.lower()] == 'manager'
       );
     }
 
-    // --- MATCHING RULES ---
-
-    // 3. Store Data (Items & Config)
-    match /artifacts/${appId}/public/data/pk_store_${safeName} {
-      
-      // A. The Config File (Contains Staff list)
-      // STRICT: Only Super Admin can read/write this file to protect emails
+    // --- DATA ---
+    match /artifacts/${appId}/public/data/{storeCollection}/{document} {
       match /_config {
-        allow read, write: if isSuperAdmin();
+        allow write: if isSuperAdmin();
+        allow read: if request.auth != null;
       }
-
-      // B. The Actual Items (Everything else in the store)
-      match /{document} {
-        // Public can view prices (Read Only)
-        allow read: if true; 
-        
-        // Managers can Add/Edit/Delete items (but cannot touch _config)
-        allow write: if isManager() && document != '_config'; 
+      match /{item} {
+        allow read: if true;
+        allow write: if item != '_config' && (isSuperAdmin() || isManager(storeCollection));
       }
     }
     
-    // 4. Audit Logs
-    match /artifacts/${appId}/public/logs/pk_store_${safeName}/{document=**} {
-      allow read: if isSuperAdmin();
-      // Managers can CREATE logs (so the system tracks their actions)
-      allow create: if isManager();
-      // Only Super Admin can modify or delete history
-      allow update, delete: if isSuperAdmin();
+    // --- LOGS ---
+    match /artifacts/${appId}/public/logs/{storeCollection}/{log} {
+       allow read, update, delete: if isSuperAdmin();
+       allow create: if isManager(storeCollection);
     }
   }
 }`;
-            navigator.clipboard.writeText(rules).then(() => alert("✅ STANDARD ENTERPRISE RULES COPIED!\n\nThis rule dynamically checks your 'Team' list.\n\n1. Go to Firebase Console > Firestore > Rules\n2. Delete everything\n3. Paste these new rules\n4. Click Publish"));
+            navigator.clipboard.writeText(rules).then(() => alert("✅ RULES COPIED!\n\n1. Go to Firebase Console > Firestore > Rules\n2. Paste this code\n3. Click Publish"));
         };
 
         document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
@@ -985,12 +967,4 @@ service cloud.firestore {
             if (isSuperAdmin) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full border border-amber-200 dark:border-amber-800"; superBtn.classList.remove('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 dark:text-amber-400 font-bold uppercase tracking-wide"; updateChartTheme(); } 
             else if (isManager) { lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>'; lockBtn.className = "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-full border border-indigo-200 dark:border-indigo-800"; superBtn.classList.add('hidden'); fab.classList.remove('hidden'); roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide"; } 
             else { lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; lockBtn.className = "text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700"; superBtn.classList.add('hidden'); fab.classList.add('hidden'); roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide"; }
-            renderList(); updateStats(); if(window.lucide) lucide.createIcons(); 
-        }
-        window.logout = () => { if (confirm("Exit?")) { localStorage.removeItem('pk_store_name'); currentStoreName = null; if (unsubscribe) unsubscribe(); document.getElementById('store-name-input').value = ""; document.getElementById('login-btn').innerText = "Open Store"; showLogin(); } };
-        function escape(s) { return s ? s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
-        
-        if(window.lucide) lucide.createIcons(); init();
-    </script>
-</body>
-</html>
+            renderList(); updateStats(); if
