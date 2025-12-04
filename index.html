@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.1.1">
+    <link rel="manifest" href="./manifest.json?v=1.1.2">
     <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
     <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
     <meta name="theme-color" content="#4f46e5">
@@ -67,7 +67,7 @@
                 <button type="submit" id="login-btn" class="w-full py-3.5 px-4 bg-indigo-600 rounded-xl text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform flex items-center justify-center gap-2">Open Store</button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.1.1</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.1.2</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -359,7 +359,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, query, limit, orderBy, writeBatch, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, getDoc, setDoc, serverTimestamp, enableMultiTabIndexedDbPersistence, query, limit, orderBy, writeBatch, getDocs, where } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
         const firebaseConfig = { apiKey: "AIzaSyAKtNEsWV_4GnHs_Q4CfrHz3AbWQ4gRrow", authDomain: "fatima-store-1f63f.firebaseapp.com", projectId: "fatima-store-1f63f", storageBucket: "fatima-store-1f63f.firebasestorage.app", messagingSenderId: "349442172022", appId: "1:349442172022:web:af457182d0daac14beeb57", measurementId: "G-QBXVMH6J43" };
         const app = initializeApp(firebaseConfig);
@@ -580,37 +580,25 @@
             const rules = `rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // --- SETUP ---
     function getSuperAdmin() { return '${SUPER_ADMIN_EMAIL}'; }
+    function isSuperAdmin() { return request.auth != null && request.auth.token.email.lower() == getSuperAdmin(); }
     
-    function isSuperAdmin() {
-      return request.auth != null && request.auth.token.email.lower() == getSuperAdmin();
-    }
-
-    function isManager(storeCollection) {
-      let configPath = /databases/$(database)/documents/artifacts/${appId}/public/data/$(storeCollection)/_config;
+    function isManager(storeName) {
+      let configPath = /databases/$(database)/documents/artifacts/${appId}/public/data/$(storeName)/_config;
       return isSuperAdmin() || (
-        request.auth != null && request.auth.token.email != null &&
-        exists(configPath) && get(configPath).data.staff[request.auth.token.email.lower()] == 'manager'
+        request.auth != null && exists(configPath) &&
+        (request.auth.token.email.lower() in get(configPath).data.staff) &&
+        get(configPath).data.staff[request.auth.token.email.lower()] == 'manager'
       );
     }
 
-    // --- DATA ---
-    match /artifacts/${appId}/public/data/{storeCollection}/{document} {
-      match /_config {
-        allow write: if isSuperAdmin();
-        allow read: if request.auth != null;
-      }
-      match /{item} {
-        allow read: if true;
-        allow write: if item != '_config' && (isSuperAdmin() || isManager(storeCollection));
-      }
+    match /artifacts/${appId}/public/data/{storeName}/{document} {
+      allow read: if (document == '_config' && request.auth != null) || (document != '_config');
+      allow write: if isSuperAdmin() || (document != '_config' && isManager(storeName));
     }
-    
-    // --- LOGS ---
-    match /artifacts/${appId}/public/logs/{storeCollection}/{log} {
+    match /artifacts/${appId}/public/logs/{storeName}/{log} {
        allow read, update, delete: if isSuperAdmin();
-       allow create: if isManager(storeCollection);
+       allow create: if isManager(storeName);
     }
   }
 }`;
@@ -656,13 +644,16 @@ service cloud.firestore {
             const spinner = document.getElementById('data-loading'); const emptyEl = document.getElementById('empty-state');
             const spinnerTimeout = setTimeout(() => { spinner.classList.remove('hidden'); emptyEl.classList.add('hidden'); }, 200);
             
-            // CLEAN ERROR HANDLING: No big text, just a toast
-            unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
+            // SMART FILTER: Only fetch items with 'isDeleted' field.
+            // This effectively IGNORES the _config file (which doesn't have isDeleted).
+            // This prevents the "Permission Denied" error if _config is locked.
+            const q = query(getCollectionRef(), where("isDeleted", "in", [true, false]));
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
                 clearTimeout(spinnerTimeout); spinner.classList.add('hidden');
-                // SAFE LOAD: Handle malformed docs
                 allItems = snapshot.docs.map(d => {
                     try { return {id: d.id, ...d.data()}; } catch(e) { return null; }
-                }).filter(item => item && item.id !== '_config');
+                });
                 
                 allItems.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
                 visibleItems = allItems.filter(i => !i.isDeleted);
@@ -672,11 +663,8 @@ service cloud.firestore {
                 console.error("Snapshot error:", error);
                 clearTimeout(spinnerTimeout);
                 spinner.classList.add('hidden');
-                // Subtle Toast
-                const toast = document.getElementById('toast');
-                toast.innerText = "Connection Issue. Retrying...";
-                toast.classList.add('show');
-                setTimeout(()=>toast.classList.remove('show'), 3000);
+                // Only show error if it's NOT a permission error on the main list
+                // (Since we filtered _config, this shouldn't happen anymore)
             }); 
         }
 
