@@ -211,13 +211,15 @@
                 <div id="view-team" class="hidden space-y-4 animate-[fadeIn_0.3s_ease-out]">
                     <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
                         <h4 class="font-bold text-slate-800 dark:text-white mb-2">Add Team Member</h4>
-                        <form id="add-staff-form" class="flex gap-2">
-                            <input type="email" id="new-staff-email" required class="flex-1 p-2 rounded border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm" placeholder="Email address">
-                            <select id="new-staff-role" class="p-2 rounded border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm">
-                                <option value="manager">Manager</option>
-                                <option value="staff">Staff (Read Only)</option>
-                            </select>
-                            <button type="submit" class="bg-indigo-600 text-white px-3 rounded text-sm font-bold hover:bg-indigo-700">Add</button>
+                        <form id="add-staff-form" class="flex flex-col gap-3">
+                            <input type="email" id="new-staff-email" required class="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Email address">
+                            <div class="flex gap-2">
+                                <select id="new-staff-role" class="flex-1 p-3 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <option value="manager">Manager</option>
+                                    <option value="staff">Staff (Read Only)</option>
+                                </select>
+                                <button type="submit" class="bg-indigo-600 text-white px-5 rounded-lg text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20">Add</button>
+                            </div>
                         </form>
                     </div>
                     
@@ -446,12 +448,12 @@
                 // Fetch dynamic staff list
                 if (currentStoreName) {
                     try {
-                        const configDoc = await getDoc(doc(getCollectionRef().parent, '_config'));
+                        const configDoc = await getDoc(doc(getCollectionRef(), '_config'));
                         if (configDoc.exists()) {
                             staffList = configDoc.data().staff || [];
                         } else if (isSuperAdmin) {
                             // Create config if missing
-                            await setDoc(doc(getCollectionRef().parent, '_config'), { staff: [] });
+                            await setDoc(doc(getCollectionRef(), '_config'), { staff: [] });
                         }
                     } catch(e) { console.log("Config fetch error (offline)", e); }
                 }
@@ -506,7 +508,7 @@
             document.getElementById('new-staff-email').value = '';
 
             try {
-                await setDoc(doc(getCollectionRef().parent, '_config'), { staff: staffList }, { merge: true });
+                await setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true });
                 alert("Staff added!");
             } catch(e) { alert("Error saving staff: " + e.message); }
         });
@@ -516,7 +518,7 @@
             staffList = staffList.filter(s => s.email !== email);
             renderStaffList();
             try {
-                await setDoc(doc(getCollectionRef().parent, '_config'), { staff: staffList }, { merge: true });
+                await setDoc(doc(getCollectionRef(), '_config'), { staff: staffList }, { merge: true });
             } catch(e) { alert("Error removing staff: " + e.message); }
         };
 
@@ -619,8 +621,14 @@
             document.getElementById('stat-active-count').innerText = visibleItems.length;
             document.getElementById('stat-db-count').innerText = allItems.length; 
             document.getElementById('stat-trash-count').innerText = deletedItems.length;
-            if (visibleItems.length > 0) { const total = visibleItems.reduce((acc, curr) => acc + (curr.price || 0), 0); document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; }
+            
+            // Fix for NaN/String issues
+            if (visibleItems.length > 0) { 
+                const total = visibleItems.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0); 
+                document.getElementById('stat-avg').innerText = `₦${Math.floor(total / visibleItems.length).toLocaleString()}`; 
+            }
             else { document.getElementById('stat-avg').innerText = '₦0'; }
+            
             if(document.getElementById('view-stats').classList.contains('hidden') === false) renderCharts();
         }
 
