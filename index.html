@@ -4,9 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fatima Store</title>
     
-    <link rel="manifest" href="./manifest.json?v=1.2.0">
-    <link rel="icon" type="image/png" href="./logo.png?v=1.2.0">
-    <link rel="apple-touch-icon" href="./logo.png?v=1.2.0">
+    <link rel="manifest" href="./manifest.json?v=1.2.1">
+    <link rel="icon" type="image/png" href="./logo.png?v=1.2.1">
+    <link rel="apple-touch-icon" href="./logo.png?v=1.2.1">
     <meta name="theme-color" content="#4f46e5">
     
     <script>
@@ -57,7 +57,7 @@
     <div id="loading-overlay" class="fixed inset-0 z-[60] bg-white dark:bg-slate-900 flex flex-col items-center justify-center">
         <div class="mb-4 relative">
              <div class="absolute inset-0 bg-indigo-100 dark:bg-indigo-900 rounded-full animate-ping opacity-75"></div>
-             <img src="./logo.png?v=1.2.0" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
+             <img src="./logo.png?v=1.2.1" class="w-24 h-24 relative z-10 rounded-full shadow-lg" alt="Fatima Store">
         </div>
         <p id="loading-text" class="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Starting System...</p>
         <button onclick="localStorage.removeItem('pk_store_name'); window.location.reload()" class="absolute bottom-10 text-xs text-slate-400 underline">Reset App</button>
@@ -83,7 +83,7 @@
                 </button>
             </form>
         </div>
-        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.2.0</div>
+        <div class="absolute bottom-6 text-[10px] text-slate-400 font-mono opacity-50 select-none">v1.2.1</div>
     </div>
 
     <div id="app-screen" class="hidden min-h-screen pb-24">
@@ -91,7 +91,7 @@
             <div class="max-w-md mx-auto px-4 py-3">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                        <img src="./logo.png?v=1.2.0" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
+                        <img src="./logo.png?v=1.2.1" class="w-8 h-8 rounded-md shadow-sm" alt="Logo">
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none flex items-center">Fatima Store <span class="hidden offline-badge ml-2 bg-red-500 text-white text-[10px] px-1 rounded">OFFLINE</span></h1>
                             <div id="role-badge" class="text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide">...</div>
@@ -575,12 +575,23 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) { 
-                // User is authenticated by Google, now authorize against App Logic
+                // User is authenticated
                 currentUser = user; 
                 const email = user.email ? user.email.toLowerCase() : "";
                 isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
                 
                 document.getElementById('debug-email').innerText = email;
+
+                // FIX: Check Super Admin Privilege IMMEDIATELY
+                if (isSuperAdmin) {
+                     isAuthorized = true;
+                     isManager = true;
+                     document.getElementById('debug-role').innerText = "Super Admin";
+                     document.getElementById('role-badge').innerText = "SUPER ADMIN";
+                     // Unlock the app UI immediately
+                     showApp();
+                     updateUI(); 
+                }
 
                 if (currentStoreName) {
                     if(configUnsubscribe) configUnsubscribe();
@@ -594,36 +605,36 @@
                             staffMap = rawStaff;
                             role = staffMap[email];
                         } else if (isSuperAdmin) {
-                            // If DB is empty, only Super Admin can initialize it
-                            setDoc(configRef, { staff: {} });
+                            setDoc(configRef, { staff: {} }).catch(e=>console.log("Auto-creation pending rules update"));
                         }
 
-                        // AUTHORIZATION CHECK
-                        if (isSuperAdmin || role) {
+                        if (isSuperAdmin) {
+                            // Already handled above, just ensuring staffMap is updated
+                        } else if (role) {
+                            // Standard Staff/Manager Logic
                             isAuthorized = true;
-                            isManager = isSuperAdmin || (role === 'manager');
-                            const roleText = isSuperAdmin ? "Super Admin" : (role === 'manager' ? "Manager" : "Staff (Read Only)");
+                            isManager = (role === 'manager');
+                            const roleText = (role === 'manager' ? "Manager" : "Staff (Read Only)");
                             document.getElementById('debug-role').innerText = roleText;
-                            document.getElementById('role-badge').innerText = isSuperAdmin ? "SUPER ADMIN" : role.toUpperCase();
+                            document.getElementById('role-badge').innerText = role.toUpperCase();
                             showApp();
+                            updateUI();
                         } else {
-                            // Valid Google Account, but not in the Staff List
+                            // Denied
                             isAuthorized = false;
-                            alert(`Access Denied.\n\nAccount: ${email}\n\nYou are not listed in the '${currentStoreName}' staff directory. Contact the manager.`);
+                            alert(`Access Denied.\n\nAccount: ${email}\n\nYou are not listed in the '${currentStoreName}' staff directory.`);
                             signOut(auth).then(() => window.location.reload());
                         }
-                        updateUI();
                     }, (error) => {
                         console.log("Auth sync error", error);
-                        // If we can't read the config, it usually means permission denied rules kicked in
+                        // If sync fails but we are Super Admin, we stay logged in
                         if(!isSuperAdmin) {
-                            alert("Authorization Failed: You do not have access to this store.");
+                            alert("Authorization Failed: Network or Permission Issue.");
                             localStorage.removeItem('pk_store_name');
                             signOut(auth).then(() => window.location.reload());
                         }
                     });
                 } else {
-                    // Logged in but no store name yet? Should not happen with new flow
                     showLogin();
                 }
             } else { 
@@ -647,6 +658,40 @@
             startDataSync(); 
             updateUI(); 
             engageTrap(); 
+        }
+        
+        function updateUI() { 
+            const lockBtn = document.getElementById('auth-btn'); 
+            const superBtn = document.getElementById('super-admin-btn'); 
+            const fab = document.getElementById('fab-container'); 
+            const roleBadge = document.getElementById('role-badge');
+            
+            if (isSuperAdmin) { 
+                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>'; 
+                lockBtn.className = "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 p-2 rounded-full border border-amber-200 dark:border-amber-800"; 
+                superBtn.classList.remove('hidden'); 
+                fab.classList.remove('hidden'); 
+                roleBadge.innerText = "SUPER ADMIN"; 
+                roleBadge.className = "text-[10px] text-amber-500 dark:text-amber-400 font-bold uppercase tracking-wide"; 
+                updateChartTheme(); 
+            } else if (isManager) { 
+                lockBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>'; 
+                lockBtn.className = "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-full border border-indigo-200 dark:border-indigo-800"; 
+                superBtn.classList.add('hidden'); 
+                fab.classList.remove('hidden'); 
+                roleBadge.innerText = "MANAGER"; 
+                roleBadge.className = "text-[10px] text-indigo-500 dark:text-indigo-400 font-bold uppercase tracking-wide"; 
+            } else { 
+                lockBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>'; 
+                lockBtn.className = "text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 p-2 rounded-full border border-slate-200 dark:border-slate-700"; 
+                superBtn.classList.add('hidden'); 
+                fab.classList.add('hidden'); 
+                roleBadge.innerText = "STAFF"; 
+                roleBadge.className = "text-[10px] text-slate-400 dark:text-slate-500 font-mono uppercase tracking-wide"; 
+            }
+            renderList(); 
+            updateStats(); 
+            if(window.lucide) lucide.createIcons(); 
         }
 
         document.getElementById('login-form').addEventListener('submit', (e) => { 
