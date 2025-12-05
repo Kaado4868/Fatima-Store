@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v1.2.0';
+const CACHE_NAME = 'fatima-store-v4.4'; // Updated to match your HTML version
 
 // 1. CORE ASSETS: These MUST be cached or the app won't open.
 const CORE_ASSETS = [
@@ -13,8 +13,7 @@ const EXTERNAL_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest', 
   'https://unpkg.com/html5-qrcode',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'
 ];
 
 self.addEventListener('install', (e) => {
@@ -24,9 +23,9 @@ self.addEventListener('install', (e) => {
       // Step A: Cache Core Files (Vital)
       try {
         await cache.addAll(CORE_ASSETS);
-        console.log(`[SW] ${CACHE_NAME} Core assets cached.`);
+        console.log('Core assets cached successfully.');
       } catch (err) {
-        console.error('[SW] Core assets failed:', err);
+        console.error('Core assets failed:', err);
       }
 
       // Step B: Cache External Files (Best Effort)
@@ -38,7 +37,7 @@ self.addEventListener('install', (e) => {
             await cache.put(request, response);
           }
         } catch (err) {
-          console.warn('[SW] Failed to cache external asset:', url);
+          console.warn('Failed to cache external asset:', url, err);
         }
       }
     })
@@ -60,6 +59,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   // 1. IGNORE FIREBASE/GOOGLE APIs
+  // Added 'google.com' to prevent SW from messing with Auth redirects
   if (url.hostname.includes('firebase') || 
       url.hostname.includes('firestore') || 
       url.hostname.includes('googleapis') ||
@@ -71,8 +71,10 @@ self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request).catch(() => {
+        // If offline, try finding index.html in cache
         return caches.match('./index.html', {ignoreSearch: true})
           .then(response => {
+            // If direct match fails, try the root
             return response || caches.match('./', {ignoreSearch: true});
           });
       })
