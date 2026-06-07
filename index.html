@@ -78,9 +78,11 @@
         <nav class="fixed bottom-0 w-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 z-30 pb-safe">
             <div class="flex justify-around items-center max-w-md mx-auto p-2">
                 <button class="flex flex-col items-center p-2 text-indigo-600" onclick="window.scrollTo(0,0)"><i data-lucide="home" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Home</span></button>
-                <div class="relative -top-5">
-                    <button id="fab-btn" onclick="window.openItemModal()" class="hidden bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center border-4 border-white dark:border-slate-800 active:scale-95"><i data-lucide="plus" class="w-7 h-7"></i></button>
+                
+                <div id="fab-container" class="hidden relative -top-5">
+                    <button onclick="window.openItemModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center border-4 border-white dark:border-slate-800 active:scale-95"><i data-lucide="plus" class="w-7 h-7"></i></button>
                 </div>
+                
                 <button id="admin-nav-btn" class="hidden flex flex-col items-center p-2 text-slate-400 hover:text-indigo-600" onclick="window.openAdminModal()"><i data-lucide="shield" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Admin</span></button>
             </div>
         </nav>
@@ -117,11 +119,14 @@
             
             <div class="flex bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 overflow-x-auto px-2">
                 <button onclick="window.switchAdminTab('stats')" class="tab-btn active flex-1 py-3 text-xs font-bold uppercase text-indigo-600 border-b-2 border-indigo-600" id="tab-stats">Stats</button>
+                <button onclick="window.switchAdminTab('team')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-team">Team</button>
+                <button onclick="window.switchAdminTab('logs')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-logs">Logs</button>
                 <button onclick="window.switchAdminTab('trash')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-trash">Bin</button>
                 <button onclick="window.switchAdminTab('tools')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-tools">Tools</button>
             </div>
 
             <div class="flex-1 overflow-y-auto p-5 bg-slate-50 dark:bg-slate-900/50">
+                
                 <div id="view-stats" class="space-y-5">
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700">
@@ -137,6 +142,29 @@
                         <h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Category Distribution</h4>
                         <div class="h-48 relative"><canvas id="catChart"></canvas></div>
                     </div>
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Price Range Analysis</h4>
+                        <div class="h-48 relative"><canvas id="priceChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div id="view-team" class="hidden space-y-4">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700">
+                        <h4 class="font-bold text-sm mb-2">Add Team Member</h4>
+                        <div class="flex gap-2">
+                            <input type="email" id="new-staff-email" class="flex-1 p-3 rounded-lg border dark:bg-slate-700 text-sm outline-none" placeholder="Email address">
+                            <button onclick="window.addStaff()" class="bg-indigo-600 text-white px-4 rounded-lg font-bold text-sm">Add</button>
+                        </div>
+                    </div>
+                    <div id="staff-list" class="space-y-2"></div>
+                </div>
+
+                <div id="view-logs" class="hidden space-y-3">
+                    <div class="flex items-center justify-between px-1 mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Audit History</span>
+                        <button onclick="window.switchAdminTab('logs')" class="text-slate-400 hover:text-indigo-600"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+                    </div>
+                    <div id="logs-list" class="space-y-2"></div>
                 </div>
 
                 <div id="view-trash" class="hidden space-y-3">
@@ -149,15 +177,17 @@
 
                 <div id="view-tools" class="hidden space-y-4">
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-sm">Export Data</h4>
-                            <p class="text-[10px] text-slate-400">Download inventory as CSV.</p>
-                        </div>
+                        <div><h4 class="font-bold text-sm">Export Data</h4><p class="text-[10px] text-slate-400">Download CSV.</p></div>
                         <button onclick="window.exportData()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs">Download</button>
                     </div>
                     
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700 flex justify-between items-center">
+                        <div><h4 class="font-bold text-sm">Security Rules</h4><p class="text-[10px] text-slate-400">Standard Firestore Setup.</p></div>
+                        <button onclick="window.copyRules()" class="bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-xs">Copy Rules</button>
+                    </div>
+
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700">
-                        <h4 class="font-bold text-sm mb-3">Bulk Price Adjuster</h4>
+                        <h4 class="font-bold text-sm mb-3">Bulk Price Adjuster (ALL ITEMS)</h4>
                         <div class="flex flex-col gap-3">
                             <input type="number" id="inflation-input" class="w-full p-3 rounded-xl border dark:bg-slate-700 outline-none" placeholder="% Change (e.g. 10)">
                             <div class="flex gap-2">
@@ -179,4 +209,5 @@
 
     <script type="module" src="./js/app.js"></script>
 </body>
-</html>
+                                                                                                                                                                                                                                                     </html>
+                            
