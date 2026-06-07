@@ -65,26 +65,26 @@ export function renderList() {
 export function updateRoleUI() {
     const roleBadge = document.getElementById('role-badge');
     const authBtn = document.getElementById('auth-btn');
-    const fab = document.getElementById('fab-btn');
+    const fabContainer = document.getElementById('fab-container'); // Targets the wrapper now
     const adminNav = document.getElementById('admin-nav-btn');
 
     if (state.isSuperAdmin) {
         roleBadge.innerText = "SUPER ADMIN";
         roleBadge.className = "text-[10px] text-amber-500 font-bold uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="unlock" class="w-5 h-5 text-amber-600"></i>';
-        fab.classList.remove('hidden');
+        fabContainer.classList.remove('hidden');
         adminNav.classList.remove('hidden');
     } else if (state.isManager) {
         roleBadge.innerText = "MANAGER";
         roleBadge.className = "text-[10px] text-indigo-500 font-bold uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="unlock" class="w-5 h-5 text-indigo-600"></i>';
-        fab.classList.remove('hidden');
+        fabContainer.classList.remove('hidden');
         adminNav.classList.add('hidden'); 
     } else {
         roleBadge.innerText = "PRICE KEEPER";
         roleBadge.className = "text-[10px] text-slate-400 font-mono uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i>';
-        fab.classList.add('hidden');
+        fabContainer.classList.add('hidden');
         adminNav.classList.add('hidden');
     }
     if(window.lucide) lucide.createIcons();
