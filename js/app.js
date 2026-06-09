@@ -4,10 +4,8 @@ import { renderCategories, renderList, updateRoleUI, showToast } from './ui.js';
 import { openScanner, closeScanner } from './scanner.js';
 import { openAdminModal, closeAdminModal, switchAdminTab, restoreItem, emptyTrash, applyBulkUpdate, exportData } from './admin.js';
 
-// ---- INITIALIZATION ----
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) lucide.createIcons();
-    
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
     
     const storeName = localStorage.getItem('pk_store_name');
@@ -16,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('app-screen').classList.remove('hidden');
         document.getElementById('skeleton-loader').classList.remove('hidden');
         
+        // Starts the syncing process immediately
         initSync(storeName, () => {
             document.getElementById('skeleton-loader').classList.add('hidden');
             renderCategories();
@@ -23,13 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Search Listener
     document.getElementById('search-input').addEventListener('input', (e) => {
         state.searchQuery = e.target.value;
         renderList();
     });
 
-    // Login Form Listener
     document.getElementById('login-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const inputName = document.getElementById('store-name-input').value.trim().toUpperCase();
@@ -39,15 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Item Form Submission
     document.getElementById('item-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('item-id').value;
+        const rawStock = document.getElementById('stock-input').value;
         const data = {
             barcode: document.getElementById('barcode-input').value.trim(),
             name: document.getElementById('name-input').value.trim(),
             price: parseFloat(document.getElementById('price-input').value),
             bulkPrice: document.getElementById('bulk-input').value.trim(),
+            stock: rawStock === '' ? null : parseInt(rawStock),
             category: document.getElementById('category-input').value.trim()
         };
         await saveItem(id, data);
@@ -56,24 +54,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ---- AUTHENTICATION ----
+// Ensures the UI instantly recognizes managers upon load
 onAuthStateChanged(auth, (user) => {
     if (user) {
         state.currentUser = user;
         const email = user.email ? user.email.toLowerCase() : "";
         state.isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
-        state.isManager = state.isSuperAdmin; 
+        
+        // Wait to determine Manager status until the config sync finishes
+        setTimeout(() => {
+            updateRoleUI();
+            renderList();
+        }, 500); 
     } else {
         state.currentUser = null;
         state.isSuperAdmin = false;
         state.isManager = false;
         if (localStorage.getItem('pk_store_name') && navigator.onLine) signInAnonymously(auth);
+        updateRoleUI();
+        renderList();
     }
-    updateRoleUI();
-    renderList();
 });
 
-// ---- GLOBAL WINDOW FUNCTIONS (Bound to HTML onClick) ----
 window.toggleDarkMode = () => {
     document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
@@ -101,6 +103,7 @@ window.editItem = (id) => {
     document.getElementById('barcode-input').value = item.barcode || '';
     document.getElementById('name-input').value = item.name;
     document.getElementById('price-input').value = item.price;
+    document.getElementById('stock-input').value = item.stock !== undefined && item.stock !== null ? item.stock : '';
     document.getElementById('bulk-input').value = item.bulkPrice || '';
     document.getElementById('category-input').value = item.category || '';
     document.getElementById('modal-title').innerText = "Edit Item";
@@ -127,8 +130,6 @@ window.startScanner = (mode) => {
 };
 
 window.stopScanner = closeScanner;
-
-// ---- ADMIN FUNCTIONS ----
 window.openAdminModal = openAdminModal;
 window.closeAdminModal = closeAdminModal;
 window.switchAdminTab = switchAdminTab;
@@ -136,4 +137,3 @@ window.restoreItem = restoreItem;
 window.emptyTrash = emptyTrash;
 window.applyBulkUpdate = applyBulkUpdate;
 window.exportData = exportData;
-                                                      
