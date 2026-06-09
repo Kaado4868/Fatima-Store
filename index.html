@@ -6,7 +6,7 @@
     <title>Fatima Store Enterprise</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./logo.png">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#ffffff">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -14,184 +14,206 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.css">
-    <script>tailwind.config = { darkMode: 'class', theme: { extend: { colors: { slate: { 850: '#151f32', 950: '#020617' } } } } }</script>
+    
+    <script>
+        tailwind.config = { 
+            darkMode: 'class', 
+            theme: { 
+                extend: { 
+                    colors: { slate: { 850: '#151f32', 950: '#020617' } },
+                    boxShadow: { 'glass': '0 4px 30px rgba(0, 0, 0, 0.1)' }
+                } 
+            } 
+        }
+    </script>
 </head>
-<body class="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-['Inter'] antialiased selection:bg-indigo-200 selection:text-indigo-900">
     <div id="toast" class="toast"></div>
 
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 dark:bg-slate-900 flex flex-col items-center justify-center p-6 hidden">
-        <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl w-full max-w-sm text-center border dark:border-slate-700">
-            <div class="w-24 h-24 mx-auto mb-4"><img src="./logo.png" class="w-full h-full object-contain" alt="Logo"></div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Fatima Store</h1>
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 hidden">
+        <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl p-10 rounded-[2rem] shadow-glass border border-white/20 dark:border-slate-800/50 w-full max-w-sm text-center">
+            <div class="w-24 h-24 mx-auto mb-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-2 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                <img src="./logo.png" class="w-full h-full object-contain" alt="Logo">
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Fatima Store</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8">Enterprise Inventory System</p>
             <form id="login-form" class="space-y-4">
-                <input type="text" id="store-name-input" required class="block w-full rounded-xl bg-slate-50 dark:bg-slate-700 border p-4 text-center font-bold outline-none uppercase" placeholder="STORE NAME">
-                <button type="submit" id="login-btn" class="w-full py-3.5 bg-indigo-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-600/20 active:scale-95 transition-transform">Open Store</button>
+                <input type="text" id="store-name-input" required class="block w-full rounded-2xl bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-4 text-center text-lg font-bold outline-none uppercase focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="STORE ID">
+                <button type="submit" id="login-btn" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/30 active:scale-[0.98] transition-all">Authenticate</button>
             </form>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden min-h-screen pb-24">
-        <header class="bg-white dark:bg-slate-800 sticky top-0 z-20 shadow-sm border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+    <div id="app-screen" class="hidden min-h-screen pb-28">
+        <header class="sticky top-0 z-20 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50 px-4 py-4">
             <div class="max-w-md mx-auto">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <img src="./logo.png" class="w-8 h-8 rounded-lg shadow-sm" alt="Logo">
+                        <div class="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-1">
+                            <img src="./logo.png" class="w-full h-full object-contain" alt="Logo">
+                        </div>
                         <div>
                             <h1 class="text-lg font-bold tracking-tight leading-none">Fatima Store</h1>
-                            <span id="role-badge" class="text-[10px] text-slate-400 font-mono uppercase tracking-wide">CONNECTING...</span>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span></span>
+                                <span id="role-badge" class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">CONNECTING...</span>
+                            </div>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.toggleDarkMode()" class="p-2 text-slate-400 hover:text-indigo-600 rounded-full bg-slate-50 dark:bg-slate-700/50"><i data-lucide="moon" class="w-5 h-5"></i></button>
-                        <button onclick="window.toggleAuth()" id="auth-btn" class="p-2 text-slate-400 rounded-full bg-slate-50 dark:bg-slate-700/50"><i data-lucide="lock" class="w-5 h-5"></i></button>
+                        <button onclick="window.toggleDarkMode()" class="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><i data-lucide="moon" class="w-5 h-5"></i></button>
+                        <button onclick="window.toggleAuth()" id="auth-btn" class="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><i data-lucide="lock" class="w-5 h-5"></i></button>
                     </div>
                 </div>
-                <div class="relative flex gap-2">
-                    <div class="relative flex-1">
-                        <i data-lucide="search" class="absolute left-3 top-3.5 w-5 h-5 text-slate-400"></i>
-                        <input type="text" id="search-input" class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-900 dark:text-white border-none outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Search inventory...">
+                
+                <div class="relative flex gap-3">
+                    <div class="relative flex-1 group">
+                        <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                        <input type="text" id="search-input" class="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 dark:text-white border border-transparent focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-sm font-medium" placeholder="Search inventory...">
                     </div>
-                    <button onclick="window.startScanner('search')" class="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 p-3 rounded-xl border border-indigo-100 dark:border-indigo-800"><i data-lucide="scan-line" class="w-6 h-6"></i></button>
+                    <button onclick="window.startScanner('search')" class="bg-indigo-600 hover:bg-indigo-700 text-white p-3.5 rounded-2xl shadow-md shadow-indigo-600/20 active:scale-95 transition-all"><i data-lucide="scan-line" class="w-5 h-5"></i></button>
                 </div>
-                <div id="category-container" class="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1"></div>
+                
+                <div id="category-container" class="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-1"></div>
             </div>
         </header>
 
-        <main class="max-w-md mx-auto px-4 py-4">
-            <div id="skeleton-loader" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 animate-pulse flex justify-between"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></div>
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 animate-pulse flex justify-between"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></div>
+        <main class="max-w-md mx-auto px-4 py-6">
+            <div id="skeleton-loader" class="space-y-4 hidden">
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 animate-pulse flex justify-between"><div class="h-4 bg-slate-100 dark:bg-slate-800 rounded-full w-1/2"></div></div>
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 animate-pulse flex justify-between"><div class="h-4 bg-slate-100 dark:bg-slate-800 rounded-full w-2/3"></div></div>
             </div>
-            <div id="empty-state" class="hidden text-center py-12 text-slate-500">No items found.</div>
-            <div id="item-list" class="space-y-3"></div>
+            <div id="empty-state" class="hidden text-center py-16">
+                <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="package-search" class="w-10 h-10 text-slate-300 dark:text-slate-600"></i></div>
+                <h3 class="font-bold text-slate-700 dark:text-slate-300">Inventory Empty</h3>
+                <p class="text-xs text-slate-400 mt-1">Scan or add an item to begin.</p>
+            </div>
+            <div id="item-list" class="space-y-4"></div>
         </main>
 
-        <nav class="fixed bottom-0 w-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 z-30 pb-safe">
-            <div class="flex justify-around items-center max-w-md mx-auto p-2">
-                <button class="flex flex-col items-center p-2 text-indigo-600" onclick="window.scrollTo(0,0)"><i data-lucide="home" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Home</span></button>
-                <div id="fab-container" class="hidden relative -top-5">
-                    <button onclick="window.openItemModal()" class="bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center border-4 border-white dark:border-slate-800"><i data-lucide="plus" class="w-7 h-7"></i></button>
+        <nav class="fixed bottom-6 left-0 right-0 z-30 pointer-events-none">
+            <div class="max-w-xs mx-auto px-4">
+                <div class="bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-full shadow-2xl border border-slate-700 p-2 flex justify-between items-center pointer-events-auto">
+                    <button class="flex items-center justify-center w-12 h-12 text-white hover:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors" onclick="window.scrollTo(0,0)"><i data-lucide="home" class="w-5 h-5"></i></button>
+                    
+                    <div id="fab-container" class="hidden relative -top-6">
+                        <button onclick="window.openItemModal()" class="bg-indigo-500 hover:bg-indigo-400 text-white w-16 h-16 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center border-4 border-slate-900 dark:border-slate-800 active:scale-90 transition-all"><i data-lucide="plus" class="w-8 h-8"></i></button>
+                    </div>
+                    
+                    <button id="admin-nav-btn" class="hidden flex items-center justify-center w-12 h-12 text-slate-400 hover:text-white hover:bg-slate-800 dark:hover:bg-slate-700 rounded-full transition-colors" onclick="window.openAdminModal()"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></button>
                 </div>
-                <button id="admin-nav-btn" class="hidden flex flex-col items-center p-2 text-slate-400 hover:text-indigo-600" onclick="window.openAdminModal()"><i data-lucide="shield" class="w-6 h-6 mb-1"></i><span class="text-[10px] font-bold">Admin</span></button>
             </div>
         </nav>
     </div>
 
-    <!-- Modals (Item Form) -->
-    <div id="item-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center px-4 py-6">
-        <div onclick="window.closeModal('item-modal')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl p-6 z-50">
-            <h3 id="modal-title" class="font-bold text-lg mb-4">New Item</h3>
+    <div id="item-modal" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center px-4 py-6">
+        <div onclick="window.closeModal('item-modal')" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
+        <div class="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2rem] p-7 z-50 shadow-2xl border border-slate-100 dark:border-slate-800">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="font-extrabold text-xl text-slate-900 dark:text-white">New Item</h3>
+                <button onclick="window.closeModal('item-modal')" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
             <form id="item-form" class="space-y-4">
                 <input type="hidden" id="item-id">
                 <div class="flex items-stretch gap-2">
-                    <input type="text" id="barcode-input" class="flex-1 w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600" placeholder="Barcode">
-                    <button type="button" onclick="window.startScanner('edit')" class="bg-slate-200 dark:bg-slate-600 px-4 rounded-lg flex items-center justify-center"><i data-lucide="scan-line" class="w-5 h-5"></i></button>
+                    <input type="text" id="barcode-input" class="flex-1 w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" placeholder="Barcode">
+                    <button type="button" onclick="window.startScanner('edit')" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-5 rounded-2xl flex items-center justify-center hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"><i data-lucide="scan-line" class="w-5 h-5"></i></button>
                 </div>
-                <input type="text" id="name-input" required class="w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600 capitalize" placeholder="Item Name">
+                <input type="text" id="name-input" required class="w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 capitalize dark:text-white transition-all text-sm font-semibold" placeholder="Item Name">
                 <div class="flex gap-3">
-                    <div class="flex-1"><input type="number" inputmode="decimal" id="price-input" step="0.01" required class="w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600" placeholder="Price (₦)"></div>
-                    <div class="w-20"><input type="number" id="stock-input" class="w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600" placeholder="Qty"></div>
+                    <div class="flex-1"><input type="number" inputmode="decimal" id="price-input" step="0.01" required class="w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm font-bold text-indigo-600" placeholder="Price (₦)"></div>
+                    <div class="w-24"><input type="number" id="stock-input" class="w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" placeholder="Qty"></div>
                 </div>
-                <input type="text" id="bulk-input" class="w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600" placeholder="Bulk Deal">
-                <input type="text" id="category-input" class="w-full p-3 rounded-lg border outline-none dark:bg-slate-700 dark:border-slate-600 capitalize" placeholder="Category">
-                <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl mt-2">Save Item</button>
+                <input type="text" id="bulk-input" class="w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all text-sm" placeholder="Bulk Deal (e.g. 2 for 50)">
+                <input type="text" id="category-input" class="w-full p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 capitalize dark:text-white transition-all text-sm" placeholder="Category">
+                
+                <button type="submit" class="w-full py-4 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-bold rounded-2xl mt-4 shadow-lg active:scale-95 transition-all">Save to Database</button>
             </form>
         </div>
     </div>
 
-    <!-- ENTERPRISE ADMIN MODAL -->
     <div id="admin-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-        <div onclick="window.closeAdminModal()" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
-        <div class="relative bg-slate-50 dark:bg-slate-800 w-full max-w-lg h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div class="bg-white dark:bg-slate-800 px-5 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-700">
+        <div onclick="window.closeAdminModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md"></div>
+        <div class="relative bg-slate-50 dark:bg-slate-950 w-full max-w-lg h-[85vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+            
+            <div class="bg-white dark:bg-slate-900 px-6 py-5 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-3">
-                    <div class="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg"><i data-lucide="shield-check" class="w-5 h-5 text-amber-600"></i></div>
-                    <h3 class="font-bold text-slate-900 dark:text-white leading-tight">Enterprise HQ</h3>
+                    <div class="bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-xl"><i data-lucide="command" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i></div>
+                    <h3 class="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">Enterprise HQ</h3>
                 </div>
-                <button onclick="window.closeAdminModal()" class="text-slate-400 p-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <button onclick="window.closeAdminModal()" class="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             
-            <div class="flex bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 overflow-x-auto px-2">
-                <button onclick="window.switchAdminTab('stats')" class="tab-btn active flex-1 py-3 text-xs font-bold uppercase text-indigo-600 border-b-2 border-indigo-600" id="tab-stats">Stats</button>
-                <button onclick="window.switchAdminTab('forecast')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-forecast">Forecast</button>
-                <button onclick="window.switchAdminTab('team')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-team">Team</button>
-                <button onclick="window.switchAdminTab('logs')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-logs">Logs</button>
-                <button onclick="window.switchAdminTab('tools')" class="tab-btn flex-1 py-3 text-xs font-bold uppercase text-slate-500" id="tab-tools">Tools</button>
+            <div class="bg-white dark:bg-slate-900 px-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-2xl overflow-x-auto no-scrollbar">
+                    <button onclick="window.switchAdminTab('stats')" class="tab-btn active whitespace-nowrap flex-1 py-2 px-4 text-xs font-bold rounded-xl transition-all" id="tab-stats">Overview</button>
+                    <button onclick="window.switchAdminTab('forecast')" class="tab-btn whitespace-nowrap flex-1 py-2 px-4 text-xs font-bold rounded-xl text-slate-500 transition-all" id="tab-forecast">AI</button>
+                    <button onclick="window.switchAdminTab('team')" class="tab-btn whitespace-nowrap flex-1 py-2 px-4 text-xs font-bold rounded-xl text-slate-500 transition-all" id="tab-team">Team</button>
+                    <button onclick="window.switchAdminTab('logs')" class="tab-btn whitespace-nowrap flex-1 py-2 px-4 text-xs font-bold rounded-xl text-slate-500 transition-all" id="tab-logs">Audit</button>
+                    <button onclick="window.switchAdminTab('tools')" class="tab-btn whitespace-nowrap flex-1 py-2 px-4 text-xs font-bold rounded-xl text-slate-500 transition-all" id="tab-tools">Tools</button>
+                </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5 bg-slate-50 dark:bg-slate-900/50">
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-slate-950">
                 
-                <div id="view-stats" class="space-y-5">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700"><div class="text-slate-400 text-[10px] font-bold uppercase">Active Items</div><div class="text-2xl font-black text-indigo-600" id="stat-active-count">0</div></div>
-                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700"><div class="text-slate-400 text-[10px] font-bold uppercase">Total DB</div><div class="text-2xl font-black text-emerald-600" id="stat-total-db">0</div></div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700"><h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Category Distribution</h4><div class="h-48 relative"><canvas id="catChart"></canvas></div></div>
-                </div>
-
-                <!-- NEW: AI Forecast Tab -->
-                <div id="view-forecast" class="hidden space-y-4">
-                    <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
-                        <h4 class="font-bold text-indigo-800 dark:text-indigo-300 text-sm flex items-center gap-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> AI Depletion Forecast</h4>
-                        <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">Predictive analysis based on current stock levels and standard velocity.</p>
-                    </div>
-                    <div id="forecast-list" class="space-y-2"></div>
-                </div>
-
-                <div id="view-team" class="hidden space-y-4">
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border dark:border-slate-700">
-                        <h4 class="font-bold text-sm mb-3">Add Manager</h4>
-                        <div class="flex items-stretch gap-2">
-                            <input type="email" id="new-staff-email" class="flex-1 w-full p-3 rounded-lg border dark:border-slate-600 dark:bg-slate-700 text-sm outline-none" placeholder="Email address">
-                            <button onclick="window.addStaff()" class="bg-indigo-600 text-white px-6 rounded-lg font-bold text-sm flex items-center justify-center">Add</button>
+                <div id="view-stats" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-indigo-500 to-violet-600 p-5 rounded-3xl shadow-lg shadow-indigo-500/20 text-white relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-10 -mt-10"></div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider mb-2 opacity-80">Active Items</div>
+                            <div class="text-4xl font-black" id="stat-active-count">0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div class="text-[10px] font-bold uppercase tracking-wider mb-2 text-slate-400">Total Database</div>
+                            <div class="text-4xl font-black text-slate-800 dark:text-white" id="stat-total-db">0</div>
                         </div>
                     </div>
-                    <div id="staff-list" class="space-y-2"></div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Category Distribution</h4>
+                        <div class="h-48 relative"><canvas id="catChart"></canvas></div>
+                    </div>
                 </div>
 
-                <div id="view-logs" class="hidden space-y-3">
-                    <div class="flex items-center justify-between px-1 mb-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase">Audit History</span>
+                <div id="view-forecast" class="hidden space-y-4">
+                    <div class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-3xl border border-indigo-100 dark:border-indigo-800/50">
+                        <h4 class="font-bold text-indigo-900 dark:text-indigo-300 text-sm flex items-center gap-2"><i data-lucide="brain-circuit" class="w-5 h-5"></i> Depletion Forecast</h4>
+                        <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-2">Predictive analysis based on current stock.</p>
+                    </div>
+                    <div id="forecast-list" class="space-y-3"></div>
+                </div>
+
+                <div id="view-team" class="hidden space-y-5">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-sm mb-4 text-slate-900 dark:text-white">Add Manager</h4>
+                        <div class="flex items-stretch gap-2">
+                            <input type="email" id="new-staff-email" class="flex-1 w-full p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Email address">
+                            <button onclick="window.addStaff()" class="bg-slate-900 dark:bg-indigo-600 text-white px-6 rounded-2xl font-bold text-sm active:scale-95 transition-transform">Add</button>
+                        </div>
+                    </div>
+                    <div id="staff-list" class="space-y-3"></div>
+                </div>
+
+                <div id="view-logs" class="hidden space-y-4">
+                    <div class="flex items-center justify-between px-2 mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Audit History</span>
                         <button onclick="window.switchAdminTab('logs')" class="text-slate-400 hover:text-indigo-600"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
                     </div>
-                    <div id="logs-list" class="space-y-2"></div>
+                    <div id="logs-list" class="space-y-3"></div>
                 </div>
 
-                <div id="view-tools" class="hidden space-y-4">
-                    <!-- NEW: Biometric Toggle -->
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700 flex justify-between items-center">
-                        <div><h4 class="font-bold text-sm flex items-center gap-2"><i data-lucide="fingerprint" class="w-4 h-4 text-indigo-500"></i> Biometric Auth</h4><p class="text-[10px] text-slate-400">Use Fingerprint/FaceID to login.</p></div>
-                        <button onclick="alert('WebAuthn API configured. Requires HTTPS and registered domain to activate.')" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs">Enable</button>
-                    </div>
+                <div id="view-tools" class="hidden space-y-5">
                     
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700 flex justify-between items-center">
-                        <div><h4 class="font-bold text-sm">Export Data</h4><p class="text-[10px] text-slate-400">Download CSV.</p></div>
-                        <button onclick="window.exportData()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs">Download</button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="window.exportData()" class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-emerald-500 transition-colors group">
+                            <div class="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-full text-emerald-600"><i data-lucide="download" class="w-6 h-6 group-hover:scale-110 transition-transform"></i></div>
+                            <span class="font-bold text-sm text-slate-700 dark:text-slate-300">Export CSV</span>
+                        </button>
+                        <button onclick="window.copyRules()" class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-purple-500 transition-colors group">
+                            <div class="bg-purple-50 dark:bg-purple-900/30 p-3 rounded-full text-purple-600"><i data-lucide="shield" class="w-6 h-6 group-hover:scale-110 transition-transform"></i></div>
+                            <span class="font-bold text-sm text-slate-700 dark:text-slate-300">Copy Rules</span>
+                        </button>
                     </div>
 
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border dark:border-slate-700">
-                        <h4 class="font-bold text-sm mb-3">Bulk Price Adjuster</h4>
-                        <div class="flex flex-col gap-3">
-                            <input type="number" id="inflation-input" class="w-full p-3 rounded-xl border dark:bg-slate-700 outline-none" placeholder="% Change (e.g. 10)">
-                            <div class="flex gap-2">
-                                <button onclick="window.applyBulkUpdate('increase')" class="flex-1 bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm">Increase</button>
-                                <button onclick="window.applyBulkUpdate('decrease')" class="flex-1 bg-rose-500 text-white py-3 rounded-xl font-bold text-sm">Decrease</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="scanner-overlay" class="hidden fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
-        <button onclick="window.stopScanner()" class="absolute top-4 right-4 text-white z-50 bg-white/20 p-2 rounded-full"><i data-lucide="x" class="w-6 h-6"></i></button>
-        <div id="reader" class="w-full h-full"></div>
-        <div class="scanner-viewfinder z-10"><div class="scanner-line"></div></div>
-    </div>
-
-    <script type="module" src="./js/app.js"></script>
-</body>
-                                                               </html>
-    
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-sm mb-4 text-slat
