@@ -1,6 +1,6 @@
 import { state, getCollectionRef, getLogCollectionRef, logAction } from './store.js';
 import { db, doc, updateDoc, setDoc, writeBatch, serverTimestamp } from './firebase.js';
-import { showToast } from './ui.js';
+import { showToast, renderList } from './ui.js';
 import { getDocs, query, orderBy, limit, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
 let catChart = null;
@@ -35,7 +35,6 @@ export function switchAdminTab(tab) {
     if (tab === 'trash') renderTrash();
 }
 
-// ---- RESTORED CHARTS ----
 function renderStats() {
     document.getElementById('stat-active-count').innerText = state.visibleItems.length;
     document.getElementById('stat-total-db').innerText = state.allItems.length;
@@ -64,7 +63,6 @@ function renderStats() {
     priceChart = new window.Chart(ctx2, { type: 'bar', data: { labels: Object.keys(ranges), datasets: [{ label: 'Items', data: Object.values(ranges), backgroundColor: '#6366f1', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false } });
 }
 
-// ---- RESTORED TEAM MANAGEMENT ----
 window.addStaff = async () => {
     if (!state.isSuperAdmin) return alert("Only Super Admins can add staff.");
     const email = document.getElementById('new-staff-email').value.trim().toLowerCase();
@@ -99,7 +97,6 @@ function renderStaffList() {
     if(window.lucide) lucide.createIcons();
 }
 
-// ---- RESTORED AUDIT LOGS ----
 async function loadLogs() {
     const list = document.getElementById('logs-list');
     list.innerHTML = '<div class="text-center py-4 text-slate-500">Loading history...</div>';
@@ -150,8 +147,6 @@ window.revertAction = async (logId) => {
     } catch(e) { alert("Revert failed: " + e.message); }
 };
 
-
-// ---- TRASH & TOOLS ----
 function renderTrash() {
     const list = document.getElementById('trash-list');
     const deletedItems = state.allItems.filter(i => i.isDeleted);
@@ -206,20 +201,10 @@ export async function applyBulkUpdate(type) {
 }
 
 export function exportData() {
-    const rows = state.visibleItems.map(i => `"${i.name}","${i.barcode||''}","${i.price}","${i.category||''}","${i.bulkPrice||''}"`).join("\n");
+    const rows = state.visibleItems.map(i => `"${i.name}","${i.barcode||''}","${i.price}","${i.category||''}","${i.bulkPrice||''}","${i.stock||''}"`).join("\n");
     const link = document.createElement("a");
-    link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,Name,Barcode,Price,Category,Bulk Deal\n" + rows));
+    link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,Name,Barcode,Price,Category,Bulk Deal,Stock\n" + rows));
     link.setAttribute("download", `inventory_${state.storeName}.csv`);
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
-}
-
-export function copyRules() {
-    const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} { allow read, write: if request.auth != null; }\n  }\n}`;
-    navigator.clipboard.writeText(rules).then(() => alert("Rules copied!"));
-}
-
-// Window attachments for Admin specific modal actions
-window.addStaff = addStaff;
-window.removeStaff = removeStaff;
-window.revertAction = revertAction;
-window.copyRules = copyRules;
+                                                                                                      }
+                                                                                                      
