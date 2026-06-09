@@ -10,7 +10,7 @@ export const state = {
     isSuperAdmin: false,
     isManager: false,
     currentUser: null,
-    staffMap: {} // Restored team tracking
+    staffMap: {}
 };
 
 let unsubscribe = null;
@@ -27,20 +27,27 @@ export function getLogCollectionRef() {
     return collection(db, 'artifacts', appId, 'public', 'logs', `pk_store_${safeName}`);
 }
 
+export async function logAction(action, details, meta = {}) {
+    if (!state.isSuperAdmin && !state.isManager) return;
+    try {
+        await addDoc(getLogCollectionRef(), { 
+            action, details, user: state.currentUser?.email || "Unknown", 
+            timestamp: serverTimestamp(), meta 
+        });
+    } catch(e) { console.error("Log error", e); }
+}
+
 export function initSync(storeName, callback) {
     state.storeName = storeName;
     if (unsubscribe) unsubscribe();
     
     unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
-        // Find config for Team Management
         const configDoc = snapshot.docs.find(d => d.id === '_config');
         if (configDoc) state.staffMap = configDoc.data().staff || {};
 
-        // Recalculate Role based on config
         const email = state.currentUser?.email?.toLowerCase();
         state.isManager = state.isSuperAdmin || (state.staffMap[email] === 'manager');
 
-        // Parse items
         state.allItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => i.id !== '_config');
         state.visibleItems = state.allItems.filter(i => !i.isDeleted).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         
@@ -50,12 +57,6 @@ export function initSync(storeName, callback) {
         
         callback();
     });
-}
-
-// Restored Audit Logging
-export async function logAction(action, details, meta = {}) {
-    if (!state.isSuperAdmin && !state.isManager) return;
-    addDoc(getLogCollectionRef(), { action, details, user: state.currentUser?.email || "Unknown", timestamp: serverTimestamp(), meta }).catch(e => console.error(e));
 }
 
 export async function saveItem(id, data) {
@@ -80,9 +81,9 @@ export async function saveItem(id, data) {
 
 export async function softDeleteItem(id) {
     if (!state.isManager || !confirm("Move to Trash?")) return;
-    const item = state.visibleItems.find(i => i.id === id);
+    const item = state.allItems.find(i => i.id === id);
     if (!item) return;
 
     await updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() });
     logAction("Soft Delete", `Deleted '${item.name}'`, { itemId: id });
-}
+                                                     }
