@@ -1,4 +1,5 @@
 import { db, appId, collection, onSnapshot, doc, updateDoc, setDoc, serverTimestamp, addDoc } from './firebase.js';
+import { query, where, documentId } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
 export const state = {
     allItems: [],
@@ -14,6 +15,7 @@ export const state = {
 };
 
 let unsubscribe = null;
+let configUnsubscribe = null;
 
 export function getCollectionRef() {
     if (!state.storeName) return null;
@@ -40,15 +42,22 @@ export async function logAction(action, details, meta = {}) {
 export function initSync(storeName, callback) {
     state.storeName = storeName;
     if (unsubscribe) unsubscribe();
+    if (configUnsubscribe) configUnsubscribe();
     
-    unsubscribe = onSnapshot(getCollectionRef(), (snapshot) => {
-        const configDoc = snapshot.docs.find(d => d.id === '_config');
-        if (configDoc) state.staffMap = configDoc.data().staff || {};
-
+    // 1. Sync Config Separately (Handles manager permissions safely)
+    configUnsubscribe = onSnapshot(doc(getCollectionRef(), '_config'), (docSnap) => {
+        if (docSnap.exists()) state.staffMap = docSnap.data().staff || {};
         const email = state.currentUser?.email?.toLowerCase();
         state.isManager = state.isSuperAdmin || (state.staffMap[email] === 'manager');
+    }, (error) => {
+        // Safe to ignore: Expected behavior for public users who can't read config
+    });
 
-        state.allItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => i.id !== '_config');
+    // 2. THE FIX: Sync Items Safely by explicitly skipping the _config file
+    const safeQuery = query(getCollectionRef(), where(documentId(), "!=", "_config"));
+
+    unsubscribe = onSnapshot(safeQuery, (snapshot) => {
+        state.allItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         state.visibleItems = state.allItems.filter(i => !i.isDeleted).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         
         const catSet = new Set(['All']);
@@ -56,6 +65,9 @@ export function initSync(storeName, callback) {
         state.categories = Array.from(catSet);
         
         callback();
+    }, (err) => {
+        console.error("Sync Error:", err);
+        callback(); // Forces the skeleton loader to hide even if there's an error
     });
 }
 
@@ -86,4 +98,4 @@ export async function softDeleteItem(id) {
 
     await updateDoc(doc(getCollectionRef(), id), { isDeleted: true, updatedAt: serverTimestamp() });
     logAction("Soft Delete", `Deleted '${item.name}'`, { itemId: id });
-                                                     }
+    }
