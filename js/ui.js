@@ -27,15 +27,11 @@ export function renderList() {
     
     const filtered = state.visibleItems.filter(item => {
         const itemText = (item.name + " " + (item.category || "") + " " + (item.barcode || "")).toLowerCase();
-        return searchWords.every(word => itemText.includes(word)) && 
-               (state.currentCategory === 'All' || item.category === state.currentCategory);
+        return searchWords.every(word => itemText.includes(word)) && (state.currentCategory === 'All' || item.category === state.currentCategory);
     });
 
     listEl.innerHTML = '';
-    if (filtered.length === 0) {
-        emptyEl.classList.remove('hidden');
-        return;
-    }
+    if (filtered.length === 0) { emptyEl.classList.remove('hidden'); return; }
     emptyEl.classList.add('hidden');
 
     filtered.forEach(item => {
@@ -43,7 +39,6 @@ export function renderList() {
         const div = document.createElement('div');
         div.className = "bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-between items-center";
         
-        // ENTERPRISE FEATURE: Predictive Low Stock Warning
         const stockWarning = (item.stock !== undefined && item.stock !== null && item.stock <= 5) 
             ? `<div class="text-[10px] text-rose-500 font-bold flex items-center gap-1 mt-1 bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded w-fit"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Low Stock: ${item.stock} left</div>` 
             : '';
@@ -71,27 +66,21 @@ export function renderList() {
 export function updateRoleUI() {
     const roleBadge = document.getElementById('role-badge');
     const authBtn = document.getElementById('auth-btn');
-    const fabContainer = document.getElementById('fab-container'); // Targets the wrapper to fix layout
+    const fabContainer = document.getElementById('fab-container');
     const adminNav = document.getElementById('admin-nav-btn');
 
     if (state.isSuperAdmin) {
-        roleBadge.innerText = "SUPER ADMIN";
-        roleBadge.className = "text-[10px] text-amber-500 font-bold uppercase tracking-wide";
+        roleBadge.innerText = "SUPER ADMIN"; roleBadge.className = "text-[10px] text-amber-500 font-bold uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="unlock" class="w-5 h-5 text-amber-600"></i>';
-        fabContainer.classList.remove('hidden');
-        adminNav.classList.remove('hidden');
+        fabContainer.classList.remove('hidden'); adminNav.classList.remove('hidden');
     } else if (state.isManager) {
-        roleBadge.innerText = "MANAGER";
-        roleBadge.className = "text-[10px] text-indigo-500 font-bold uppercase tracking-wide";
+        roleBadge.innerText = "MANAGER"; roleBadge.className = "text-[10px] text-indigo-500 font-bold uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="unlock" class="w-5 h-5 text-indigo-600"></i>';
-        fabContainer.classList.remove('hidden');
-        adminNav.classList.add('hidden'); 
+        fabContainer.classList.remove('hidden'); adminNav.classList.add('hidden'); 
     } else {
-        roleBadge.innerText = "PRICE KEEPER";
-        roleBadge.className = "text-[10px] text-slate-400 font-mono uppercase tracking-wide";
+        roleBadge.innerText = "PRICE KEEPER"; roleBadge.className = "text-[10px] text-slate-400 font-mono uppercase tracking-wide";
         authBtn.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i>';
-        fabContainer.classList.add('hidden');
-        adminNav.classList.add('hidden');
+        fabContainer.classList.add('hidden'); adminNav.classList.add('hidden');
     }
     if(window.lucide) lucide.createIcons();
 }
