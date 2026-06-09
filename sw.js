@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fatima-store-v5.0';
+const CACHE_NAME = 'fatima-store-v5.2';
 
 // Only LOCAL assets
 const CORE_ASSETS = [
