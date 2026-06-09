@@ -43,6 +43,11 @@ export function renderList() {
         const div = document.createElement('div');
         div.className = "bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex justify-between items-center";
         
+        // ENTERPRISE FEATURE: Predictive Low Stock Warning
+        const stockWarning = (item.stock !== undefined && item.stock !== null && item.stock <= 5) 
+            ? `<div class="text-[10px] text-rose-500 font-bold flex items-center gap-1 mt-1 bg-rose-50 dark:bg-rose-900/30 px-2 py-0.5 rounded w-fit"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Low Stock: ${item.stock} left</div>` 
+            : '';
+
         div.innerHTML = `
             <div class="flex-1">
                 <h3 class="font-bold text-slate-900 dark:text-white text-lg">${item.name}</h3>
@@ -50,6 +55,7 @@ export function renderList() {
                     <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">₦${price}</span>
                     ${item.category ? `<span class="text-[10px] text-slate-400 font-medium uppercase border px-1 rounded">${item.category}</span>` : ''}
                 </div>
+                ${stockWarning}
             </div>
             ${state.isManager ? `
             <div class="flex gap-2">
@@ -65,7 +71,7 @@ export function renderList() {
 export function updateRoleUI() {
     const roleBadge = document.getElementById('role-badge');
     const authBtn = document.getElementById('auth-btn');
-    const fabContainer = document.getElementById('fab-container'); // Targets the wrapper now
+    const fabContainer = document.getElementById('fab-container'); // Targets the wrapper to fix layout
     const adminNav = document.getElementById('admin-nav-btn');
 
     if (state.isSuperAdmin) {
