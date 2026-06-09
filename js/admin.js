@@ -1,10 +1,11 @@
 import { state, getCollectionRef, getLogCollectionRef, logAction } from './store.js';
 import { db, doc, updateDoc, setDoc, writeBatch, serverTimestamp } from './firebase.js';
-import { showToast, renderList } from './ui.js';
+import { showToast } from './ui.js';
 import { getDocs, query, orderBy, limit, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
 let catChart = null;
 let priceChart = null;
+let bulkScope = 'all';
 
 export function openAdminModal() {
     if (!state.isSuperAdmin && !state.isManager) return;
@@ -178,6 +179,19 @@ export async function emptyTrash() {
     showToast("Trash Emptied"); renderTrash();
 }
 
+window.setBulkScope = (scope) => {
+    bulkScope = scope;
+    document.querySelectorAll('.scope-btn').forEach(b => { 
+        b.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-600', 'ring-2', 'ring-indigo-200', 'dark:bg-indigo-900/30', 'dark:text-indigo-400'); 
+        b.classList.add('text-slate-500', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-600'); 
+    });
+    const activeBtn = document.getElementById(`scope-${scope}`); 
+    if(activeBtn) {
+        activeBtn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-600', 'ring-2', 'ring-indigo-200', 'dark:bg-indigo-900/30', 'dark:text-indigo-400'); 
+        activeBtn.classList.remove('text-slate-500', 'dark:text-slate-400', 'border-slate-200', 'dark:border-slate-600');
+    }
+}
+
 export async function applyBulkUpdate(type) {
     if (!state.isManager) return alert("Access Denied");
     const val = parseFloat(document.getElementById('inflation-input').value);
@@ -206,5 +220,9 @@ export function exportData() {
     link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,Name,Barcode,Price,Category,Bulk Deal,Stock\n" + rows));
     link.setAttribute("download", `inventory_${state.storeName}.csv`);
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                                                                                                      }
-                                                                                                      
+}
+
+window.copyRules = () => {
+    const rules = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function hasEmail() { return request.auth != null && request.auth.token.email != null; }\n    function isSuperAdmin() { return hasEmail() && request.auth.token.email.lower() == 'abdulkadirbukar2006@gmail.com'; }\n    function isManager(storeName) {\n      let configPath = path('/databases/' + database + '/documents/artifacts/fatima-store-1f63f/public/data/' + storeName + '/_config');\n      return isSuperAdmin() || (hasEmail() && exists(configPath) && get(configPath).data.get('staff', {}).get(request.auth.token.email.lower(), '') == 'manager');\n    }\n    match /artifacts/fatima-store-1f63f/public/data/{storeName} {\n      match /_config { allow read: if isSuperAdmin() || (hasEmail() && resource.data.get('staff', {}).get(request.auth.token.email.lower(), '') == 'manager'); allow write: if isSuperAdmin(); }\n      match /{document} { allow read: if document != '_config'; allow write: if isManager(storeName) && document != '_config'; }\n    }\n    match /artifacts/fatima-store-1f63f/public/logs/{storeName}/{document=**} { allow read: if isSuperAdmin(); allow create: if isManager(storeName); allow update, delete: if isSuperAdmin(); }\n  }\n}`;
+    navigator.clipboard.writeText(rules).then(() => alert("Rules copied to clipboard!"));
+};
