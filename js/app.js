@@ -9,17 +9,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
     
     const storeName = localStorage.getItem('pk_store_name');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+
     if (storeName) {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
+        loginScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+        
+        // THE FIX: Explicitly hide the loading screen!
+        if (loadingOverlay) loadingOverlay.classList.add('hidden'); 
+        
         document.getElementById('skeleton-loader').classList.remove('hidden');
         
-        // Starts the syncing process immediately
         initSync(storeName, () => {
             document.getElementById('skeleton-loader').classList.add('hidden');
             renderCategories();
             renderList();
         });
+    } else {
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
     }
 
     document.getElementById('search-input').addEventListener('input', (e) => {
@@ -54,14 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Ensures the UI instantly recognizes managers upon load
 onAuthStateChanged(auth, (user) => {
     if (user) {
         state.currentUser = user;
         const email = user.email ? user.email.toLowerCase() : "";
         state.isSuperAdmin = (email === SUPER_ADMIN_EMAIL.toLowerCase());
         
-        // Wait to determine Manager status until the config sync finishes
         setTimeout(() => {
             updateRoleUI();
             renderList();
@@ -76,6 +85,8 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// ----- ALL WINDOW FUNCTIONS RESTORED -----
+
 window.toggleDarkMode = () => {
     document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
@@ -86,6 +97,20 @@ window.toggleAuth = () => {
         if(confirm("Log out Admin?")) signOut(auth).then(()=>signInAnonymously(auth));
     } else {
         signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert(e.message));
+    }
+};
+
+window.logout = () => {
+    if (confirm("Exit?")) {
+        localStorage.removeItem('pk_store_name');
+        window.location.reload();
+    }
+};
+
+window.openSuperAdmin = () => {
+    if (state.isSuperAdmin) {
+        openAdminModal();
+        switchAdminTab('stats');
     }
 };
 
